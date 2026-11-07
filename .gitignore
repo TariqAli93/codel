@@ -22,3 +22,8 @@ logs
 .env
 .env.*
 !.env.example
+
+# AI tooling: local state and generated indexes, never committed
+.claude-flow/
+graphify-out/
+.claude/settings.local.json
