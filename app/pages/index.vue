@@ -43,7 +43,7 @@ const price = (value: number) => new Intl.NumberFormat('en-US').format(value)
 
 <template>
   <div class="home">
-    <section class="home__hero" aria-labelledby="home-title">
+    <section class="home__hero home__grid" aria-labelledby="home-title">
       <h1 id="home-title" class="home__title">
         <span class="home__title-line">برامج جاهزة لعملك،</span> <span class="home__title-line">وبرمجيات نبنيها على مقاسه.</span>
       </h1>
@@ -65,91 +65,94 @@ const price = (value: number) => new Intl.NumberFormat('en-US').format(value)
       </p>
     </section>
 
-    <section class="home__section" aria-labelledby="home-solutions">
-      <div class="home__inner">
-        <div class="home__head">
-          <h2 id="home-solutions" class="home__heading">حلولنا الجاهزة</h2>
-          <p class="home__intro">برامج جاهزة للاستخدام. وإن احتجت حلاً غير موجود، نبرمجه لك حسب طلبك.</p>
-          <p class="home__head-more"><NuxtLink class="home__link" to="/solutions">كل الحلول</NuxtLink></p>
-        </div>
-
-        <ul class="home__products">
-          <li v-for="solution in solutions" :key="solution.slug" class="home__product">
-            <div class="home__product-names">
-              <h3 class="home__product-name">{{ solution.nameAr }}</h3>
-              <p class="home__product-latin"><span dir="ltr">{{ solution.nameEn }}</span></p>
-            </div>
-
-            <div class="home__product-body">
-              <p class="home__product-tagline">{{ solution.tagline }}</p>
-              <dl class="home__product-facts">
-                <div class="home__product-fact">
-                  <dt>السعر</dt>
-                  <dd>
-                    <span class="home__price"><span class="home__price-text">{{ price(solution.priceIqd) }} دينار عراقي</span></span>
-                  </dd>
-                </div>
-                <div class="home__product-fact">
-                  <dt>يعمل على</dt>
-                  <dd>{{ solution.platform }}</dd>
-                </div>
-              </dl>
-              <NuxtLink class="home__product-link" :to="`/solutions/${solution.slug}`">تفاصيل {{ solution.nameAr }}</NuxtLink>
-            </div>
-          </li>
-        </ul>
+    <section class="home__section home__grid" aria-labelledby="home-solutions">
+      <div class="home__head">
+        <h2 id="home-solutions" class="home__heading">حلولنا الجاهزة</h2>
+        <p class="home__intro">اختر البرنامج الذي يناسب عملك، وإن لم تجده هنا نبرمجه لك.</p>
+        <p class="home__more"><NuxtLink class="home__link" to="/solutions">كل الحلول</NuxtLink></p>
       </div>
+
+      <ul class="home__products home__body">
+        <li v-for="solution in solutions" :key="solution.slug" class="home__product">
+          <div class="home__product-names">
+            <h3 class="home__product-name">{{ solution.nameAr }}</h3>
+            <p class="home__product-latin"><span dir="ltr">{{ solution.nameEn }}</span></p>
+          </div>
+          <p class="home__product-tagline">{{ solution.tagline }}</p>
+
+          <div class="home__product-foot">
+            <dl class="home__product-facts">
+              <div class="home__product-fact">
+                <dt class="home__visually-hidden">السعر</dt>
+                <dd>
+                  <span class="home__price"><span class="home__price-text">{{ price(solution.priceIqd) }} دينار عراقي</span></span>
+                </dd>
+              </div>
+              <div class="home__product-fact">
+                <dt>يعمل على</dt>
+                <dd>{{ solution.platform }}</dd>
+              </div>
+            </dl>
+
+            <NuxtLink class="home__product-link" :to="`/solutions/${solution.slug}`">
+              <span>تفاصيل {{ solution.nameAr }}</span>
+              <!-- Points left: forward in RTL. -->
+              <svg class="home__arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M19 12H5m6-6-6 6 6 6" />
+              </svg>
+            </NuxtLink>
+          </div>
+        </li>
+      </ul>
     </section>
 
-    <section class="home__section" aria-labelledby="home-services">
-      <div class="home__inner">
-        <div class="home__head">
-          <h2 id="home-services" class="home__heading">خدماتنا</h2>
-          <p class="home__intro">من الموقع والتطبيق إلى برامج الحسابات والسيرفرات، وما تحتاجه حسب الطلب.</p>
-          <p class="home__head-more"><NuxtLink class="home__link" to="/services">تفاصيل الخدمات</NuxtLink></p>
-        </div>
-
-        <ul class="home__services">
-          <li v-for="service in services" :key="service.title" class="home__service">
-            <h3 class="home__service-title">{{ service.title }}</h3>
-            <p class="home__service-text">{{ service.text }}</p>
-          </li>
-        </ul>
+    <section class="home__section home__grid" aria-labelledby="home-services">
+      <div class="home__head">
+        <h2 id="home-services" class="home__heading">خدماتنا</h2>
+        <p class="home__intro">من تصميم الواجهة وبرمجتها إلى إدارة السيرفر الذي يشغّلها.</p>
+        <p class="home__more"><NuxtLink class="home__link" to="/services">تفاصيل الخدمات</NuxtLink></p>
       </div>
+
+      <ul class="home__services home__body">
+        <li v-for="service in services" :key="service.title" class="home__service">
+          <h3 class="home__service-title">{{ service.title }}</h3>
+          <p class="home__service-text">{{ service.text }}</p>
+        </li>
+      </ul>
     </section>
 
-    <section class="home__section" aria-labelledby="home-company">
-      <div class="home__inner home__company">
+    <section class="home__section home__grid" aria-labelledby="home-company">
+      <div class="home__head">
         <h2 id="home-company" class="home__heading">شركة ناشئة من {{ company.addressParts.city }}</h2>
+      </div>
 
-        <div class="home__company-body">
-          <ol class="home__timeline">
-            <li class="home__stop">
-              <span class="home__year">{{ company.founded.idea }}</span>
-              <span class="home__stop-label">بداية الفكرة</span>
-            </li>
-            <li class="home__stop">
-              <span class="home__year">{{ company.founded.launch }}</span>
-              <span class="home__stop-label">انطلاق الشركة</span>
-            </li>
-          </ol>
-          <p class="home__company-text">هدفنا أن نبني برمجيات تخدم الأعمال في العراق.</p>
-          <p><NuxtLink class="home__link" to="/about">قصتنا</NuxtLink></p>
-        </div>
+      <div class="home__body">
+        <ol class="home__timeline">
+          <li class="home__stop">
+            <span class="home__year">{{ company.founded.idea }}</span>
+            <span class="home__stop-label">بداية الفكرة</span>
+          </li>
+          <li class="home__stop">
+            <span class="home__year">{{ company.founded.launch }}</span>
+            <span class="home__stop-label">انطلاق الشركة</span>
+          </li>
+        </ol>
+        <p class="home__statement">هدفنا أن نبني برمجيات تخدم الأعمال في العراق.</p>
+        <p class="home__more"><NuxtLink class="home__link" to="/about">قصتنا</NuxtLink></p>
       </div>
     </section>
 
-    <section class="home__contact" aria-labelledby="home-contact">
+    <section class="home__contact home__grid" aria-labelledby="home-contact">
       <div class="home__field">
         <h2 id="home-contact" class="home__contact-title">لديك مشروع أو فكرة؟</h2>
         <p class="home__contact-text">
-          راسلنا على واتساب أو البريد الإلكتروني، ونردّ عليك. الدوام {{ company.hours.days }}، {{ company.hours.time }}.
+          أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني. الدوام {{ company.hours.days }}، {{ company.hours.time }}.
         </p>
         <ul class="home__contact-actions">
           <li>
             <a class="home__contact-button" :href="company.phones.main.whatsapp" target="_blank" rel="noopener noreferrer">
               <span class="home__contact-button-inner">
-                <span>واتساب</span> <span dir="ltr">{{ company.phones.main.display }}</span>
+                <span>راسلنا على واتساب</span> <span dir="ltr">{{ company.phones.main.display }}</span>
               </span>
             </a>
           </li>
@@ -165,55 +168,86 @@ const price = (value: number) => new Intl.NumberFormat('en-US').format(value)
 // The brand lean, and the counter-slant that turns a label back upright.
 $lean: skewX(calc(var(--slant-angle) * -1));
 $upright: skewX(var(--slant-angle));
-// Width of the content column (the container minus its gutters).
+
+// Page grid. Every section shares one set of column lines: a heading column (5/12) and a body
+// column (7/12) inside the content width, plus outer tracks that reach the window edge so a bar
+// can start on a column line and run off the page.
 $content: calc(var(--container-max) - 2 * var(--page-gutter));
-// Hero and contact band: a centred content column split in two, plus outer tracks that reach the
-// window edge so a bar can start inside the column and run off the page.
-$bleed-columns:
-  [full-start] minmax(var(--page-gutter), 1fr)
-  [content-start] minmax(0, calc(#{$content} * 0.56))
-  [split] minmax(0, calc(#{$content} * 0.44))
-  [content-end] minmax(var(--page-gutter), 1fr)
-  [full-end];
+$gap: clamp(var(--space-6), 4vw, var(--space-8));
+// The content width at this viewport. 100cqi is the width of .home, the query container below.
+$inner: calc(min(100cqi - 2 * var(--page-gutter), #{$content}) - #{$gap});
+// Above this width the heading and body columns sit side by side.
 $wide: 64em;
+// Above this width the outer track is wide enough for the contact band's slanted end.
+$band-lean: 80em;
+
+// Type scale: one step per role, and section headings always outrank product names.
+$text-display: clamp(2.25rem, 1rem + 5.2vw, 5.5rem); // h1; its first line stays whole on a 375px phone
+$text-title: clamp(2.125rem, 1.45rem + 2.8vw, 3.75rem); // h2
+$text-name: clamp(1.875rem, 1.35rem + 2.2vw, 3.125rem); // product names, years
+$text-lead: clamp(1.1875rem, 1.05rem + 0.6vw, 1.5rem); // service titles, taglines, the goal
+$text-large: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem); // lede and contact text
 
 .home {
+  container-type: inline-size;
+
   // ---------------------------------------------------------------------------
   // Shared section pieces
   // ---------------------------------------------------------------------------
 
-  &__inner {
-    max-inline-size: var(--container-max);
-    margin-inline: auto;
-    padding-inline: var(--page-gutter);
+  &__grid {
+    display: grid;
+    // Fallback without container units: the two inner tracks share the space.
+    grid-template-columns:
+      [full-start] minmax(var(--page-gutter), 1fr)
+      [content-start] minmax(0, calc((#{$content} - #{$gap}) * 5 / 12))
+      [head-end] $gap
+      [body-start] minmax(0, calc((#{$content} - #{$gap}) * 7 / 12))
+      [content-end] minmax(var(--page-gutter), 1fr)
+      [full-end];
+    // Exact 5/12 and 7/12 of the content width at every viewport.
+    grid-template-columns:
+      [full-start] minmax(var(--page-gutter), 1fr)
+      [content-start] calc(#{$inner} * 5 / 12)
+      [head-end] $gap
+      [body-start] calc(#{$inner} * 7 / 12)
+      [content-end] minmax(var(--page-gutter), 1fr)
+      [full-end];
+
+    > * {
+      grid-column: content-start / content-end;
+    }
   }
 
   &__section {
     padding-block-start: clamp(var(--space-8), 8vw, var(--space-10));
   }
 
+  // Heading, intro and link read as one group. On wide screens the group holds the heading
+  // column and stays in view while the body column scrolls past it.
   &__head {
-    display: grid;
-    gap: var(--space-2) var(--space-7);
-    align-items: end;
-    margin-block-end: clamp(var(--space-6), 5vw, var(--space-8));
+    margin-block-end: clamp(var(--space-6), 5vw, var(--space-7));
 
-    @media (width >= 48em) {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    @media (width >= $wide) {
+      position: sticky;
+      inset-block-start: calc(var(--header-height) + var(--space-7));
+      grid-column: content-start / head-end;
+      align-self: start;
+      margin-block-end: 0;
+    }
+  }
 
-      .home__heading {
-        grid-row: span 2;
-        align-self: end;
-      }
+  &__body {
+    @media (width >= $wide) {
+      grid-column: body-start / content-end;
     }
   }
 
   &__heading {
-    margin: 0;
-    font-size: clamp(2rem, 1.3rem + 2.6vw, 3.25rem);
+    margin: 0 0 var(--space-3);
+    font-size: $text-title;
     line-height: 1.25;
     font-weight: 800;
-    text-wrap: balance;
   }
 
   &__intro {
@@ -221,8 +255,8 @@ $wide: 64em;
     color: var(--text-muted);
   }
 
-  &__head-more {
-    margin: 0;
+  &__more {
+    margin-block-start: var(--space-2);
   }
 
   // Standalone text links: 44px touch target (WCAG 2.5.5).
@@ -234,9 +268,20 @@ $wide: 64em;
     text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
     transition: text-decoration-color var(--duration-fast) var(--ease-out);
 
-    &:hover {
-      text-decoration-color: currentColor;
+    @media (hover: hover) {
+      &:hover {
+        text-decoration-color: currentColor;
+      }
     }
+  }
+
+  &__visually-hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   // ---------------------------------------------------------------------------
@@ -244,20 +289,14 @@ $wide: 64em;
   // ---------------------------------------------------------------------------
 
   &__hero {
-    display: grid;
-    grid-template-columns: $bleed-columns;
     padding-block: clamp(var(--space-8), 8vw, var(--space-10)) clamp(var(--space-5), 3vw, var(--space-7));
     // The call bar's slanted far end runs past the window edge.
     overflow: clip;
-
-    > * {
-      grid-column: content-start / content-end;
-    }
   }
 
   &__title {
     margin-block-end: clamp(var(--space-5), 3.5vw, var(--space-7));
-    font-size: clamp(2.375rem, 1.1rem + 5.2vw, 5.5rem);
+    font-size: $text-display;
     line-height: 1.22;
     font-weight: 800;
   }
@@ -269,13 +308,15 @@ $wide: 64em;
 
   &__lede {
     max-inline-size: 34rem;
-    font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+    font-size: $text-large;
     line-height: 1.85;
     color: var(--text-muted);
   }
 
-  // The main call: a lime bar with the brand lean that starts in the column and runs off the window edge.
+  // The main call: a lime bar with the brand lean. It starts on a column line and runs off the
+  // window edge; on wide screens that line is the one every section's body column starts on.
   &__cta {
+    grid-column: content-start / full-end;
     display: flex;
     align-items: center;
     min-block-size: clamp(4rem, 3.2rem + 2vw, 5.25rem);
@@ -291,8 +332,10 @@ $wide: 64em;
     transform-origin: left center; // inline end in RTL: the bar grows out of the window edge
     transition: background-color var(--duration-fast) var(--ease-out);
 
-    &:hover {
-      background-color: var(--primary-hover);
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--primary-hover);
+      }
     }
 
     &:active {
@@ -310,8 +353,10 @@ $wide: 64em;
     transition: translate var(--duration-base) var(--ease-out);
 
     // Leans forward a step on hover (forward is to the left in RTL).
-    .home__cta:hover & {
-      translate: calc(var(--space-2) * -1) 0;
+    @media (hover: hover) {
+      .home__cta:hover & {
+        translate: calc(var(--space-2) * -1) 0;
+      }
     }
   }
 
@@ -340,14 +385,11 @@ $wide: 64em;
     margin-block-start: var(--space-3);
   }
 
+  // Lede in the heading column, call bar from the body column to the window edge.
   @media (width >= $wide) {
-    &__title {
-      grid-column: content-start / content-end;
-    }
-
     &__lede,
     &__hero-more {
-      grid-column: content-start / split;
+      grid-column: content-start / head-end;
     }
 
     &__lede {
@@ -356,21 +398,14 @@ $wide: 64em;
     }
 
     &__cta {
-      grid-column: split / full-end;
+      grid-column: body-start / full-end;
       grid-row: 2;
       align-self: center;
       margin-block-start: 0;
-      margin-inline-start: var(--space-7);
     }
 
     &__hero-more {
       grid-row: 3;
-    }
-  }
-
-  @media (width < $wide) {
-    &__cta {
-      grid-column: content-start / full-end;
     }
   }
 
@@ -401,71 +436,81 @@ $wide: 64em;
 
   &__product {
     position: relative;
-    display: grid;
-    gap: var(--space-5) var(--space-8);
-    padding: clamp(var(--space-5), 3.5vw, var(--space-7));
+    padding: clamp(var(--space-5), 3vw, var(--space-7));
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     background-color: var(--surface);
-    transition:
-      background-color var(--duration-base) var(--ease-out),
-      border-color var(--duration-base) var(--ease-out);
+    transition: background-color var(--duration-base) var(--ease-out);
 
-    @media (width >= 48em) {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-      align-items: center;
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--surface-raised);
+      }
     }
 
-    &:hover {
-      border-color: var(--border-strong);
-      background-color: var(--surface-raised);
-    }
-
-    // The whole row is the link's hit area; show its focus on the row as well.
+    // The whole entry is the link's hit area; show its focus on the entry as well.
     &:has(.home__product-link:focus-visible) {
       border-color: var(--focus);
     }
   }
 
+  // The Latin name follows the Arabic one on its baseline: one name, two scripts.
+  &__product-names {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-4);
+  }
+
   &__product-name {
     margin: 0;
-    font-size: clamp(2.5rem, 1.6rem + 3.4vw, 4.5rem);
-    line-height: 1.2;
+    font-size: $text-name;
+    line-height: 1.25;
     font-weight: 800;
   }
 
   &__product-latin {
-    margin-block-start: var(--space-1);
     font-family: var(--font-display);
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-muted);
   }
 
   &__product-tagline {
-    font-family: var(--font-display);
-    font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
-    font-weight: 600;
-    line-height: 1.5;
-    text-wrap: balance;
+    margin-block-start: var(--space-2);
+    font-size: $text-lead;
+    font-weight: 500;
+    line-height: 1.55;
+  }
+
+  // Price and platform, then the way in. Stacked in every entry, so a longer product name
+  // never moves its link to a different place from the others.
+  &__product-foot {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-block-start: var(--space-5);
   }
 
   &__product-facts {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--space-4) clamp(var(--space-5), 4vw, var(--space-7));
-    margin-block: var(--space-5) var(--space-4);
+    align-items: center;
+    gap: var(--space-3) var(--space-6);
+  }
+
+  &__product-fact {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
 
     dt {
-      margin-block-end: var(--space-1);
       font-size: 0.875rem;
       color: var(--text-muted);
     }
 
     dd {
-      margin: 0;
-      font-size: 1.125rem;
       font-weight: 600;
     }
   }
@@ -478,68 +523,71 @@ $wide: 64em;
     background-color: var(--accent);
     color: var(--on-accent);
     transform: $lean;
-    transition: translate var(--duration-base) var(--ease-out);
-
-    .home__product:hover & {
-      translate: calc(var(--space-2) * -1) 0;
-    }
   }
 
   &__price-text {
     font-family: var(--font-display);
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 700;
     line-height: 1.5;
+    font-variant-numeric: tabular-nums;
     transform: $upright;
   }
 
   &__product-link {
     display: inline-flex;
     align-items: center;
+    gap: var(--space-2);
     min-block-size: 44px;
     font-weight: 600;
-    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+    text-decoration: none;
 
-    // Stretches the link over the whole row.
+    // Stretches the link over the whole entry.
     &::after {
       content: '';
       position: absolute;
       inset: 0;
-      border-radius: inherit;
     }
+  }
 
-    .home__product:hover & {
-      text-decoration-color: currentColor;
+  // Stroke close to the weight of the label beside it.
+  &__arrow {
+    flex: none;
+    inline-size: 1.25em;
+    block-size: 1.25em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate var(--duration-base) var(--ease-out);
+
+    // Steps forward while the pointer is anywhere on the entry.
+    @media (hover: hover) {
+      .home__product:hover & {
+        translate: calc(var(--space-1) * -1) 0;
+      }
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Services index
+  // Services
   // ---------------------------------------------------------------------------
 
+  // Grouped by space alone: the gap between services is several times the gap inside one.
   &__services {
+    display: grid;
+    gap: clamp(var(--space-6), 3vw, var(--space-7));
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  &__service {
-    display: grid;
-    gap: var(--space-2) var(--space-8);
-    padding-block: clamp(var(--space-5), 2.5vw, var(--space-6));
-    border-block-start: 1px solid var(--border);
-
-    @media (width >= 48em) {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-      align-items: baseline;
-    }
   }
 
   &__service-title {
     display: flex;
     gap: var(--space-4);
     margin: 0;
-    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    font-size: $text-lead;
     line-height: 1.45;
     font-weight: 700;
 
@@ -557,8 +605,11 @@ $wide: 64em;
     }
   }
 
+  // Hangs under the title text, clear of the marker.
   &__service-text {
     max-inline-size: 36rem;
+    margin-block-start: var(--space-2);
+    padding-inline-start: calc(0.5rem + var(--space-4));
     color: var(--text-muted);
   }
 
@@ -566,23 +617,14 @@ $wide: 64em;
   // Company
   // ---------------------------------------------------------------------------
 
-  &__company {
-    display: grid;
-    gap: var(--space-6) var(--space-8);
-    align-items: center;
-
-    @media (width >= 48em) {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    }
-  }
-
   // Idea, then launch: a real sequence, joined by a leaning bar.
   &__timeline {
     display: grid;
     grid-template-columns: auto minmax(1.5rem, 1fr) auto;
     align-items: center;
     gap: clamp(var(--space-3), 3vw, var(--space-5));
-    margin: 0 0 var(--space-5);
+    max-inline-size: 34rem;
+    margin: 0;
     padding: 0;
     list-style: none;
     view-timeline-name: --home-timeline;
@@ -615,9 +657,9 @@ $wide: 64em;
 
   &__year {
     font-family: var(--font-display);
-    font-size: clamp(2rem, 1.4rem + 2.4vw, 3.5rem);
+    font-size: $text-name;
     font-weight: 800;
-    line-height: 1.15;
+    line-height: 1.2;
   }
 
   &__stop-label {
@@ -625,8 +667,13 @@ $wide: 64em;
     color: var(--text-muted);
   }
 
-  &__company-text {
-    font-size: 1.125rem;
+  &__statement {
+    max-inline-size: 30rem;
+    margin-block-start: var(--space-6);
+    font-size: $text-lead;
+    font-weight: 500;
+    line-height: 1.6;
+    text-wrap: balance;
   }
 
   // ---------------------------------------------------------------------------
@@ -634,8 +681,6 @@ $wide: 64em;
   // ---------------------------------------------------------------------------
 
   &__contact {
-    display: grid;
-    grid-template-columns: $bleed-columns;
     padding-block: clamp(var(--space-8), 8vw, var(--space-10)) var(--space-8);
     overflow: clip;
   }
@@ -647,6 +692,7 @@ $wide: 64em;
     position: relative;
     isolation: isolate;
     grid-column: full-start / full-end;
+    // Below the container width the outer track is one gutter, so the text keeps the content edge.
     padding: clamp(var(--space-7), 7vw, var(--space-9)) var(--page-gutter);
     color: var(--on-accent);
 
@@ -658,11 +704,12 @@ $wide: 64em;
       background-color: var(--accent);
     }
 
-    @media (width >= $wide) {
+    // Leans like the hero bar once there is room for its slanted start; the far end runs past
+    // the window edge.
+    @media (width >= $band-lean) {
       grid-column: content-start / full-end;
       padding-inline: clamp(var(--space-7), 6vw, var(--space-9)) var(--space-7);
 
-      // Leans like the hero bar; the far end runs past the window edge.
       &::before {
         inset-inline-end: calc(var(--space-9) * -1);
         border-radius: var(--radius-lg);
@@ -673,14 +720,14 @@ $wide: 64em;
 
   &__contact-title {
     margin: 0 0 var(--space-4);
-    font-size: clamp(2rem, 1.2rem + 3.4vw, 4rem);
+    font-size: $text-title;
     line-height: 1.25;
     font-weight: 800;
   }
 
   &__contact-text {
     max-inline-size: 36rem;
-    font-size: 1.125rem;
+    font-size: $text-large;
   }
 
   &__contact-actions {
@@ -688,7 +735,7 @@ $wide: 64em;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3) var(--space-6);
-    margin: var(--space-6) 0 0;
+    margin-block-start: var(--space-6);
     padding: 0;
     list-style: none;
   }
@@ -704,16 +751,26 @@ $wide: 64em;
     font-weight: 600;
     text-decoration: none;
     transform: $lean;
-    transition: background-color var(--duration-fast) var(--ease-out);
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      scale var(--duration-fast) var(--ease-out);
 
-    &:hover {
-      background-color: var(--surface-raised);
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--surface-raised);
+      }
+    }
+
+    &:active {
+      scale: 0.96;
     }
   }
 
   &__contact-button-inner {
     display: inline-flex;
-    gap: var(--space-3);
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    padding-block: var(--space-2);
     transform: $upright;
   }
 
@@ -726,8 +783,10 @@ $wide: 64em;
     text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
     transition: text-decoration-color var(--duration-fast) var(--ease-out);
 
-    &:hover {
-      text-decoration-color: currentColor;
+    @media (hover: hover) {
+      &:hover {
+        text-decoration-color: currentColor;
+      }
     }
   }
 }
@@ -786,7 +845,7 @@ $wide: 64em;
 @keyframes home-rise {
   from {
     opacity: 0;
-    transform: translateY(0.45em);
+    transform: translateY(0.3em);
   }
 }
 

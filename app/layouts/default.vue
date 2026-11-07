@@ -333,11 +333,14 @@ $upright: skewX(var(--slant-angle));
         background-color var(--duration-fast) var(--ease-out);
     }
 
-    &:hover {
-      color: var(--text);
+    // Hover styles only where a pointer can hover: on touch, :hover sticks after a tap.
+    @media (hover: hover) {
+      &:hover {
+        color: var(--text);
 
-      &::after {
-        transform: $lean scaleX(1);
+        &::after {
+          transform: $lean scaleX(1);
+        }
       }
     }
 
@@ -369,7 +372,8 @@ $upright: skewX(var(--slant-angle));
     transition:
       border-color var(--duration-fast) var(--ease-out),
       background-color var(--duration-fast) var(--ease-out),
-      color var(--duration-fast) var(--ease-out);
+      color var(--duration-fast) var(--ease-out),
+      scale var(--duration-fast) var(--ease-out);
 
     &::after {
       content: none;
@@ -379,13 +383,16 @@ $upright: skewX(var(--slant-angle));
       transform: $upright;
     }
 
-    &:hover {
-      border-color: var(--accent);
-      color: var(--text);
+    @media (hover: hover) {
+      &:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
     }
 
     &:active {
       background-color: var(--surface-raised);
+      scale: 0.96;
     }
 
     &[aria-current='page'] {
@@ -416,15 +423,22 @@ $upright: skewX(var(--slant-angle));
       transform: $lean;
       transition:
         border-color var(--duration-fast) var(--ease-out),
-        background-color var(--duration-fast) var(--ease-out);
+        background-color var(--duration-fast) var(--ease-out),
+        scale var(--duration-fast) var(--ease-out);
 
-      &:hover,
       &[aria-expanded='true'] {
         border-color: var(--accent);
       }
 
+      @media (hover: hover) {
+        &:hover {
+          border-color: var(--accent);
+        }
+      }
+
       &:active {
         background-color: var(--surface-raised);
+        scale: 0.96;
       }
     }
 
@@ -485,6 +499,7 @@ $upright: skewX(var(--slant-angle));
       align-items: stretch;
       max-block-size: calc(100dvh - var(--header-height));
       overflow-y: auto;
+      overscroll-behavior: contain;
       padding: var(--space-3) var(--page-gutter) var(--space-6);
       border-block-end: 1px solid var(--border);
       background-color: var(--bg);
@@ -661,9 +676,11 @@ $upright: skewX(var(--slant-angle));
       text-decoration-color: var(--border-strong);
       transition: text-decoration-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
 
-      &:hover {
-        color: var(--accent-text);
-        text-decoration-color: currentColor;
+      @media (hover: hover) {
+        &:hover {
+          color: var(--accent-text);
+          text-decoration-color: currentColor;
+        }
       }
     }
   }

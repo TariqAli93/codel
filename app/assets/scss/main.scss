@@ -211,6 +211,20 @@ p {
   overflow-wrap: break-word;
 }
 
+// Even line lengths in headings; no lone word on the last line of a paragraph.
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
 // -----------------------------------------------------------------------------
 // 4. Base elements (type styles from the design system: Arabic needs the
 //    generous line heights below; never add letter-spacing to Arabic text)
