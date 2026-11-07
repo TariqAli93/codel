@@ -1,0 +1,4 @@
+# Codebase Memory reads this in addition to .gitignore.
+# AI tool configuration, not site code
+.claude/
+.gemini/

@@ -1,0 +1,17 @@
+# Graphify reads this file instead of .gitignore, so it repeats the parts of .gitignore that matter.
+# Built in already: node_modules, .nuxt, .cache, graphify-out, package-lock.json.
+
+# Secrets
+.env
+.env.*
+
+# Build output, local state, logs
+.output
+.data
+.nitro
+.claude-flow/
+*.log
+
+# AI tool configuration, not site code
+.claude/
+.gemini/
