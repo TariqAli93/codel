@@ -20,16 +20,18 @@ withDefaults(
       <span v-if="title" class="window__title">{{ title }}</span>
       <span class="window__lights"><span /><span /><span /></span>
     </div>
-    <img
-      class="window__image"
-      :src="src"
-      :alt="alt"
-      :width="width"
-      :height="height"
-      :loading="eager ? 'eager' : 'lazy'"
-      :fetchpriority="eager ? 'high' : undefined"
-      decoding="async"
-    />
+    <div class="window__view">
+      <img
+        class="window__image"
+        :src="src"
+        :alt="alt"
+        :width="width"
+        :height="height"
+        :loading="eager ? 'eager' : 'lazy'"
+        :fetchpriority="eager ? 'high' : undefined"
+        decoding="async"
+      />
+    </div>
   </figure>
 </template>
 
@@ -76,9 +78,18 @@ withDefaults(
     }
   }
 
+  // A parent can crop the screen to a focused view (on small screens): --window-ratio sets the
+  // view's shape and --window-zoom how much wider than the frame the screenshot is drawn. The view
+  // keeps the screenshot's top and inline-start edge: in these RTL apps, the menu and the headings.
+  &__view {
+    overflow: hidden;
+    aspect-ratio: var(--window-ratio, auto);
+  }
+
   &__image {
     display: block;
-    inline-size: 100%;
+    inline-size: calc(100% * var(--window-zoom, 1));
+    max-inline-size: none;
     block-size: auto;
   }
 }

@@ -69,7 +69,7 @@ $upright: skewX(var(--slant-angle));
       inset: 0;
       border-radius: inherit;
       box-shadow: var(--glow-accent);
-      opacity: 0.65;
+      opacity: 0.4;
       pointer-events: none;
       transition: opacity var(--duration-base) var(--ease-out);
     }
@@ -80,7 +80,7 @@ $upright: skewX(var(--slant-angle));
         background-color: var(--primary-hover);
 
         &::after {
-          opacity: 1;
+          opacity: 0.8;
         }
 
         .action__content {

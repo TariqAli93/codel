@@ -440,7 +440,7 @@ $footer-three: 64em;
       inset: 0;
       border-radius: inherit;
       box-shadow: var(--glow-accent);
-      opacity: 0.65;
+      opacity: 0.4;
       pointer-events: none;
       transition: opacity var(--duration-base) var(--ease-out);
     }
@@ -458,7 +458,7 @@ $footer-three: 64em;
         color: var(--on-primary);
 
         &::after {
-          opacity: 1;
+          opacity: 0.8;
         }
       }
     }

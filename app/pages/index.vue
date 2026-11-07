@@ -47,10 +47,10 @@ const price = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const whatsappAsk = (nameAr: string) =>
   `${company.phones.main.whatsapp}?text=${encodeURIComponent(`مرحباً، أرغب بالاستفسار عن ${nameAr}`)}`;
 
-// The hero shows one real screen of each of the first two products: the last listed screen of the
-// first product behind, the first screen of the second in front.
+// The hero shows one real screen of each of the first two products: the first product's second
+// screenshot (its home screen) behind, the second product's first screenshot in front.
 const [heroBack, heroFront] = solutions;
-const heroBackShot = heroBack?.images[heroBack.images.length - 1];
+const heroBackShot = heroBack?.images[1] ?? heroBack?.images[0];
 const heroFrontShot = heroFront?.images[0];
 
 // Each product's showcase takes its colours from the product's own interface.
@@ -98,11 +98,16 @@ onBeforeUnmount(() => {
 // server render and hydration never see it. The hero's entrance is plain CSS and needs none of it:
 // its content is on screen within half a second whatever the network does.
 const loadMotion = () =>
-  Promise.all([import("gsap"), import("gsap/ScrollTrigger"), import("gsap/SplitText")]);
+  Promise.all([
+    import("gsap"),
+    import("gsap/ScrollTrigger"),
+    import("gsap/SplitText"),
+  ]);
 const motionModules = import.meta.client ? loadMotion() : undefined;
 
 async function startMotion() {
-  const [{ gsap }, { ScrollTrigger }, { SplitText }] = await (motionModules ?? loadMotion());
+  const [{ gsap }, { ScrollTrigger }, { SplitText }] = await (motionModules ??
+    loadMotion());
   await document.fonts.ready;
   const root = page.value;
   if (unmounted || !root) return;
@@ -128,7 +133,12 @@ async function startMotion() {
         gsap.to(layer, {
           yPercent: -18 * depth,
           ease: "none",
-          scrollTrigger: { trigger: ".home__hero", start: "top top", end: "bottom top", scrub: true },
+          scrollTrigger: {
+            trigger: ".home__hero",
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
         });
       }
 
@@ -157,22 +167,48 @@ async function startMotion() {
       for (const product of all(".home__product")) {
         const main = product.querySelector(".home__shot--main");
         const second = product.querySelector(".home__shot--second");
-        const show = gsap.timeline({ scrollTrigger: { trigger: product, start: "top 75%", once: true } });
-        if (main) show.from(main, { clipPath: "inset(100% 0% 0% 0%)", y: 40, duration: 1.1, ease: "expo.inOut" });
-        if (second) show.from(second, { opacity: 0, x: -60, y: 30, duration: 1, ease }, 0.45);
-        show.from(all(".home__product-body > *", product), {
-          opacity: 0,
-          y: 24,
-          duration: 0.8,
-          ease,
-          stagger: 0.06,
-        }, 0.2);
-        if (second) {
-          gsap.fromTo(second, { yPercent: 10 }, {
-            yPercent: -10,
-            ease: "none",
-            scrollTrigger: { trigger: product, start: "top bottom", end: "bottom top", scrub: true },
+        const show = gsap.timeline({
+          scrollTrigger: { trigger: product, start: "top 75%", once: true },
+        });
+        if (main)
+          show.from(main, {
+            clipPath: "inset(100% 0% 0% 0%)",
+            y: 40,
+            duration: 1.1,
+            ease: "expo.inOut",
           });
+        if (second)
+          show.from(
+            second,
+            { opacity: 0, x: -60, y: 30, duration: 1, ease },
+            0.45,
+          );
+        show.from(
+          all(".home__product-body > *", product),
+          {
+            opacity: 0,
+            y: 24,
+            duration: 0.8,
+            ease,
+            stagger: 0.06,
+          },
+          0.2,
+        );
+        if (second) {
+          gsap.fromTo(
+            second,
+            { yPercent: 10 },
+            {
+              yPercent: -10,
+              ease: "none",
+              scrollTrigger: {
+                trigger: product,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+              },
+            },
+          );
         }
       }
 
@@ -181,85 +217,140 @@ async function startMotion() {
         start: "top 88%",
         once: true,
         onEnter: (batch) =>
-          gsap.from(batch, { opacity: 0, y: 40, duration: 0.9, ease, stagger: 0.1 }),
+          gsap.from(batch, {
+            opacity: 0,
+            y: 40,
+            duration: 0.9,
+            ease,
+            stagger: 0.1,
+          }),
       });
 
       // Company: the city's name drifts behind the quote; the years draw their bar.
-      gsap.fromTo(".home__backdrop", { xPercent: -6 }, {
-        xPercent: 6,
-        ease: "none",
-        scrollTrigger: { trigger: ".home__company", start: "top bottom", end: "bottom top", scrub: true },
-      });
-      gsap.timeline({ scrollTrigger: { trigger: ".home__years", start: "top 85%", once: true } })
-        .from(".home__year--idea .home__year-node", { scale: 0, duration: 0.4, ease: "back.out(2)" })
-        .from(".home__years-bar", { scaleX: 0, transformOrigin: "right center", duration: 0.8, ease: "power2.inOut" })
-        .from(".home__year--launch .home__year-node", { scale: 0, duration: 0.4, ease: "back.out(2)" });
+      gsap.fromTo(
+        ".home__backdrop",
+        { xPercent: -6 },
+        {
+          xPercent: 6,
+          ease: "none",
+          scrollTrigger: {
+            trigger: ".home__company",
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        },
+      );
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: ".home__years",
+            start: "top 85%",
+            once: true,
+          },
+        })
+        .from(".home__year--idea .home__year-node", {
+          scale: 0,
+          duration: 0.4,
+          ease: "back.out(2)",
+        })
+        .from(".home__years-bar", {
+          scaleX: 0,
+          transformOrigin: "right center",
+          duration: 0.8,
+          ease: "power2.inOut",
+        })
+        .from(".home__year--launch .home__year-node", {
+          scale: 0,
+          duration: 0.4,
+          ease: "back.out(2)",
+        });
 
       // Contact: the lime band sweeps in from the reading start, then its contents follow.
       const band = root.querySelector(".home__band");
       if (band) {
-        gsap.timeline({ scrollTrigger: { trigger: band, start: "top 80%", once: true } })
-          .fromTo(band, { clipPath: "inset(-20% -20% -20% 100%)" }, {
-            clipPath: "inset(-20% -20% -20% -20%)",
-            duration: 1.1,
-            ease: "expo.inOut",
-            clearProps: "clipPath",
+        gsap
+          .timeline({
+            scrollTrigger: { trigger: band, start: "top 80%", once: true },
           })
-          .from(all(".home__band-content > *", band), {
-            opacity: 0,
-            y: 20,
-            duration: 0.7,
-            ease,
-            stagger: 0.06,
-          }, 0.5);
+          .fromTo(
+            band,
+            { clipPath: "inset(-20% -20% -20% 100%)" },
+            {
+              clipPath: "inset(-20% -20% -20% -20%)",
+              duration: 1.1,
+              ease: "expo.inOut",
+              clearProps: "clipPath",
+            },
+          )
+          .from(
+            all(".home__band-content > *", band),
+            {
+              opacity: 0,
+              y: 20,
+              duration: 0.7,
+              ease,
+              stagger: 0.06,
+            },
+            0.5,
+          );
       }
     });
 
     // Pointer: the hero's screens lean toward the pointer by depth; product screens tilt.
-    media.add("(prefers-reduced-motion: no-preference) and (hover: hover)", () => {
-      const detach: Array<() => void> = [];
-      const stage = root.querySelector<HTMLElement>(".home__stage");
-      const hero = root.querySelector<HTMLElement>(".home__hero");
-      if (stage && hero) {
-        const layers = all(".home__layer", stage).map((layer) => ({
-          depth: Number(layer.dataset.depth ?? 1),
-          x: gsap.quickTo(layer, "x", { duration: 0.8, ease: "power3.out" }),
-          y: gsap.quickTo(layer, "y", { duration: 0.8, ease: "power3.out" }),
-        }));
-        const move = (event: PointerEvent) => {
-          const box = hero.getBoundingClientRect();
-          const dx = (event.clientX - box.left) / box.width - 0.5;
-          const dy = (event.clientY - box.top) / box.height - 0.5;
-          for (const layer of layers) {
-            layer.x(dx * 26 * layer.depth);
-            layer.y(dy * 18 * layer.depth);
-          }
-        };
-        hero.addEventListener("pointermove", move);
-        detach.push(() => hero.removeEventListener("pointermove", move));
-      }
-      for (const visual of all(".home__product-visual")) {
-        gsap.set(visual, { transformPerspective: 1400 });
-        const tiltX = gsap.quickTo(visual, "rotationX", { duration: 0.7, ease: "power3.out" });
-        const tiltY = gsap.quickTo(visual, "rotationY", { duration: 0.7, ease: "power3.out" });
-        const move = (event: PointerEvent) => {
-          const box = visual.getBoundingClientRect();
-          tiltX(((event.clientY - box.top) / box.height - 0.5) * -5);
-          tiltY(((event.clientX - box.left) / box.width - 0.5) * 7);
-        };
-        const leave = () => {
-          tiltX(0);
-          tiltY(0);
-        };
-        visual.addEventListener("pointermove", move);
-        visual.addEventListener("pointerleave", leave);
-        detach.push(() => {
-          visual.removeEventListener("pointermove", move);
-          visual.removeEventListener("pointerleave", leave);
-        });
-      }
-      return () => detach.forEach((off) => off());
-    });
+    media.add(
+      "(prefers-reduced-motion: no-preference) and (hover: hover)",
+      () => {
+        const detach: Array<() => void> = [];
+        const stage = root.querySelector<HTMLElement>(".home__stage");
+        const hero = root.querySelector<HTMLElement>(".home__hero");
+        if (stage && hero) {
+          const layers = all(".home__layer", stage).map((layer) => ({
+            depth: Number(layer.dataset.depth ?? 1),
+            x: gsap.quickTo(layer, "x", { duration: 0.8, ease: "power3.out" }),
+            y: gsap.quickTo(layer, "y", { duration: 0.8, ease: "power3.out" }),
+          }));
+          const move = (event: PointerEvent) => {
+            const box = hero.getBoundingClientRect();
+            const dx = (event.clientX - box.left) / box.width - 0.5;
+            const dy = (event.clientY - box.top) / box.height - 0.5;
+            for (const layer of layers) {
+              layer.x(dx * 26 * layer.depth);
+              layer.y(dy * 18 * layer.depth);
+            }
+          };
+          hero.addEventListener("pointermove", move);
+          detach.push(() => hero.removeEventListener("pointermove", move));
+        }
+        for (const visual of all(".home__product-visual")) {
+          gsap.set(visual, { transformPerspective: 1400 });
+          const tiltX = gsap.quickTo(visual, "rotationX", {
+            duration: 0.7,
+            ease: "power3.out",
+          });
+          const tiltY = gsap.quickTo(visual, "rotationY", {
+            duration: 0.7,
+            ease: "power3.out",
+          });
+          const move = (event: PointerEvent) => {
+            const box = visual.getBoundingClientRect();
+            tiltX(((event.clientY - box.top) / box.height - 0.5) * -5);
+            tiltY(((event.clientX - box.left) / box.width - 0.5) * 7);
+          };
+          const leave = () => {
+            tiltX(0);
+            tiltY(0);
+          };
+          visual.addEventListener("pointermove", move);
+          visual.addEventListener("pointerleave", leave);
+          detach.push(() => {
+            visual.removeEventListener("pointermove", move);
+            visual.removeEventListener("pointerleave", leave);
+          });
+        }
+        return () => detach.forEach((off) => off());
+      },
+    );
   }, root);
 
   // Keyboard focus can reach an element before its reveal has run or finished: whatever holds
@@ -268,7 +359,8 @@ async function startMotion() {
     const target = event.target as HTMLElement | null;
     for (const trigger of ScrollTrigger.getAll()) {
       const element = trigger.trigger;
-      if (element && target && element.contains(target)) trigger.animation?.progress(1);
+      if (element && target && element.contains(target))
+        trigger.animation?.progress(1);
     }
   };
   root.addEventListener("focusin", onFocus);
@@ -296,10 +388,13 @@ async function startMotion() {
         </p>
         <h1 id="home-title" class="home__title">
           <span class="home__title-line">برامج جاهزة،</span>
-          <span class="home__title-line">وبرمجيات <span class="home__title-mark">على مقاسك.</span></span>
+          <span class="home__title-line"
+            >وبرمجيات <span class="home__title-mark">على مقاسك.</span></span
+          >
         </h1>
         <p class="home__lede">
-          نبيع برامج جاهزة بأسعار معلنة، ونصمّم ونبرمج المواقع والتطبيقات والأنظمة حسب طلبك.
+          نبيع برامج جاهزة بأسعار معلنة، ونصمّم ونبرمج المواقع والتطبيقات
+          والأنظمة حسب طلبك.
         </p>
         <div class="home__hero-actions">
           <ActionLink
@@ -310,26 +405,63 @@ async function startMotion() {
           />
           <ActionLink to="#ready" label="تصفح حلولنا الجاهزة" />
         </div>
+        <ul role="list" class="home__shortcuts" aria-label="برامجنا الجاهزة">
+          <li v-for="solution in solutions" :key="solution.slug">
+            <NuxtLink
+              class="home__shortcut"
+              :class="`home__shortcut--${productLook[solution.slug] ?? 'violet'}`"
+              :to="`/solutions/${solution.slug}`"
+            >
+              <span class="home__shortcut-name">{{ solution.nameAr }}</span>
+              <span class="home__shortcut-tagline">{{ solution.tagline }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
       </div>
 
-      <!-- Real screens of the products, layered; decorative here, described in the products below. -->
+      <!-- Real screens of the products; decorative here, described in the products below. -->
       <div class="home__stage" aria-hidden="true">
-        <div v-if="heroBack && heroBackShot" class="home__layer home__layer--back" data-depth="0.6">
-          <ProductWindow v-bind="heroBackShot" alt="" :title="heroBack.nameAr" eager />
+        <div
+          v-if="heroBack && heroBackShot"
+          class="home__layer home__layer--back"
+          data-depth="0.6"
+        >
+          <ProductWindow
+            v-bind="heroBackShot"
+            alt=""
+            :title="heroBack.nameAr"
+            eager
+          />
           <p class="home__tag home__tag--back">
-            {{ heroBack.nameAr }} <span dir="ltr">{{ price(heroBack.priceIqd) }}</span> دينار
+            {{ heroBack.nameAr }}
+            <span dir="ltr">{{ price(heroBack.priceIqd) }}</span> دينار
           </p>
         </div>
-        <div v-if="heroFront && heroFrontShot" class="home__layer home__layer--front" data-depth="1">
-          <ProductWindow v-bind="heroFrontShot" alt="" :title="heroFront.nameAr" eager />
+        <div
+          v-if="heroFront && heroFrontShot"
+          class="home__layer home__layer--front"
+          data-depth="1"
+        >
+          <ProductWindow
+            v-bind="heroFrontShot"
+            alt=""
+            :title="heroFront.nameAr"
+            eager
+          />
           <p class="home__tag home__tag--front">
-            {{ heroFront.nameAr }} <span dir="ltr">{{ price(heroFront.priceIqd) }}</span> دينار
+            {{ heroFront.nameAr }}
+            <span dir="ltr">{{ price(heroFront.priceIqd) }}</span> دينار
           </p>
         </div>
         <div class="home__layer home__layer--code" data-depth="1.5">
           <div class="home__code">
-            <div class="home__code-bar"><span class="home__code-file" dir="ltr">checkout.ts</span></div>
-            <pre class="home__code-body" dir="ltr"><code><span class="home__code-k">export async function</span> <span class="home__code-f">checkout</span>(cart) {
+            <div class="home__code-bar">
+              <span class="home__code-file" dir="ltr">checkout.ts</span>
+            </div>
+            <pre
+              class="home__code-body"
+              dir="ltr"
+            ><code><span class="home__code-k">export async function</span> <span class="home__code-f">checkout</span>(cart) {
   <span class="home__code-k">const</span> invoice = <span class="home__code-k">await</span> invoices.<span class="home__code-f">create</span>(cart)
   <span class="home__code-k">await</span> stock.<span class="home__code-f">move</span>(cart.items)
   <span class="home__code-k">return</span> <span class="home__code-f">print</span>(invoice)
@@ -361,12 +493,16 @@ async function startMotion() {
         :key="solution.slug"
         class="home__product"
         :class="`home__product--${productLook[solution.slug] ?? 'violet'}`"
-        :data-theme="productLook[solution.slug] === 'sand' ? 'light' : undefined"
+        :data-theme="
+          productLook[solution.slug] === 'sand' ? 'light' : undefined
+        "
         :aria-labelledby="`product-${solution.slug}`"
       >
         <div class="home__product-body">
           <p class="home__chip">
-            <span class="home__chip-text">يعمل على {{ solution.platform }}</span>
+            <span class="home__chip-text"
+              >يعمل على {{ solution.platform }}</span
+            >
           </p>
           <h3 :id="`product-${solution.slug}`" class="home__name">
             {{ solution.nameAr }}
@@ -375,10 +511,14 @@ async function startMotion() {
           <p class="home__tagline">{{ solution.tagline }}</p>
           <p class="home__desc">{{ solution.description }}</p>
           <ul role="list" class="home__features">
-            <li v-for="feature in solution.features.slice(0, 4)" :key="feature">{{ feature }}</li>
+            <li v-for="feature in solution.features.slice(0, 4)" :key="feature">
+              {{ feature }}
+            </li>
           </ul>
           <p class="home__price">
-            <span class="home__price-figure">{{ price(solution.priceIqd) }}</span>
+            <span class="home__price-figure">{{
+              price(solution.priceIqd)
+            }}</span>
             <span class="home__price-unit">دينار عراقي</span>
           </p>
           <div class="home__actions">
@@ -424,7 +564,9 @@ async function startMotion() {
             من تصميم الواجهة وبرمجتها إلى إدارة السيرفر الذي يشغّلها.
           </p>
           <p class="home__more">
-            <NuxtLink class="home__link" to="/services">تفاصيل الخدمات</NuxtLink>
+            <NuxtLink class="home__link" to="/services"
+              >تفاصيل الخدمات</NuxtLink
+            >
           </p>
         </div>
       </div>
@@ -444,16 +586,29 @@ async function startMotion() {
               <span class="home__mini-line home__mini-line--short" />
               <span class="home__mini-cards"><span /><span /><span /></span>
             </div>
-            <div v-else-if="serviceArt[index] === 'mobile'" class="home__mini-phone">
+            <div
+              v-else-if="serviceArt[index] === 'mobile'"
+              class="home__mini-phone"
+            >
               <span class="home__mini-notch" />
               <span v-for="row in 5" :key="row" class="home__mini-row" />
               <span class="home__mini-fab" />
             </div>
-            <div v-else-if="serviceArt[index] === 'ledger'" class="home__mini-ledger" dir="ltr">
-              <span v-for="row in 4" :key="row" class="home__mini-entry"><span /><span /></span>
+            <div
+              v-else-if="serviceArt[index] === 'ledger'"
+              class="home__mini-ledger"
+              dir="ltr"
+            >
+              <span v-for="row in 4" :key="row" class="home__mini-entry"
+                ><span /><span
+              /></span>
               <span class="home__mini-total"><span /><span /></span>
             </div>
-            <pre v-else-if="serviceArt[index] === 'server'" class="home__mini-terminal" dir="ltr"><span class="home__mini-ok">$</span> deploy --production
+            <pre
+              v-else-if="serviceArt[index] === 'server'"
+              class="home__mini-terminal"
+              dir="ltr"
+            ><span class="home__mini-ok">$</span> deploy --production
 <span class="home__mini-ok">✓</span> build      12.4s
 <span class="home__mini-ok">✓</span> migrate     0.8s
 <span class="home__mini-live">●</span> online</pre>
@@ -477,7 +632,9 @@ async function startMotion() {
       class="home__section home__company"
       aria-labelledby="company-title"
     >
-      <p class="home__backdrop" aria-hidden="true">{{ company.addressParts.city }}</p>
+      <p class="home__backdrop" aria-hidden="true">
+        {{ company.addressParts.city }}
+      </p>
       <div class="home__company-lead">
         <h2 id="company-title" class="home__heading">
           شركة ناشئة من {{ company.addressParts.city }}
@@ -559,12 +716,17 @@ async function startMotion() {
               >
             </li>
             <li>
-              <a class="home__link" :href="`mailto:${company.email}`" dir="ltr">{{
-                company.email
-              }}</a>
+              <a
+                class="home__link"
+                :href="`mailto:${company.email}`"
+                dir="ltr"
+                >{{ company.email }}</a
+              >
             </li>
             <li>
-              <NuxtLink class="home__link" to="/contact">كل طرق التواصل</NuxtLink>
+              <NuxtLink class="home__link" to="/contact"
+                >كل طرق التواصل</NuxtLink
+              >
             </li>
           </ul>
         </div>
@@ -671,7 +833,8 @@ $band-lean: 80em;
     display: grid;
     gap: var(--space-8);
     align-items: center;
-    padding: clamp(var(--space-7), 6vw, var(--space-9)) $edge clamp(var(--space-8), 7vw, var(--space-10));
+    padding: clamp(var(--space-6), 5vw, var(--space-8)) $edge
+      clamp(var(--space-7), 6vw, var(--space-9));
 
     // An engineering grid behind the screens, fading out toward the text.
     &::before {
@@ -680,17 +843,28 @@ $band-lean: 80em;
       inset: 0;
       z-index: -1;
       background-image:
-        linear-gradient(color-mix(in srgb, var(--border) 70%, transparent) 1px, transparent 1px),
-        linear-gradient(90deg, color-mix(in srgb, var(--border) 70%, transparent) 1px, transparent 1px);
+        linear-gradient(
+          color-mix(in srgb, var(--border) 60%, transparent) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--border) 60%, transparent) 1px,
+          transparent 1px
+        );
       background-size: 56px 56px;
-      mask-image: radial-gradient(ellipse 60% 70% at 25% 50%, black, transparent 75%);
+      mask-image: radial-gradient(
+        ellipse 55% 65% at 28% 50%,
+        black,
+        transparent 75%
+      );
       pointer-events: none;
     }
 
     @media (width >= $wide) {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-      gap: clamp(var(--space-6), 4vw, var(--space-9));
-      min-block-size: min(calc(100svh - var(--header-height)), 54rem);
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: clamp(var(--space-7), 5vw, var(--space-10));
+      min-block-size: min(calc(100svh - var(--header-height)), 50rem);
     }
   }
 
@@ -722,9 +896,14 @@ $band-lean: 80em;
 
   &__title {
     margin: 0;
-    font-size: clamp(2.25rem, 1.3rem + 3.4vw, 4.25rem);
-    line-height: 1.25;
+    font-size: clamp(2.125rem, 1.3rem + 2.9vw, 3.625rem);
+    line-height: 1.35;
     font-weight: 800;
+
+    // Wide: sized to its column, so the second line stays whole (it runs about 10em).
+    @media (width >= $wide) {
+      font-size: min(3.5rem, (100cqi - 2 * #{$edge}) * 0.046);
+    }
   }
 
   &__title-line {
@@ -742,9 +921,9 @@ $band-lean: 80em;
       content: "";
       position: absolute;
       inset-inline: 0.05em;
-      inset-block-end: 0.02em;
+      inset-block-end: 0.04em;
       z-index: -1;
-      block-size: 0.18em;
+      block-size: 0.14em;
       border-radius: var(--radius-pill);
       background-color: var(--accent);
       opacity: 0.85;
@@ -756,7 +935,7 @@ $band-lean: 80em;
     max-inline-size: 30rem;
     margin-block-start: var(--space-5);
     font-size: var(--text-lead);
-    line-height: 1.85;
+    line-height: 1.9;
     color: var(--text-muted);
   }
 
@@ -768,29 +947,178 @@ $band-lean: 80em;
     margin-block-start: var(--space-7);
   }
 
-  // The screens: positioned on a fixed-ratio stage, so the composition holds at every width.
-  &__stage {
-    position: relative;
-    aspect-ratio: 1.12;
-    margin-inline-end: calc(-0.35 * #{$edge});
+  // Straight to a product: its name and what it does, after a point in the product's colour.
+  &__shortcuts {
+    display: grid;
+    gap: var(--space-2) var(--space-6);
+    max-inline-size: 34rem;
+    margin-block-start: var(--space-7);
+    padding: var(--space-4) 0 0;
+    border-block-start: 1px solid var(--border);
+    list-style: none;
 
-    @media (width >= $wide) {
-      margin-inline-end: calc(-1 * #{$edge} + var(--space-4));
+    @media (width >= $medium) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
+  &__shortcut {
+    --shortcut-colour: var(--nuqta-accent);
+
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-3);
+    min-block-size: 44px;
+    padding-block: var(--space-2);
+    text-decoration: none;
+    color: var(--text);
+
+    &--sand {
+      --shortcut-colour: var(--dalaly-accent);
+    }
+
+    &::before {
+      content: "";
+      grid-row: 1 / 3;
+      inline-size: var(--point-md);
+      block-size: var(--point-md);
+      border-radius: 50%;
+      background-color: var(--shortcut-colour);
+    }
+
+    // Forward is to the left in RTL.
+    &::after {
+      content: "←";
+      grid-column: 3;
+      grid-row: 1 / 3;
+      color: var(--text-muted);
+      transition:
+        translate var(--duration-base) var(--ease-out),
+        color var(--duration-fast) var(--ease-out);
+    }
+
+    @media (hover: hover) {
+      &:hover::after {
+        color: var(--text);
+        translate: -0.3rem 0;
+      }
+
+      &:hover .home__shortcut-name {
+        text-decoration: underline;
+        text-decoration-color: var(--shortcut-colour);
+        text-underline-offset: 0.3em;
+      }
+    }
+  }
+
+  &__shortcut-name {
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  &__shortcut-tagline {
+    grid-column: 2;
+    font-size: var(--text-small);
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  // The screens on a fixed-ratio stage, lit in each product's colour. Wide screens turn the scene
+  // toward the text; phones get flat, focused crops so the screens stay legible.
+  &__stage {
+    position: relative;
+    aspect-ratio: 1.02;
+    margin-inline-end: calc(-0.5 * #{$edge});
+
+    @media (width >= $medium) {
+      aspect-ratio: 1.2;
+    }
+
+    @media (width >= $wide) {
+      aspect-ratio: 1.08;
+      margin-inline-end: calc(-1 * #{$edge} + var(--space-5));
+      perspective: 2400px;
+    }
+
+    // A soft shadow on the floor under the screens.
+    &::after {
+      content: "";
+      position: absolute;
+      inset-inline: 10%;
+      inset-block-end: -5%;
+      z-index: -1;
+      block-size: 12%;
+      border-radius: 50%;
+      background: radial-gradient(
+        closest-side,
+        color-mix(in srgb, black 70%, transparent),
+        transparent
+      );
+      filter: blur(12px);
+    }
+  }
+
+  &__stage-light {
+    position: absolute;
+    inset: -14% -10%;
+    z-index: -1;
+    background:
+      radial-gradient(
+        closest-side at 42% 32%,
+        color-mix(in srgb, var(--nuqta-accent) 32%, transparent),
+        transparent
+      ),
+      radial-gradient(
+        closest-side at 62% 80%,
+        color-mix(in srgb, var(--dalaly-accent) 22%, transparent),
+        transparent
+      );
+    pointer-events: none;
+  }
+
+  &__stage-scene {
+    position: absolute;
+    inset: 0;
+
+    @media (width >= $wide) {
+      transform-style: preserve-3d;
+      transform: rotateY(-9deg) rotateX(4deg);
+    }
+  }
+
+  // Phones: the back screen full width, cropped to its menu and headings; the front screen over its
+  // lower corner, cropped the same way. From $medium both show whole.
   &__layer {
     position: absolute;
 
     &--back {
+      --window-ratio: 1.45;
+      --window-zoom: 1.6;
+
       inset-block-start: 0;
       inset-inline-end: 0;
-      inline-size: 88%;
+      inline-size: 100%;
+
+      @media (width >= $medium) {
+        --window-ratio: auto;
+        --window-zoom: 1;
+
+        inset-block-start: 3%;
+        inline-size: 86%;
+      }
+
+      @media (width >= $wide) {
+        translate: 0 0 -40px;
+      }
     }
 
     &--front {
+      --window-ratio: 1.15;
+      --window-zoom: 1.8;
+
       z-index: 1;
-      inset-block-end: 9%;
+      inset-block-end: 0;
       inset-inline-start: 0;
       inline-size: 66%;
     }
@@ -815,24 +1143,26 @@ $band-lean: 80em;
     display: inline-flex;
     gap: 0.3em;
     margin: 0;
-    padding: var(--space-1) var(--space-3);
+    padding: 0.15rem var(--space-3);
     border-radius: var(--radius-sm);
-    font-size: clamp(0.6875rem, 0.6rem + 0.3vw, 0.875rem);
+    font-size: clamp(0.6875rem, 0.62rem + 0.25vw, 0.8125rem);
     font-weight: 700;
     line-height: 1.7;
     white-space: nowrap;
+    box-shadow: 0 0.5rem 1rem -0.25rem
+      color-mix(in srgb, black 45%, transparent);
     transform: $lean;
 
     &--back {
-      inset-block-start: -0.9rem;
-      inset-inline-end: 14%;
+      inset-block-start: -0.85rem;
+      inset-inline-end: 12%;
       background-color: var(--nuqta-accent);
       color: var(--white);
     }
 
     &--front {
-      inset-block-end: -0.9rem;
-      inset-inline-start: 10%;
+      inset-block-end: -0.85rem;
+      inset-inline-start: 8%;
       background-color: var(--dalaly-ground);
       color: var(--dalaly-ink);
     }
@@ -906,7 +1236,11 @@ $band-lean: 80em;
     &--violet {
       border: 1px solid var(--border);
       background:
-        radial-gradient(ellipse 70% 80% at 15% 50%, color-mix(in srgb, var(--nuqta-accent) 26%, transparent), transparent 70%),
+        radial-gradient(
+          ellipse 70% 80% at 15% 50%,
+          color-mix(in srgb, var(--nuqta-accent) 26%, transparent),
+          transparent 70%
+        ),
         var(--surface);
     }
 
@@ -1037,12 +1371,17 @@ $band-lean: 80em;
     padding-block-end: 12%;
 
     @media (width >= $wide) {
-      margin-inline-end: calc(-1 * clamp(var(--space-6), 5vw, var(--space-9)) - var(--space-6));
+      margin-inline-end: calc(
+        -1 * clamp(var(--space-6), 5vw, var(--space-9)) - var(--space-6)
+      );
     }
 
     .home__product--sand & {
       @media (width >= $wide) {
-        margin-inline: calc(-1 * clamp(var(--space-6), 5vw, var(--space-9)) - var(--space-6)) 0;
+        margin-inline: calc(
+            -1 * clamp(var(--space-6), 5vw, var(--space-9)) - var(--space-6)
+          )
+          0;
       }
     }
   }
@@ -1099,7 +1438,11 @@ $band-lean: 80em;
 
     &--custom {
       background:
-        linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 55%),
+        linear-gradient(
+          135deg,
+          color-mix(in srgb, var(--accent) 10%, transparent),
+          transparent 55%
+        ),
         var(--surface);
     }
 
@@ -1149,7 +1492,11 @@ $band-lean: 80em;
     margin-block-end: var(--space-6);
     border-radius: var(--radius-lg);
     background-color: var(--bg);
-    background-image: radial-gradient(circle, var(--border) 1px, transparent 1.4px);
+    background-image: radial-gradient(
+      circle,
+      var(--border) 1px,
+      transparent 1.4px
+    );
     background-size: 16px 16px;
 
     .home__tile--mobile & {
@@ -1686,19 +2033,25 @@ $band-lean: 80em;
   }
 
   .home__layer {
-    animation: home-settle 1.1s var(--ease-out) both;
+    animation: home-settle 1.2s var(--ease-out) both;
 
     &--back {
-      animation-delay: 0.1s;
+      animation-delay: 0.12s;
     }
 
     &--front {
-      animation-delay: 0.25s;
+      animation-delay: 0.3s;
     }
+  }
 
-    &--code {
-      animation-delay: 0.4s;
-    }
+  .home__stage-light {
+    animation: home-light 1.6s var(--ease-out) both;
+  }
+}
+
+@keyframes home-light {
+  from {
+    opacity: 0;
   }
 }
 
