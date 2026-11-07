@@ -218,6 +218,8 @@ onBeforeUnmount(() => {
           </dl>
         </address>
       </div>
+      <!-- The company name once more, in outline type as large as the window allows. -->
+      <p class="layout__footer-word" aria-hidden="true">كودل</p>
     </footer>
   </div>
 </template>
@@ -277,6 +279,12 @@ $footer-three: 64em;
     position: relative;
     z-index: 20;
     background-color: var(--bg);
+
+    // Frosted where the browser can blur what scrolls under it.
+    @supports (backdrop-filter: blur(1px)) {
+      background-color: color-mix(in srgb, var(--bg) 80%, transparent);
+      backdrop-filter: blur(14px) saturate(1.3);
+    }
 
     .js & {
       position: sticky;
@@ -673,9 +681,35 @@ $footer-three: 64em;
   // ---------------------------------------------------------------------------
 
   &__footer {
+    overflow: hidden;
     border-block-start: 1px solid var(--border);
     font-size: 0.9375rem;
     color: var(--text-muted);
+  }
+
+  // Cut off at the bottom of the page, over a faint dot field; it rises as the footer arrives.
+  &__footer-word {
+    position: relative;
+    margin: 0 0 -0.32em;
+    padding-inline: var(--page-gutter);
+    font-family: var(--font-display);
+    font-size: clamp(6rem, 2rem + 24vw, 22rem);
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--border-strong);
+    background-image: radial-gradient(circle, var(--border) 1.2px, transparent 1.6px);
+    background-size: 20px 20px;
+    user-select: none;
+
+    @media (prefers-reduced-motion: no-preference) {
+      @supports (animation-timeline: view()) {
+        animation: layout-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 100%;
+      }
+    }
   }
 
   // Identity, links, contact: stacked, then identity across the top of two columns, then three.
@@ -818,6 +852,13 @@ $footer-three: 64em;
 @keyframes layout-rule {
   from {
     opacity: 0;
+  }
+}
+
+@keyframes layout-rise {
+  from {
+    opacity: 0;
+    translate: 0 30%;
   }
 }
 </style>
