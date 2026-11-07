@@ -63,8 +63,9 @@ Notes:
 
 ## Brand assets
 
-- Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on. The page gutter and the motion tokens (durations, easing, stagger) are site-level additions in the same file.
-- Motion is CSS only: one load sequence on the home hero and two bars that draw as they scroll into view. All of it is off under `prefers-reduced-motion: reduce`.
+- Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on. The page gutter, the motion tokens (durations, easing, stagger), the type scale, the point sizes, the stroke and the lime glow are site-level additions in the same file.
+- Two motifs: buttons, tags and decorative bars lean (the brand slant), and a small lime point marks what is live now (current page, opening hours status, the launch year). Lime is kept for those two jobs.
+- Motion is CSS only: one load sequence on the home hero (headline, then the call bar wiping in from the window edge), and scroll-linked effects on the home page (product plates rising in, the service titles lighting up in turn, the founding-years bar drawing) plus the header's bottom rule fading in. All of it is off under `prefers-reduced-motion: reduce`, and anything that takes keyboard focus is shown in its end state.
 - Fonts are self-hosted in `public/fonts/`: Rubik (display and headings) and Readex Pro (body and UI), as subset variable woff2 files for Arabic and Latin. Both are licensed under the SIL Open Font License; the license texts are beside the files.
 - Logo files are in `public/brand/` (full logo and symbol, each in white, ink and lime). The favicon is `public/favicon.svg`: the symbol, ink on light browser themes and lime on dark ones.
 - `public/brand/og.png` (1200×630) is the share image: the white logo on the dark `--bg`, rendered from `codel-full-white.svg`.
@@ -177,7 +178,7 @@ images: [
 
 - **اسم النطاق (الدومين)**: مطلوب للخطوة 7 أعلاه.
 - **طريقة تسعير البرنامجين**: هل السعر دفعة واحدة، أم لكل جهاز، أم اشتراك؟ وماذا يحصل العميل مقابل السعر؟ الموقع الآن يعرض المبلغ فقط.
-- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وعنوان الصفحة الرئيسية والجملتان تحت عنواني "حلولنا الجاهزة" و"خدماتنا" فيها.
+- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وفي الصفحة الرئيسية: العنوان الرئيسي والسطر الصغير فوقه والجملة تحته، والجملتان تحت عنواني "حلولنا الجاهزة" و"خدماتنا"، ونصوص أزرار التواصل، ورسالة واتساب الجاهزة التي يفتحها زر "اسأل عنه على واتساب"، وعبارتا حالة الدوام ("في الدوام الآن" و"خارج ساعات الدوام الآن").
 - **الفريق والرؤية والوظائف والمقالات**: لا يوجد نص لها بعد.
 - **سياسة الخصوصية والشروط والأحكام**: يكتبها صاحب الشركة أو يوافق عليها (ومحامٍ إذا صار الموقع يجمع بيانات). الصفحتان الآن مؤقتتان ومخفيتان عن محركات البحث.
 - **صور البرنامجين وأي فيديو**: لم تُرفع أي صورة أو فيديو بعد. طريقة الإضافة في الخطوة 4.

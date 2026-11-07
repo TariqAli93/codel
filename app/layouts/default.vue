@@ -179,16 +179,28 @@ onBeforeUnmount(() => {
           <p class="layout__footer-about">شركة برمجيات عراقية في {{ company.addressParts.city }}.</p>
         </div>
 
+        <nav class="layout__footer-nav" aria-label="روابط الموقع">
+          <ul class="layout__footer-links">
+            <li v-for="link in links" :key="link.to">
+              <NuxtLink class="layout__footer-link" :to="link.to">{{ link.label }}</NuxtLink>
+            </li>
+          </ul>
+        </nav>
+
         <address class="layout__contact">
           <dl class="layout__contact-list">
             <div class="layout__contact-row">
               <dt>{{ company.phones.main.label }}</dt>
-              <dd><a :href="company.phones.main.tel" dir="ltr">{{ company.phones.main.display }}</a></dd>
+              <dd>
+                <a :href="company.phones.main.tel" dir="ltr">{{ company.phones.main.display }}</a>
+                <!-- The hidden number keeps this link's name apart from other "واتساب" links. -->
+                <a :href="company.phones.main.whatsapp" target="_blank" rel="noopener noreferrer">واتساب <span class="layout__hidden" dir="ltr">{{ company.phones.main.display }}</span> <span class="layout__hidden">(يفتح في نافذة جديدة)</span></a>
+              </dd>
             </div>
             <div class="layout__contact-row">
               <dt>{{ company.phones.secondary.label }}</dt>
               <dd>
-                <a :href="company.phones.secondary.whatsapp" target="_blank" rel="noopener noreferrer" dir="ltr">{{ company.phones.secondary.display }}</a>
+                <a :href="company.phones.secondary.whatsapp" target="_blank" rel="noopener noreferrer" dir="ltr">{{ company.phones.secondary.display }} <span class="layout__hidden" dir="rtl">(يفتح في نافذة جديدة)</span></a>
               </dd>
             </div>
             <div class="layout__contact-row">
@@ -218,6 +230,9 @@ $nav-wide: 60em;
 // The brand lean, and the counter-slant that turns a label back upright.
 $lean: skewX(calc(var(--slant-angle) * -1));
 $upright: skewX(var(--slant-angle));
+// Footer: stacked below the first, two columns between, three from the second.
+$footer-two: 48em;
+$footer-three: 64em;
 
 .layout {
   display: flex;
@@ -255,12 +270,43 @@ $upright: skewX(var(--slant-angle));
   // Header
   // ---------------------------------------------------------------------------
 
+  // Sticky only while it stays one bar high: with JavaScript (the links fold into the menu) or on
+  // wide screens. Without JavaScript on a small screen the links wrap into a tall header that would
+  // cover whatever has focus.
   &__header {
-    position: sticky;
-    inset-block-start: 0;
+    position: relative;
     z-index: 20;
-    border-block-end: 1px solid var(--border);
     background-color: var(--bg);
+
+    .js & {
+      position: sticky;
+      inset-block-start: 0;
+    }
+
+    @media (width >= $nav-wide) {
+      position: sticky;
+      inset-block-start: 0;
+    }
+
+    // The bottom rule. Shown by default; where scroll timelines exist it fades in over the
+    // first few rem of scroll, so the header sits flush with the page at the top.
+    &::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      inset-block-end: 0;
+      block-size: 1px;
+      background-color: var(--border);
+      pointer-events: none;
+
+      @media (prefers-reduced-motion: no-preference) {
+        @supports (animation-timeline: scroll()) {
+          animation: layout-rule linear both;
+          animation-timeline: scroll(root);
+          animation-range: 0 6rem;
+        }
+      }
+    }
   }
 
   // Same width and gutters as the page content, so logo and links line up with it.
@@ -291,18 +337,15 @@ $upright: skewX(var(--slant-angle));
     display: none;
   }
 
+  // Wide enough apart that each link's point sits clearly with its own label.
   &__menu {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0 var(--space-5);
+    gap: 0 var(--space-6);
     margin: 0;
     padding: 0;
     list-style: none;
-  }
-
-  &__menu-item--cta {
-    margin-inline-start: var(--space-2);
   }
 
   &__link {
@@ -317,19 +360,22 @@ $upright: skewX(var(--slant-angle));
     text-decoration: none;
     transition: color var(--duration-fast) var(--ease-out);
 
-    // Leaning bar under the link: grows from the start on hover, stays full and lime on the current page.
-    &::after {
+    // A point before the label, outside it so the label never moves: grey on hover, lime on
+    // the current page (live now). Nudged down onto the Arabic letter bodies.
+    &::before {
       content: '';
       position: absolute;
-      inset-inline: 0;
-      inset-block-end: var(--space-1);
-      block-size: 3px;
-      border-radius: var(--radius-pill);
+      inset-block: 0;
+      inset-inline-start: calc(-1 * (var(--point-sm) + var(--space-2)));
+      inline-size: var(--point-sm);
+      block-size: var(--point-sm);
+      margin-block: auto;
+      border-radius: 50%;
       background-color: var(--border-strong);
-      transform: $lean scaleX(0);
-      transform-origin: right center; // inline start in RTL
+      scale: 0;
+      translate: 0 0.08em;
       transition:
-        transform var(--duration-base) var(--ease-out),
+        scale var(--duration-base) var(--ease-out),
         background-color var(--duration-fast) var(--ease-out);
     }
 
@@ -338,8 +384,8 @@ $upright: skewX(var(--slant-angle));
       &:hover {
         color: var(--text);
 
-        &::after {
-          transform: $lean scaleX(1);
+        &::before {
+          scale: 1;
         }
       }
     }
@@ -354,51 +400,78 @@ $upright: skewX(var(--slant-angle));
       font-weight: 600;
       color: var(--text);
 
-      &::after {
-        background-color: var(--accent-text);
-        transform: $lean scaleX(1);
+      &::before {
+        background-color: var(--accent);
+        scale: 1;
       }
     }
   }
 
-  // "تواصل معنا": an outlined leaning button; the label inside is turned back upright.
+  // "تواصل معنا": the leaning button, lime with a neon glow so it is the first thing the eye finds.
+  // The label inside is turned back upright. On its own page a dark point marks it current.
   &__link--cta {
     padding-inline: var(--space-5);
-    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
-    color: var(--text);
+    background-color: var(--primary);
+    color: var(--on-primary);
     font-weight: 600;
     transform: $lean;
     transition:
-      border-color var(--duration-fast) var(--ease-out),
       background-color var(--duration-fast) var(--ease-out),
-      color var(--duration-fast) var(--ease-out),
       scale var(--duration-fast) var(--ease-out);
 
-    &::after {
+    // The nav point is not drawn on the button.
+    &::before {
       content: none;
     }
 
+    // Neon glow on its own layer, so hover only has to raise its opacity. It leans with the button.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: var(--glow-accent);
+      opacity: 0.65;
+      pointer-events: none;
+      transition: opacity var(--duration-base) var(--ease-out);
+    }
+
     .layout__link-label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
       transform: $upright;
     }
 
     @media (hover: hover) {
       &:hover {
-        border-color: var(--accent);
-        color: var(--text);
+        background-color: var(--primary-hover);
+        color: var(--on-primary);
+
+        &::after {
+          opacity: 1;
+        }
       }
     }
 
     &:active {
-      background-color: var(--surface-raised);
+      background-color: var(--primary-active);
       scale: 0.96;
     }
 
     &[aria-current='page'] {
-      border-color: var(--accent);
-      background-color: var(--accent);
-      color: var(--on-accent);
+      color: var(--on-primary);
+
+      .layout__link-label::before {
+        content: '';
+        flex: none;
+        inline-size: var(--point-sm);
+        block-size: var(--point-sm);
+        border-radius: 50%;
+        background-color: currentColor;
+        translate: 0 0.08em;
+      }
     }
 
     &:focus-visible {
@@ -409,11 +482,12 @@ $upright: skewX(var(--slant-angle));
   // Small screens, with JavaScript: the links fold into a panel under the header.
   // Without JavaScript (no .js class) they stay a wrapping list and the button stays hidden.
   @media (width < $nav-wide) {
+    // An outlined leaning button; icon and label inside are turned back upright.
     .js &__menu-button {
       display: inline-flex;
       align-items: center;
       min-block-size: $touch-target;
-      padding-inline: var(--space-4);
+      padding-inline: var(--space-4) var(--space-5);
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-sm);
       background-color: transparent;
@@ -427,18 +501,18 @@ $upright: skewX(var(--slant-angle));
         scale var(--duration-fast) var(--ease-out);
 
       &[aria-expanded='true'] {
-        border-color: var(--accent);
+        border-color: var(--text);
       }
 
       @media (hover: hover) {
         &:hover {
-          border-color: var(--accent);
+          border-color: var(--text);
         }
       }
 
       &:active {
         background-color: var(--surface-raised);
-        scale: 0.96;
+        scale: 0.97;
       }
     }
 
@@ -449,7 +523,9 @@ $upright: skewX(var(--slant-angle));
       transform: $upright;
     }
 
-    // Two leaning bars of different length that cross into an X while the menu is open.
+    // Two bars, full and 65%, that cross into an X while the menu is open (transform only).
+    // Both bars span the icon; the short one is scaled down and shifted 17.5% to the right,
+    // the inline start in RTL, so the two share that edge.
     &__menu-icon {
       position: relative;
       inline-size: 1.125rem;
@@ -459,34 +535,31 @@ $upright: skewX(var(--slant-angle));
       &::after {
         content: '';
         position: absolute;
-        inset-inline-start: 0;
-        block-size: 2px;
+        inset-inline: 0;
+        block-size: var(--stroke);
         border-radius: var(--radius-pill);
         background-color: currentColor;
-        transition: transform var(--duration-base) var(--ease-out), inline-size var(--duration-base) var(--ease-out);
+        transition: transform var(--duration-base) var(--ease-out);
       }
 
       &::before {
         inset-block-start: 0;
-        inline-size: 100%;
-        transform: $lean;
+        transform: translate(0, 0) rotate(0deg);
       }
 
       &::after {
         inset-block-end: 0;
-        inline-size: 65%;
-        transform: $lean;
+        transform: translate(17.5%, 0) rotate(0deg) scaleX(0.65);
       }
     }
 
     [aria-expanded='true'] &__menu-icon {
       &::before {
-        transform: translateY(5px) rotate(45deg);
+        transform: translate(0, 5px) rotate(45deg);
       }
 
       &::after {
-        inline-size: 100%;
-        transform: translateY(-5px) rotate(-45deg);
+        transform: translate(0, -5px) rotate(-45deg) scaleX(1);
       }
     }
 
@@ -539,33 +612,33 @@ $upright: skewX(var(--slant-angle));
       transform: none;
     }
 
+    // The panel scrolls, so it clips what spills out of it: this padding keeps the CTA's glow
+    // inside it (the glow fades out within about 2.5rem).
     .js &__menu-item--cta {
       margin-block-start: var(--space-4);
-      margin-inline-start: 0;
+      padding-inline: var(--space-5);
+      padding-block-end: var(--space-2);
     }
 
+    // In the panel the point stands in the row before the label, so every label starts on one line.
     .js &__link {
+      gap: var(--space-3);
       inline-size: 100%;
       min-block-size: 3.5rem;
-      padding-inline-start: var(--space-5);
       font-family: var(--font-display);
       font-size: 1.375rem;
       font-weight: 600;
 
-      // In the panel the indicator is a short upright-height bar at the start of the row.
-      &::after {
-        inset-inline: 0 auto;
-        inset-block: 0;
-        inline-size: 0.375rem;
-        block-size: 1.375rem;
-        margin-block: auto;
+      &::before {
+        position: static;
+        flex: none;
       }
     }
 
     .js &__link--cta {
       justify-content: center;
+      gap: var(--space-2);
       min-block-size: var(--control-lg);
-      padding-inline-start: var(--space-5);
       font-family: var(--font-sans);
       font-size: 1rem;
     }
@@ -605,13 +678,21 @@ $upright: skewX(var(--slant-angle));
     color: var(--text-muted);
   }
 
+  // Identity, links, contact: stacked, then identity across the top of two columns, then three.
   &__footer-inner {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
     gap: var(--space-7) var(--space-8);
     max-inline-size: var(--container-max);
     margin-inline: auto;
     padding: clamp(var(--space-7), 7vw, var(--space-9)) var(--page-gutter) var(--space-7);
+
+    @media (width >= $footer-two) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (width >= $footer-three) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr);
+    }
   }
 
   &__identity {
@@ -619,6 +700,14 @@ $upright: skewX(var(--slant-angle));
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
+
+    @media (width >= $footer-two) {
+      grid-column: 1 / -1;
+    }
+
+    @media (width >= $footer-three) {
+      grid-column: auto;
+    }
   }
 
   &__footer-logo {
@@ -637,6 +726,33 @@ $upright: skewX(var(--slant-angle));
 
   &__footer-about {
     margin: 0;
+  }
+
+  // A plain list: no points and never lime; the footer only repeats the way around.
+  &__footer-links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: $touch-target;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
+
+    @media (hover: hover) {
+      &:hover {
+        color: var(--text);
+      }
+    }
+
+    &[aria-current='page'] {
+      font-weight: 600;
+      color: var(--text);
+    }
   }
 
   &__contact {
@@ -658,31 +774,50 @@ $upright: skewX(var(--slant-angle));
       flex: 0 0 8.5rem;
     }
 
+    // Flex, so a row with two links (number and WhatsApp) keeps them apart.
     dd {
+      display: flex;
       flex: 1 1 14rem;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 var(--space-5);
       min-inline-size: 0;
       margin: 0;
       color: var(--text);
       overflow-wrap: anywhere;
     }
 
-    // Standalone links: 44px touch target (WCAG 2.5.5).
+    // Standalone links: 44px touch target (WCAG 2.5.5). Hover stays in the footer's greys.
     a {
       display: inline-flex;
       align-items: center;
       min-block-size: $touch-target;
       font-weight: 500;
       color: var(--text);
-      text-decoration-color: var(--border-strong);
-      transition: text-decoration-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+      transition: text-decoration-color var(--duration-fast) var(--ease-out);
 
       @media (hover: hover) {
         &:hover {
-          color: var(--accent-text);
-          text-decoration-color: currentColor;
+          text-decoration-color: var(--text);
         }
       }
     }
+  }
+
+  // Read by screen readers only.
+  &__hidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@keyframes layout-rule {
+  from {
+    opacity: 0;
   }
 }
 </style>

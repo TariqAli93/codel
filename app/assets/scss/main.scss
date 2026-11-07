@@ -15,16 +15,16 @@
 // -----------------------------------------------------------------------------
 
 @font-face {
-  font-family: 'Rubik';
-  src: url('/fonts/Rubik-Variable.woff2') format('woff2');
+  font-family: "Rubik";
+  src: url("/fonts/Rubik-Variable.woff2") format("woff2");
   font-weight: 600 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Readex Pro';
-  src: url('/fonts/ReadexPro-Variable.woff2') format('woff2');
+  font-family: "Readex Pro";
+  src: url("/fonts/ReadexPro-Variable.woff2") format("woff2");
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -36,7 +36,7 @@
 
 // Color and shadow: dark
 :root,
-[data-theme='dark'] {
+[data-theme="dark"] {
   color-scheme: dark;
   --charcoal-950: #0b0e0c;
   --charcoal-900: #101411;
@@ -75,12 +75,12 @@
   --danger: #ff7b7b;
   --info: #6cb0ff;
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
-  --shadow-md: 0 8px 24px rgba(0,0,0,0.45);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 // Color and shadow: light
-[data-theme='light'] {
+[data-theme="light"] {
   color-scheme: light;
   --bg: var(--charcoal-50);
   --surface: var(--white);
@@ -103,8 +103,8 @@
   --danger: #c0262d;
   --info: #1d5fd1;
 
-  --shadow-sm: 0 1px 2px rgba(16,20,17,0.12);
-  --shadow-md: 0 8px 24px rgba(16,20,17,0.12);
+  --shadow-sm: 0 1px 2px rgba(16, 20, 17, 0.12);
+  --shadow-md: 0 8px 24px rgba(16, 20, 17, 0.12);
 }
 
 // Spacing, radius, size, slant and font families (same in every theme)
@@ -134,9 +134,9 @@
 
   --slant-angle: 10deg;
 
-  --font-display: 'Rubik', 'Readex Pro', system-ui, sans-serif;
-  --font-sans: 'Readex Pro', 'Rubik', system-ui, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-display: "Rubik", "Readex Pro", system-ui, sans-serif;
+  --font-sans: "Readex Pro", "Rubik", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 // Page gutter and motion: site-level tokens, not in tokens.json v1 yet.
@@ -144,13 +144,45 @@
 :root {
   --page-gutter: clamp(var(--space-4), 5vw, var(--space-6));
 
-  --duration-fast: 120ms;      // feedback: hover, press, colour
-  --duration-base: 220ms;      // UI transitions: menu, indicators
-  --duration-slow: 480ms;      // larger moves and fades
-  --duration-entrance: 800ms;  // the page-load sequence (home hero only)
-  --stagger: 80ms;             // step between items of one sequence
+  --duration-fast: 120ms; // feedback: hover, press, colour
+  --duration-base: 220ms; // UI transitions: menu, indicators
+  --duration-slow: 480ms; // larger moves and fades
+  --duration-entrance: 800ms; // the page-load sequence (home hero only)
+  --stagger: 80ms; // step between items of one sequence
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+// Type scale, points, strokes and glow: site-level tokens, not in tokens.json v1 yet.
+// Roles: what you act on, tags and decorative bars lean (--slant-angle); a lime point marks
+// what is live now, and sits small inside outline buttons. Lime fills only the hero call bar, the
+// home contact band and the header button, and only they glow (--glow-accent, on its own layer).
+:root {
+  --text-hero: clamp(2.25rem, 1.2rem + 5vw, 6rem); // the home h1
+  --text-title: clamp(2rem, 1.35rem + 2.6vw, 3.75rem); // section headings
+  --text-name: clamp(1.75rem, 1.35rem + 1.6vw, 2.75rem); // product names
+  --text-figure: clamp(
+    1.875rem,
+    1.4rem + 2.4vw,
+    3.5rem
+  ); // prices and years; always below --text-title
+  --text-flow: clamp(
+    1.5rem,
+    1.1rem + 1.8vw,
+    2.625rem
+  ); // running display lines: services, statements
+  --text-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.3125rem); // ledes
+  --text-small: 0.875rem;
+
+  --point-sm: 0.375rem; // every point except the year nodes
+  --point-md: 0.75rem; // the year nodes
+  --stroke: 2px; // menu bars and the call bar's divider
+
+  --glow-accent:
+    0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 0 1rem color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 2.5rem color-mix(in srgb, var(--accent) 35%, transparent),
+    0 0 4rem color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 // -----------------------------------------------------------------------------
@@ -240,21 +272,49 @@ h6 {
   margin-block-end: var(--space-3);
 }
 
-h1 { font-size: 3rem;      line-height: 1.25; font-weight: 800; } // display-lg
-h2 { font-size: 2.25rem;   line-height: 1.3;  font-weight: 700; } // heading-xl
-h3 { font-size: 1.75rem;   line-height: 1.4;  font-weight: 700; } // heading-lg
-h4 { font-size: 1.375rem;  line-height: 1.45; font-weight: 600; } // heading-md
+h1 {
+  font-size: 3rem;
+  line-height: 1.25;
+  font-weight: 800;
+} // display-lg
+h2 {
+  font-size: 2.25rem;
+  line-height: 1.3;
+  font-weight: 700;
+} // heading-xl
+h3 {
+  font-size: 1.75rem;
+  line-height: 1.4;
+  font-weight: 700;
+} // heading-lg
+h4 {
+  font-size: 1.375rem;
+  line-height: 1.45;
+  font-weight: 600;
+} // heading-md
 h5,
-h6 { font-size: 1.125rem;  line-height: 1.5;  font-weight: 600; } // heading-sm
+h6 {
+  font-size: 1.125rem;
+  line-height: 1.5;
+  font-weight: 600;
+} // heading-sm
 
 p + p {
   margin-block-start: var(--space-3);
 }
 
+// Links read as text with a quiet underline; the underline turns lime on hover (lime = act).
 a {
-  color: var(--accent-text);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.25em;
+  color: var(--text);
+  text-decoration-color: var(--border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
+
+@media (hover: hover) {
+  a:hover {
+    text-decoration-color: var(--accent);
+  }
 }
 
 :focus-visible {
