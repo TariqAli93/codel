@@ -1,0 +1,249 @@
+// =============================================================================
+// Codel - كودل | Global stylesheet
+// Contains ONLY: (1) font faces  (2) design tokens as CSS custom properties
+// (3) a basic reset and base element styles.
+//
+// Token names and values mirror the Codel design system (tokens.json v1).
+// Change a value in the design system first, then here.
+// Dark is the default theme (<html data-theme="dark"> in nuxt.config.ts). The
+// light theme is declared for later and is not switched on anywhere yet.
+// Consume tokens in components with var(--token).
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 1. Font faces (self-hosted in public/fonts, subset to Arabic + Latin)
+// -----------------------------------------------------------------------------
+
+@font-face {
+  font-family: 'Rubik';
+  src: url('/fonts/Rubik-Variable.woff2') format('woff2');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Readex Pro';
+  src: url('/fonts/ReadexPro-Variable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+// -----------------------------------------------------------------------------
+// 2. Design tokens
+// -----------------------------------------------------------------------------
+
+// Color and shadow: dark
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --charcoal-950: #0b0e0c;
+  --charcoal-900: #101411;
+  --charcoal-800: #171c19;
+  --charcoal-700: #202722;
+  --charcoal-600: #2d3631;
+  --charcoal-500: #46524b;
+  --charcoal-400: #6b786f;
+  --charcoal-300: #98a39c;
+  --charcoal-200: #c5cdc8;
+  --charcoal-50: #f3f6f4;
+  --white: #ffffff;
+  --lime-400: #d4fa4a;
+  --lime-500: #c4f527;
+  --lime-600: #a6d312;
+  --lime-800: #5c7a06;
+
+  --bg: var(--charcoal-900);
+  --surface: var(--charcoal-800);
+  --surface-raised: var(--charcoal-700);
+  --text: var(--charcoal-50);
+  --text-muted: var(--charcoal-300);
+  --accent: var(--lime-500);
+  --accent-text: var(--lime-500);
+  --accent-subtle: #2c361b;
+  --on-accent: var(--charcoal-950);
+  --primary: var(--lime-500);
+  --primary-hover: var(--lime-400);
+  --primary-active: var(--lime-600);
+  --on-primary: var(--charcoal-950);
+  --border: var(--charcoal-600);
+  --border-strong: var(--charcoal-400);
+  --focus: var(--lime-500);
+  --success: #34d3a0;
+  --warning: #ffb224;
+  --danger: #ff7b7b;
+  --info: #6cb0ff;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.45);
+}
+
+// Color and shadow: light
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: var(--charcoal-50);
+  --surface: var(--white);
+  --surface-raised: var(--white);
+  --text: var(--charcoal-900);
+  --text-muted: var(--charcoal-500);
+  --accent: var(--lime-500);
+  --accent-text: var(--lime-800);
+  --accent-subtle: #f1fdcb;
+  --on-accent: var(--charcoal-950);
+  --primary: var(--charcoal-900);
+  --primary-hover: var(--charcoal-700);
+  --primary-active: var(--charcoal-600);
+  --on-primary: var(--lime-500);
+  --border: var(--charcoal-200);
+  --border-strong: var(--charcoal-400);
+  --focus: var(--charcoal-900);
+  --success: #0b7a5c;
+  --warning: #8a5a00;
+  --danger: #c0262d;
+  --info: #1d5fd1;
+
+  --shadow-sm: 0 1px 2px rgba(16,20,17,0.12);
+  --shadow-md: 0 8px 24px rgba(16,20,17,0.12);
+}
+
+// Spacing, radius, size, slant and font families (same in every theme)
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+
+  --control-sm: 36px;
+  --control-md: 48px;
+  --control-lg: 56px;
+  --header-height: 72px;
+  --container-max: 1200px;
+
+  --slant-angle: 10deg;
+
+  --font-display: 'Rubik', 'Readex Pro', system-ui, sans-serif;
+  --font-sans: 'Readex Pro', 'Rubik', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+// -----------------------------------------------------------------------------
+// 3. Reset
+// -----------------------------------------------------------------------------
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: 1rem; // body
+  line-height: 1.75;
+  color: var(--text);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-inline-size: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  overflow-wrap: break-word;
+}
+
+// -----------------------------------------------------------------------------
+// 4. Base elements (type styles from the design system: Arabic needs the
+//    generous line heights below; never add letter-spacing to Arabic text)
+// -----------------------------------------------------------------------------
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  margin-block-end: var(--space-3);
+}
+
+h1 { font-size: 3rem;      line-height: 1.25; font-weight: 800; } // display-lg
+h2 { font-size: 2.25rem;   line-height: 1.3;  font-weight: 700; } // heading-xl
+h3 { font-size: 1.75rem;   line-height: 1.4;  font-weight: 700; } // heading-lg
+h4 { font-size: 1.375rem;  line-height: 1.45; font-weight: 600; } // heading-md
+h5,
+h6 { font-size: 1.125rem;  line-height: 1.5;  font-weight: 600; } // heading-sm
+
+p + p {
+  margin-block-start: var(--space-3);
+}
+
+a {
+  color: var(--accent-text);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
