@@ -27,3 +27,6 @@ logs
 .claude-flow/
 graphify-out/
 .claude/settings.local.json
+# Agent copies other tools' installers write here; project agents live in .claude/agents/
+.gemini/
+.codex/

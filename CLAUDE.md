@@ -143,7 +143,7 @@ Data files are plain typed constants, not utilities or composables. Do not add l
 
 ## AI tooling
 
-The repository is public. Never commit tool output, caches, credentials or media; `graphify-out/`, `.claude-flow/` and `.claude/settings.local.json` are gitignored.
+The repository is public. Never commit tool output, caches, credentials or media; `graphify-out/`, `.claude-flow/`, `.claude/settings.local.json`, `.gemini/` and `.codex/` are gitignored.
 
 - **Agents** in `.claude/agents/`, taken from `msitarzewski/agency-agents` (MIT) at commit `b859c51`, each with a Codel header: `ux-architect`, `ui-designer`, `frontend-developer` (the only one that edits files), `ui-finish-gate-reviewer`, `accessibility-auditor`, `performance-benchmarker`. This file overrides anything in an agent's own text.
 - **Graphify** (`graphify-out/`, local only) maps code, this file and the README. Use it for questions that cross files or link a rule to code: `graphify query "<symbol or rule name>" --budget 800` (it matches keywords, so name the thing). After code changes run `graphify update .` (no LLM cost). `.graphifyignore` replaces `.gitignore` for Graphify, so it repeats the secrets and build-output rules; keep it in step. An update keeps nodes from files it no longer reads, so prune those after changing the ignore list. Re-extracting this file or the README (`/graphify --update`) spends tokens; do it only when asked. For work inside one file, read the file.
