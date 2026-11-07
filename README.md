@@ -63,7 +63,8 @@ Notes:
 
 ## Brand assets
 
-- Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on.
+- Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on. The page gutter and the motion tokens (durations, easing, stagger) are site-level additions in the same file.
+- Motion is CSS only: one load sequence on the home hero and two bars that draw as they scroll into view. All of it is off under `prefers-reduced-motion: reduce`.
 - Fonts are self-hosted in `public/fonts/`: Rubik (display and headings) and Readex Pro (body and UI), as subset variable woff2 files for Arabic and Latin. Both are licensed under the SIL Open Font License; the license texts are beside the files.
 - Logo files are in `public/brand/` (full logo and symbol, each in white, ink and lime). The favicon is `public/favicon.svg`: the symbol, ink on light browser themes and lime on dark ones.
 - `public/brand/og.png` (1200×630) is the share image: the white logo on the dark `--bg`, rendered from `codel-full-white.svg`.
@@ -74,7 +75,7 @@ Notes:
 app/
   app.vue                  # NuxtLayout + NuxtPage
   error.vue                # branded 404 / error page (uses the default layout)
-  layouts/default.vue      # the only layout (skip link, header / main / footer, site-wide share tags)
+  layouts/default.vue      # the only layout (skip link, sticky header with a small-screen menu, main, footer, site-wide share tags)
   pages/                   # one file per route
   data/                    # company.ts and solutions.ts: the facts the pages show
   assets/scss/main.scss    # font faces, design tokens, reset and base styles

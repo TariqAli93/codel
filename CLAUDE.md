@@ -25,6 +25,7 @@ Website starter for **Codel - كودل**, an Iraqi software company. Primary aud
 
 - Use `<style scoped lang="scss">` in `.vue` files, or the global stylesheet at `app/assets/scss/main.scss`.
 - `main.scss` contains **only** font faces, design tokens (as CSS custom properties) and a basic reset with base element styles. Consume tokens in components with `var(--token)`.
+- Site-level tokens not yet in `tokens.json`: `--page-gutter` and the motion tokens `--duration-fast` (feedback), `--duration-base` (UI transitions), `--duration-slow` (larger moves and fades), `--duration-entrance` (the home hero's load sequence), `--stagger`, `--ease-out`, `--ease-in-out`. Use them instead of literal timings.
 - Prefer BEM-style class names (`.block__element--modifier`) written with SCSS `&` nesting.
 - No inline `style` attributes, no CSS-in-JS, no `.css` files.
 - Use `@use`, never `@import`.
@@ -41,7 +42,8 @@ Identity follows the Codel design system (charcoal and lime, dark first). Token 
 - Never add `letter-spacing` to Arabic and never slant Arabic text.
 - Logo files live in `public/brand/`: `-white` on dark grounds, `-ink` on light grounds, `-lime` on dark grounds only. Do not recolor, stretch, redraw or retype the logo. There is no Arabic wordmark; write كودل as live text.
 - `public/brand/og.png` (1200×630) is the share image: `codel-full-white.svg` centred on the dark `--bg` (`#101411`), rendered once with headless Chrome. Re-render it the same way if the logo or `--bg` changes.
-- The brand lean is `--slant-angle` (10deg). It applies to buttons, tags and decorative bars, never to text, inputs, cards or images, and the label is turned back upright.
+- The brand lean is `--slant-angle` (10deg). It applies to buttons, tags and decorative bars, never to text, inputs, cards or images, and the label is turned back upright. Write it as `skewX(calc(var(--slant-angle) * -1))` on the element and `skewX(var(--slant-angle))` on an inner label span; the element keeps the global focus ring.
+- The lean is the site's one recurring motif: things you act on lean (the hero's lime call bar, the header button, price tags, the menu button, link indicators), things you read stay upright. On a lime ground (the home contact band) set `--focus: var(--on-accent)` so the focus ring stays visible.
 
 ## TypeScript
 
@@ -69,6 +71,12 @@ File-based routing under `app/pages/`. One placeholder file per route:
 
 Only one layout exists: `app/layouts/default.vue`. It holds the skip link, the header (logo and main navigation), `<main id="main" tabindex="-1">`, the footer (contact details) and the site-wide share tags.
 
+- The header is sticky and its content sits in the same `--container-max` column as the pages (`html` has `scroll-padding-block-start` so in-page targets clear it).
+- Below `60em` the links fold behind a menu button (`aria-expanded`, `aria-controls="site-menu"`). The menu closes on Escape (focus returns to the button), on a press or focus move outside the header, on any link click or route change, and when the window widens past the breakpoint. Listeners are added only while it is open and removed on unmount. Keep the breakpoint in step between `wideQuery` (script) and `$nav-wide` (styles).
+- An inline head script adds `class="js"` to `<html>` before the first paint. Styles that collapse the menu are written under `.js`, so without JavaScript the links stay a visible wrapping list and the button stays hidden. Never hide content behind `.js` that a visitor needs.
+- `/solutions/<slug>` marks "حلولنا" with `layout__link--section`; the exact page link keeps `aria-current="page"`.
+- A page that draws its own full-width sections sets `definePageMeta({ fullWidth: true })`; the layout then drops the centred column and its padding from `<main>`. Only the home page uses it.
+
 `app/error.vue` is the branded error page (Nuxt special file, not a component): Arabic message, a link home, wrapped in `<NuxtLayout>`, `robots: noindex`. An unknown `/solutions/<slug>` throws `createError({ status: 404, statusText: 'Page Not Found', fatal: true })`; keep `statusText` ASCII because it goes into the HTTP status line, and put Arabic text in `error.vue` only. Use `status`/`statusText`, not the deprecated `statusCode`/`statusMessage`.
 
 ## Language and direction
@@ -94,11 +102,13 @@ Real content only comes from the project owner. Never invent services, products,
 
 - `app/data/company.ts`: name, `siteUrl`, founding years, phones, email, address, hours, the five services. `addressParts` and `openingHours` repeat the address and hours in the shape JSON-LD needs; keep them in step with `address` and `hours`.
 - `app/data/solutions.ts`: the ready-made products (slug, names, tagline, description, features, price in IQD, platform, images). `/solutions`, `/solutions/[slug]`, the home page and the FAQ read it. An unknown slug throws a 404. Add a product by adding an entry; the static build finds it through the link on `/solutions`.
-- Main navigation: the `links` array in `app/layouts/default.vue`.
+- Main navigation: the `links` array in `app/layouts/default.vue`. `cta: true` draws an entry as the leaning button at the end of the bar (only "تواصل معنا").
 
 Data files are plain typed constants, not utilities or composables. Do not add logic to them.
 
 **Pages with real content:** `/`, `/about`, `/services`, `/solutions`, `/solutions/[slug]`, `/contact`, `/faq`. The founding story on `/about` is written from the two years only. The description under each service, and each product's description and feature list, are drafts: the product text was taken from the products' repositories and the service text from the service names, and the owner has not reviewed them.
+
+**Home page** (`app/pages/index.vue`, sections in this order): hero (headline, lede, the lime WhatsApp call bar, a link to the products), ready-made products, services index, a short company section (the two founding years and the goal sentence from `/about`), and the lime contact band. The headline `برامج جاهزة لعملك، وبرمجيات نبنيها على مقاسه.` restates the two offerings and is a draft the owner has not reviewed. Product rows show only owner facts (name, tagline, price, platform), not the draft descriptions or features; every product and service comes from the data files through `v-for`.
 
 **Images.** Product screenshots go in `public/solutions/<slug>/` (plain lowercase file names) and are listed in the product's `images` array in `app/data/solutions.ts`: `{ src: '/solutions/<slug>/<file>', alt, width, height }`. `alt` is Arabic and describes only what is visible; `width` and `height` are the file's real pixel size. The detail page shows a gallery only when the array is not empty: the first image loads eagerly, the rest lazily, inside a fixed 16:10 frame with `object-fit: contain` (no layout shift, no cropping). Flag any file over 500 KB to the owner. No screenshots exist yet (none were supplied) and no video player is planned.
 
@@ -119,8 +129,9 @@ Data files are plain typed constants, not utilities or composables. Do not add l
 - The skip link `تخطَّ إلى المحتوى` is the first focusable element; it is visually hidden until focused and targets `#main`.
 - The global `:focus-visible` outline in `main.scss` is the focus ring; do not remove it on interactive elements.
 - Standalone links (navigation, contact links, action links) get `display: inline-flex; align-items: center; min-block-size: 44px`. Links inside a running sentence are exempt.
-- Grids use `minmax(min(<size>, 100%), 1fr)` so nothing overflows at 320px. Page gutters use `clamp(var(--space-4), 5vw, var(--space-6))`.
+- Grids use `minmax(min(<size>, 100%), 1fr)` so nothing overflows at 320px. Page gutters use `var(--page-gutter)` (`clamp(var(--space-4), 5vw, var(--space-6))`). In RTL, overflow runs off the left edge: check sideways scroll, not only `scrollWidth`.
 - `main.scss` neutralises transitions and animations under `prefers-reduced-motion: reduce`; any new motion must still be optional.
+- Motion is CSS only (no animation library, no IntersectionObserver). Load and scroll animations sit inside `@media (prefers-reduced-motion: no-preference)`; scroll-linked ones also inside `@supports (animation-timeline: view())`, so without support they simply show their end state. Animate `transform`, `scale`, `translate` and `opacity` only. The home hero is the one load sequence; do not add entrance animations to every section.
 - Links that open in a new tab (WhatsApp) carry `rel="noopener noreferrer"`. Phone, WhatsApp and email links come from `company.ts` only.
 
 ## Commands
