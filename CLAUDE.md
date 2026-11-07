@@ -15,14 +15,6 @@ The site has real content and is due for a full redesign. Passages marked **Curr
 - SCSS for all styling.
 - Node `^22.22.3 || ^24.15.0 || >=26.0.0` (Nuxt 4.6.4 requirement).
 
-## No-library rule
-
-- No third-party UI libraries (Vuetify, PrimeVue, Element, etc.).
-- No CSS frameworks (Tailwind, Bootstrap, UnoCSS, etc.).
-- No new npm dependencies without explicit approval from the project owner.
-  The only dependencies are `nuxt`, `vue`, `vue-router` (as in the official starter) and `sass` (dev, needed to compile SCSS).
-- No web-font or icon services (no Google Fonts link, no CDN). Fonts are self-hosted in `public/fonts/` (see Brand below).
-
 ## Styling (SCSS only)
 
 - Use `<style scoped lang="scss">` in `.vue` files, or the global stylesheet at `app/assets/scss/main.scss`.
