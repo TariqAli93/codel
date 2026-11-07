@@ -687,7 +687,7 @@ $footer-three: 64em;
     color: var(--text-muted);
   }
 
-  // Cut off at the bottom of the page, over a faint dot field; it rises as the footer arrives.
+  // Cut off at the bottom of the page; it rises as the footer arrives.
   &__footer-word {
     position: relative;
     margin: 0 0 -0.32em;
@@ -699,8 +699,6 @@ $footer-three: 64em;
     text-align: center;
     color: transparent;
     -webkit-text-stroke: 1px var(--border-strong);
-    background-image: radial-gradient(circle, var(--border) 1.2px, transparent 1.6px);
-    background-size: 20px 20px;
     user-select: none;
 
     @media (prefers-reduced-motion: no-preference) {

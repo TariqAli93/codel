@@ -178,6 +178,12 @@
   --point-md: 0.75rem; // the year nodes
   --stroke: 2px; // menu bars and the call bar's divider
 
+  // Product accents, taken from each product's own interface (home page showcases only).
+  --nuqta-accent: #7367f0;
+  --dalaly-ground: #f4efe5;
+  --dalaly-ink: #263236;
+  --dalaly-accent: #b48f55;
+
   --glow-accent:
     0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent),
     0 0 1rem color-mix(in srgb, var(--accent) 55%, transparent),

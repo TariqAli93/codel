@@ -54,7 +54,7 @@ Notes:
 - Structured data (JSON-LD): a `ProfessionalService` block on the home page and a `Product` block (name, price in IQD) on each product page, built from the two data files.
 - `/solutions/[slug]` serves the products in `app/data/solutions.ts` (`nuqta-plus`, `dalaly`); any other slug returns a 404. `npm run generate` renders them because `/solutions` links to each one.
 - Company facts (services, phones, email, address, hours) live in `app/data/company.ts`; the ready-made products (names, prices, features, images) live in `app/data/solutions.ts`. Edit those two files to change content. `CLAUDE.md` lists every fact.
-- Product screenshots go in `public/solutions/<slug>/` and are listed in the product's `images` array.
+- Product screenshots go in `public/images/solutions/<slug>/` and are listed in the product's `images` array.
 
 ## Dependencies
 
@@ -64,8 +64,8 @@ Notes:
 ## Brand assets
 
 - Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on. The page gutter, the motion tokens (durations, easing, stagger), the type scale, the point sizes, the stroke and the lime glow are site-level additions in the same file.
-- Art direction: النقطة (the dot). Dots on a 20px grid are the visual language: the hero draws the letter ن in dots on a canvas (`app/components/HeroArt.vue`) with its lime نقطة above the call bar, and the product drawings live in `public/art/`. Buttons, tags and decorative bars lean (the brand slant); lime marks what you act on and what is live now.
-- Motion uses GSAP with ScrollTrigger and SplitText, loaded on the client after mount: the hero writes its letter while the headline rises word by word and the call bar wipes in from the window edge; on scroll the service marquee runs (faster while you scroll), section headings rise, the product drawings open and tilt toward the pointer, the services light up in turn, the goal sentence reads itself in, the years bar draws and the contact band sweeps in. All of it is off under `prefers-reduced-motion: reduce`, and anything that takes keyboard focus is shown in its end state.
+- Imagery: the products' real screens. The hero layers a Nuqta Plus screen, a Dalaly screen and a code window over an engineering grid; each product has a showcase with two real screenshots (`public/images/solutions/<slug>/`, framed by `app/components/ProductWindow.vue`) in the product's own colours. Buttons, tags and decorative bars lean (the brand slant); lime marks what you act on and what is live now.
+- Motion: the hero's entrance is plain CSS (text first, then the screens). GSAP with ScrollTrigger and SplitText, loaded on the client, adds the rest: the hero's screens follow the pointer by depth and drift apart on scroll, section headings rise word by word, product screens open like a shutter and tilt toward the pointer, the service tiles rise row by row, the years bar draws and the contact band sweeps in. All of it is off under `prefers-reduced-motion: reduce`, and anything that takes keyboard focus is shown in its end state.
 - Fonts are self-hosted in `public/fonts/`: Rubik (display and headings) and Readex Pro (body and UI), as subset variable woff2 files for Arabic and Latin. Both are licensed under the SIL Open Font License; the license texts are beside the files.
 - Logo files are in `public/brand/` (full logo and symbol, each in white, ink and lime). The favicon is `public/favicon.svg`: the symbol, ink on light browser themes and lime on dark ones.
 - `public/brand/og.png` (1200×630) is the share image: the white logo on the dark `--bg`, rendered from `codel-full-white.svg`.
@@ -122,13 +122,13 @@ tsconfig.json
 
 ### 4. إضافة صورة لبرنامج
 
-1. ضع الصورة في المجلد `public/solutions/nuqta-plus/` (لنقطة بلس) أو `public/solutions/dalaly/` (لدلالي). أنشئ المجلد إذا لم يكن موجوداً. اسم الملف بأحرف إنكليزية صغيرة بدون مسافات، مثل `sales-screen.png`.
+1. ضع الصورة في المجلد `public/images/solutions/nuqta-plus/` (لنقطة بلس) أو `public/images/solutions/dalaly/` (لدلالي). أنشئ المجلد إذا لم يكن موجوداً. اسم الملف بأحرف إنكليزية صغيرة بدون مسافات، مثل `sales-screen.png`.
 2. اعرف مقاس الصورة بالبكسل: في ويندوز اضغط على الصورة بالزر الأيمن ← خصائص ← التفاصيل ← الأبعاد.
-3. في `app/data/solutions.ts` غيّر `images: []` (السطر 49 لنقطة بلس، السطر 70 لدلالي) إلى:
+3. في `app/data/solutions.ts` أضف الصورة داخل `images` (السطر 49 لنقطة بلس، السطر 70 لدلالي) بنفس شكل الصور الموجودة فيه:
 
 ```ts
 images: [
-  { src: '/solutions/nuqta-plus/sales-screen.png', alt: 'شاشة البيع في نقطة بلس', width: 1280, height: 800 }
+  { src: '/images/solutions/nuqta-plus/sales-screen.png', alt: 'شاشة البيع في نقطة بلس', width: 1280, height: 800 }
 ]
 ```
 
@@ -178,7 +178,7 @@ images: [
 
 - **اسم النطاق (الدومين)**: مطلوب للخطوة 7 أعلاه.
 - **طريقة تسعير البرنامجين**: هل السعر دفعة واحدة، أم لكل جهاز، أم اشتراك؟ وماذا يحصل العميل مقابل السعر؟ الموقع الآن يعرض المبلغ فقط.
-- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وفي الصفحة الرئيسية: العنوان الرئيسي والسطر الصغير فوقه، والجملتان تحت عنواني "حلولنا الجاهزة" و"خدماتنا"، ونصوص أزرار التواصل، ورسالة واتساب الجاهزة التي يفتحها زر "اسأل عنه على واتساب"، وعبارتا حالة الدوام ("في الدوام الآن" و"خارج ساعات الدوام الآن").
+- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وفي الصفحة الرئيسية: العنوان الرئيسي والسطر الصغير فوقه والجملة تحته، والجملتان تحت عنواني "حلولنا الجاهزة" و"خدماتنا"، ونصوص أزرار التواصل، ووصف كل برنامج ومميزاته الأربع الظاهرة في الصفحة الرئيسية، ورسالة واتساب الجاهزة التي يفتحها زر "اسأل عنه على واتساب"، وعبارتا حالة الدوام ("في الدوام الآن" و"خارج ساعات الدوام الآن").
 - **الفريق والرؤية والوظائف والمقالات**: لا يوجد نص لها بعد.
 - **سياسة الخصوصية والشروط والأحكام**: يكتبها صاحب الشركة أو يوافق عليها (ومحامٍ إذا صار الموقع يجمع بيانات). الصفحتان الآن مؤقتتان ومخفيتان عن محركات البحث.
 - **صور البرنامجين وأي فيديو**: لم تُرفع أي صورة أو فيديو بعد. طريقة الإضافة في الخطوة 4.

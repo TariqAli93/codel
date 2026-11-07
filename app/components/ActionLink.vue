@@ -1,12 +1,12 @@
 <script setup lang="ts">
 // One link for actions. Both looks lean with the brand slant and keep their content upright:
-// 'bar' is the lime call bar (label, divider, number) that the page runs off the window edge,
+// 'solid' is the lime button with the lime glow, for the page's main call,
 // 'ink' is the dark call button for a lime ground (the contact band),
 // 'outline' is an outlined button with a small lime point at its start.
 const props = withDefaults(
   defineProps<{
     to: string
-    look?: 'bar' | 'ink' | 'outline'
+    look?: 'solid' | 'ink' | 'outline'
     newTab?: boolean
     label: string
     // Shown after the label, left to right (the phone number); the outline look does not show it.
@@ -51,19 +51,18 @@ $upright: skewX(var(--slant-angle));
     transform: $upright;
   }
 
-  // The call: a leaning lime bar with a lime glow. How far it runs (off the window edge) is up to
-  // the page.
-  &--bar {
-    display: flex;
+  // The main call: a leaning lime button with a lime glow.
+  &--solid {
+    display: inline-flex;
     align-items: center;
-    min-block-size: clamp(4rem, 3.2rem + 2vw, 5.25rem);
+    min-block-size: var(--control-lg);
     padding-inline: var(--space-6);
     border-radius: var(--radius-sm);
     background-color: var(--primary);
     color: var(--on-primary);
     transition: background-color var(--duration-fast) var(--ease-out);
 
-    // The glow on its own layer, so hover only changes its opacity. It leans with the bar.
+    // The glow on its own layer, so hover only changes its opacity. It leans with the button.
     &::after {
       content: '';
       position: absolute;
@@ -95,12 +94,12 @@ $upright: skewX(var(--slant-angle));
     }
   }
 
-  &--bar &__content {
+  &--solid &__content {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-1) var(--space-4);
-    padding-block: var(--space-3);
+    gap: 0 var(--space-3);
+    padding-block: var(--space-2);
     transition: translate var(--duration-base) var(--ease-out);
 
     // Narrow phones: the number under the label, no divider.
@@ -111,14 +110,14 @@ $upright: skewX(var(--slant-angle));
     }
   }
 
-  &--bar &__label {
+  &--solid &__label {
     font-family: var(--font-display);
-    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+    font-size: 1.0625rem;
     font-weight: 700;
     line-height: 1.4;
   }
 
-  // Leans inside the upright content, so it shares the bar's slant.
+  // Leans inside the upright content, so it shares the button's slant.
   &__divider {
     inline-size: var(--stroke);
     block-size: 1.375rem;
@@ -137,7 +136,7 @@ $upright: skewX(var(--slant-angle));
     font-weight: 500;
   }
 
-  // The call on a lime ground: dark with lime text, leaning like the bar.
+  // The call on a lime ground: dark with lime text, leaning like the lime button.
   &--ink {
     display: inline-flex;
     align-items: center;

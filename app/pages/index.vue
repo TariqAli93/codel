@@ -2,7 +2,7 @@
 import { company, services } from "~/data/company";
 import { solutions } from "~/data/solutions";
 
-// The call bar and the marquee run off the edge of the window, so this page draws its own
+// The hero's screens and the contact band run to the window edge, so this page draws its own
 // full-width sections instead of the layout's centred column.
 definePageMeta({ fullWidth: true });
 
@@ -47,20 +47,26 @@ const price = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const whatsappAsk = (nameAr: string) =>
   `${company.phones.main.whatsapp}?text=${encodeURIComponent(`مرحباً، أرغب بالاستفسار عن ${nameAr}`)}`;
 
-// Dot-matrix artwork per product, in public/art/. A product without one shows its text only.
-const productArt: Record<string, string> = {
-  "nuqta-plus": "/art/nuqta-plus.svg",
-  dalaly: "/art/dalaly.svg",
+// The hero shows one real screen of each of the first two products: the last listed screen of the
+// first product behind, the first screen of the second in front.
+const [heroBack, heroFront] = solutions;
+const heroBackShot = heroBack?.images[heroBack.images.length - 1];
+const heroFrontShot = heroFront?.images[0];
+
+// Each product's showcase takes its colours from the product's own interface.
+const productLook: Record<string, "violet" | "sand"> = {
+  "nuqta-plus": "violet",
+  dalaly: "sand",
 };
+
+// One small drawing per service, in the order of `services` in app/data/company.ts.
+const serviceArt = ["web", "mobile", "ledger", "server", "custom"] as const;
 
 // Open or closed right now, on Baghdad time. Worked out in the browser after mount only, so the
 // server-rendered page never carries a time; until then (and without JavaScript) nothing is shown.
 const openNow = ref<boolean | null>(null);
 
 const page = ref<HTMLElement | null>(null);
-// The artwork writes its letter when the load sequence starts, or after a moment without it.
-const artPlay = ref(false);
-let artFallback: ReturnType<typeof setTimeout> | undefined;
 let stopMotion: (() => void) | undefined;
 let unmounted = false;
 
@@ -80,20 +86,17 @@ onMounted(() => {
   openNow.value =
     days.includes(part("weekday")) && time >= opens && time < closes;
 
-  artFallback = setTimeout(() => (artPlay.value = true), 2500);
   startMotion();
 });
 
 onBeforeUnmount(() => {
   unmounted = true;
-  clearTimeout(artFallback);
   stopMotion?.();
 });
 
-// Motion (GSAP, loaded after mount so the server render and hydration never see it). Only under
-// prefers-reduced-motion: no-preference; otherwise, and without JavaScript, every element simply
-// shows. The hero's parts are hidden by CSS until this takes over (with a timed CSS fallback).
-// Fetched while the page hydrates rather than after it, so the hero does not wait on the network.
+// Scroll and pointer motion (GSAP), fetched while the page hydrates and set up after mount, so the
+// server render and hydration never see it. The hero's entrance is plain CSS and needs none of it:
+// its content is on screen within half a second whatever the network does.
 const loadMotion = () =>
   Promise.all([import("gsap"), import("gsap/ScrollTrigger"), import("gsap/SplitText")]);
 const motionModules = import.meta.client ? loadMotion() : undefined;
@@ -106,129 +109,91 @@ async function startMotion() {
   gsap.registerPlugin(ScrollTrigger, SplitText);
 
   const splits: Array<{ revert: () => void }> = [];
-  let intro: { progress: (value: number) => unknown } | undefined;
   const words = (target: Element) => {
     const split = SplitText.create(target, { type: "words", mask: "words" });
     splits.push(split);
     return split.words;
   };
-  const all = (selector: string) => gsap.utils.toArray<HTMLElement>(selector, root);
+  const all = (selector: string, scope: Element = root) =>
+    gsap.utils.toArray<HTMLElement>(selector, scope);
   const ease = "expo.out";
 
   const context = gsap.context(() => {
     const media = gsap.matchMedia();
 
     media.add("(prefers-reduced-motion: no-preference)", () => {
-      // Hero: the line above, the headline word by word, the call bar out of the window edge,
-      // then the second actions. The artwork writes itself on its own clock (HeroArt).
-      const title = root.querySelector(".home__title");
-      intro = gsap.timeline({ defaults: { ease } })
-        .set(all(".home__hero [data-intro]"), { opacity: 1 })
-        .from(".home__kicker", { opacity: 0, x: -24, duration: 0.8 })
-        .from(title ? words(title) : [], { yPercent: 110, duration: 1.1, stagger: 0.07 }, 0.1)
-        .from(".home__call--hero", { scaleX: 0, transformOrigin: "left center", duration: 1.1 }, 0.55)
-        .from(".home__call--hero .action__content", { opacity: 0, x: -30, duration: 0.7 }, 1.05)
-        .from(".home__hero-actions > *", { opacity: 0, y: 16, duration: 0.7, stagger: 0.08 }, 1.15);
-      root.classList.add("home--motion");
-      artPlay.value = true;
-
-      // The marquee runs toward the reading start and speeds up with the scroll.
-      const track = root.querySelector(".home__marquee-track");
-      if (track) {
-        const loop = gsap.to(track, { xPercent: 100 / 3, duration: 38, ease: "none", repeat: -1 });
-        ScrollTrigger.create({
-          trigger: ".home__marquee",
-          onUpdate: (self) => {
-            const boost = 1 + Math.min(Math.abs(self.getVelocity()) / 400, 5);
-            gsap.to(loop, { timeScale: boost, duration: 0.2, overwrite: true });
-            gsap.to(loop, { timeScale: 1, duration: 1.2, delay: 0.2, overwrite: false });
-          },
+      // The hero's screens drift apart at different speeds as the page scrolls away from them.
+      for (const layer of all(".home__layer")) {
+        const depth = Number(layer.dataset.depth ?? 1);
+        gsap.to(layer, {
+          yPercent: -18 * depth,
+          ease: "none",
+          scrollTrigger: { trigger: ".home__hero", start: "top top", end: "bottom top", scrub: true },
         });
       }
 
-      // Section headings rise word by word as they arrive.
+      // Section headings rise word by word as they arrive; leads and links follow.
       for (const heading of all(".home__heading")) {
         gsap.from(words(heading), {
           yPercent: 110,
-          duration: 1,
+          duration: 0.9,
           ease,
-          stagger: 0.06,
+          stagger: 0.05,
           scrollTrigger: { trigger: heading, start: "top 88%", once: true },
         });
       }
       for (const item of all("[data-reveal]")) {
         gsap.from(item, {
           opacity: 0,
-          y: 28,
-          duration: 0.9,
+          y: 24,
+          duration: 0.8,
           ease,
           scrollTrigger: { trigger: item, start: "top 90%", once: true },
         });
       }
 
-      // Products: the art opens like a shutter from the top, its drawing settles inside it, and the
-      // text follows. The drawing drifts against the scroll while the product passes.
+      // Products: the main screen opens from the bottom like a shutter, the second screen slides
+      // in over it, then the text follows. While the product passes, the screens drift apart.
       for (const product of all(".home__product")) {
-        const frame = product.querySelector(".home__product-art");
-        const image = product.querySelector(".home__product-image");
-        const show = gsap.timeline({ scrollTrigger: { trigger: product, start: "top 78%", once: true } });
-        if (frame && image) {
-          show
-            .from(frame, { clipPath: "inset(0% 0% 100% 0% round 1.5rem)", duration: 1.2, ease: "expo.inOut" })
-            .from(image, { scale: 1.25, duration: 1.6, ease }, 0.2);
-          gsap.fromTo(image, { yPercent: 6 }, {
-            yPercent: -6,
+        const main = product.querySelector(".home__shot--main");
+        const second = product.querySelector(".home__shot--second");
+        const show = gsap.timeline({ scrollTrigger: { trigger: product, start: "top 75%", once: true } });
+        if (main) show.from(main, { clipPath: "inset(100% 0% 0% 0%)", y: 40, duration: 1.1, ease: "expo.inOut" });
+        if (second) show.from(second, { opacity: 0, x: -60, y: 30, duration: 1, ease }, 0.45);
+        show.from(all(".home__product-body > *", product), {
+          opacity: 0,
+          y: 24,
+          duration: 0.8,
+          ease,
+          stagger: 0.06,
+        }, 0.2);
+        if (second) {
+          gsap.fromTo(second, { yPercent: 10 }, {
+            yPercent: -10,
             ease: "none",
             scrollTrigger: { trigger: product, start: "top bottom", end: "bottom top", scrub: true },
           });
         }
-        show.from(product.querySelectorAll(".home__product-body > *"), {
-          opacity: 0,
-          y: 30,
-          duration: 0.9,
-          ease,
-          stagger: 0.08,
-        }, frame ? 0.45 : 0);
       }
 
-      // Services: each title lights up as the list passes the middle of the screen.
-      gsap.fromTo(".home__stair", { opacity: 0.22, x: -36 }, {
-        opacity: 1,
-        x: 0,
-        ease: "none",
-        stagger: 0.25,
-        scrollTrigger: { trigger: ".home__stairs", start: "top 80%", end: "bottom 55%", scrub: 0.6 },
-      });
-      gsap.from(".home__stairs-spine", {
-        scaleY: 0,
-        transformOrigin: "top center",
-        ease: "none",
-        scrollTrigger: { trigger: ".home__stairs", start: "top 80%", end: "bottom 55%", scrub: 0.6 },
+      // Services: the tiles rise in reading order, a row at a time.
+      ScrollTrigger.batch(all(".home__tile"), {
+        start: "top 88%",
+        once: true,
+        onEnter: (batch) =>
+          gsap.from(batch, { opacity: 0, y: 40, duration: 0.9, ease, stagger: 0.1 }),
       });
 
-      // Company: the goal reads itself in, word by word; the city name drifts behind it; the
-      // years draw their bar from 2020 to 2024.
-      const goal = root.querySelector(".home__goal");
-      if (goal) {
-        gsap.fromTo(words(goal), { opacity: 0.16 }, {
-          opacity: 1,
-          ease: "none",
-          stagger: 0.1,
-          scrollTrigger: { trigger: goal, start: "top 82%", end: "bottom 50%", scrub: 0.5 },
-        });
-      }
-      gsap.fromTo(".home__backdrop", { xPercent: -8 }, {
-        xPercent: 8,
+      // Company: the city's name drifts behind the quote; the years draw their bar.
+      gsap.fromTo(".home__backdrop", { xPercent: -6 }, {
+        xPercent: 6,
         ease: "none",
         scrollTrigger: { trigger: ".home__company", start: "top bottom", end: "bottom top", scrub: true },
       });
-      const years = gsap.timeline({
-        scrollTrigger: { trigger: ".home__years", start: "top 85%", end: "top 45%", scrub: 0.5 },
-      });
-      years
-        .from(".home__year--idea .home__year-node", { scale: 0, duration: 0.2 })
-        .from(".home__years-bar", { scaleX: 0, transformOrigin: "right center", duration: 0.6 })
-        .from(".home__year--launch .home__year-node", { scale: 0, duration: 0.2 });
+      gsap.timeline({ scrollTrigger: { trigger: ".home__years", start: "top 85%", once: true } })
+        .from(".home__year--idea .home__year-node", { scale: 0, duration: 0.4, ease: "back.out(2)" })
+        .from(".home__years-bar", { scaleX: 0, transformOrigin: "right center", duration: 0.8, ease: "power2.inOut" })
+        .from(".home__year--launch .home__year-node", { scale: 0, duration: 0.4, ease: "back.out(2)" });
 
       // Contact: the lime band sweeps in from the reading start, then its contents follow.
       const band = root.querySelector(".home__band");
@@ -236,46 +201,61 @@ async function startMotion() {
         gsap.timeline({ scrollTrigger: { trigger: band, start: "top 80%", once: true } })
           .fromTo(band, { clipPath: "inset(-20% -20% -20% 100%)" }, {
             clipPath: "inset(-20% -20% -20% -20%)",
-            duration: 1.2,
+            duration: 1.1,
             ease: "expo.inOut",
             clearProps: "clipPath",
           })
-          .from(band.querySelectorAll(".home__band-content > *"), {
+          .from(all(".home__band-content > *", band), {
             opacity: 0,
-            y: 24,
-            duration: 0.8,
+            y: 20,
+            duration: 0.7,
             ease,
-            stagger: 0.07,
-          }, 0.55);
-        gsap.fromTo(".home__band-pattern", { yPercent: -12 }, {
-          yPercent: 12,
-          ease: "none",
-          scrollTrigger: { trigger: band, start: "top bottom", end: "bottom top", scrub: true },
-        });
+            stagger: 0.06,
+          }, 0.5);
       }
     });
 
-    // Pointer: the product drawings tilt toward the pointer.
+    // Pointer: the hero's screens lean toward the pointer by depth; product screens tilt.
     media.add("(prefers-reduced-motion: no-preference) and (hover: hover)", () => {
       const detach: Array<() => void> = [];
-      for (const frame of all(".home__product-art")) {
-        gsap.set(frame, { transformPerspective: 1200 });
-        const tiltX = gsap.quickTo(frame, "rotationX", { duration: 0.6, ease: "power3.out" });
-        const tiltY = gsap.quickTo(frame, "rotationY", { duration: 0.6, ease: "power3.out" });
+      const stage = root.querySelector<HTMLElement>(".home__stage");
+      const hero = root.querySelector<HTMLElement>(".home__hero");
+      if (stage && hero) {
+        const layers = all(".home__layer", stage).map((layer) => ({
+          depth: Number(layer.dataset.depth ?? 1),
+          x: gsap.quickTo(layer, "x", { duration: 0.8, ease: "power3.out" }),
+          y: gsap.quickTo(layer, "y", { duration: 0.8, ease: "power3.out" }),
+        }));
         const move = (event: PointerEvent) => {
-          const box = frame.getBoundingClientRect();
-          tiltX(((event.clientY - box.top) / box.height - 0.5) * -8);
-          tiltY(((event.clientX - box.left) / box.width - 0.5) * 10);
+          const box = hero.getBoundingClientRect();
+          const dx = (event.clientX - box.left) / box.width - 0.5;
+          const dy = (event.clientY - box.top) / box.height - 0.5;
+          for (const layer of layers) {
+            layer.x(dx * 26 * layer.depth);
+            layer.y(dy * 18 * layer.depth);
+          }
+        };
+        hero.addEventListener("pointermove", move);
+        detach.push(() => hero.removeEventListener("pointermove", move));
+      }
+      for (const visual of all(".home__product-visual")) {
+        gsap.set(visual, { transformPerspective: 1400 });
+        const tiltX = gsap.quickTo(visual, "rotationX", { duration: 0.7, ease: "power3.out" });
+        const tiltY = gsap.quickTo(visual, "rotationY", { duration: 0.7, ease: "power3.out" });
+        const move = (event: PointerEvent) => {
+          const box = visual.getBoundingClientRect();
+          tiltX(((event.clientY - box.top) / box.height - 0.5) * -5);
+          tiltY(((event.clientX - box.left) / box.width - 0.5) * 7);
         };
         const leave = () => {
           tiltX(0);
           tiltY(0);
         };
-        frame.addEventListener("pointermove", move);
-        frame.addEventListener("pointerleave", leave);
+        visual.addEventListener("pointermove", move);
+        visual.addEventListener("pointerleave", leave);
         detach.push(() => {
-          frame.removeEventListener("pointermove", move);
-          frame.removeEventListener("pointerleave", leave);
+          visual.removeEventListener("pointermove", move);
+          visual.removeEventListener("pointerleave", leave);
         });
       }
       return () => detach.forEach((off) => off());
@@ -286,7 +266,6 @@ async function startMotion() {
   // focus jumps to its end state at once, so nothing is ever focused half-faded.
   const onFocus = (event: FocusEvent) => {
     const target = event.target as HTMLElement | null;
-    if (target?.closest(".home__hero")) intro?.progress(1);
     for (const trigger of ScrollTrigger.getAll()) {
       const element = trigger.trigger;
       if (element && target && element.contains(target)) trigger.animation?.progress(1);
@@ -303,7 +282,6 @@ async function startMotion() {
     window.removeEventListener("load", refresh);
     context.revert();
     for (const split of splits) split.revert();
-    root.classList.remove("home--motion");
   };
 }
 </script>
@@ -312,47 +290,54 @@ async function startMotion() {
   <div ref="page" class="home">
     <section class="home__hero" aria-labelledby="home-title">
       <div class="home__hero-text">
-        <p class="home__kicker" data-intro>
+        <p class="home__kicker">
           <span class="home__kicker-bar" aria-hidden="true" />
           شركة برمجيات عراقية في {{ company.addressParts.city }}
         </p>
-        <h1 id="home-title" class="home__title" data-intro>
+        <h1 id="home-title" class="home__title">
           <span class="home__title-line">برامج جاهزة،</span>
-          <span class="home__title-line">وبرمجيات على مقاسك.</span>
+          <span class="home__title-line">وبرمجيات <span class="home__title-mark">على مقاسك.</span></span>
         </h1>
+        <p class="home__lede">
+          نبيع برامج جاهزة بأسعار معلنة، ونصمّم ونبرمج المواقع والتطبيقات والأنظمة حسب طلبك.
+        </p>
+        <div class="home__hero-actions">
+          <ActionLink
+            look="solid"
+            :to="company.phones.main.whatsapp"
+            new-tab
+            label="راسلنا على واتساب"
+          />
+          <ActionLink to="#ready" label="تصفح حلولنا الجاهزة" />
+        </div>
       </div>
 
-      <HeroArt class="home__hero-art" :play="artPlay" :delay="350" />
-
-      <ActionLink
-        look="bar"
-        :to="company.phones.main.whatsapp"
-        new-tab
-        label="راسلنا على واتساب"
-        :detail="company.phones.main.display"
-        class="home__call home__call--hero"
-        data-intro
-      />
-
-      <div class="home__hero-actions" data-intro>
-        <ActionLink to="#ready" label="حلولنا الجاهزة" />
-        <a class="home__link" :href="company.phones.main.tel"
-          >أو اتصل
-          <span dir="ltr">{{ company.phones.main.display }}</span></a
-        >
+      <!-- Real screens of the products, layered; decorative here, described in the products below. -->
+      <div class="home__stage" aria-hidden="true">
+        <div v-if="heroBack && heroBackShot" class="home__layer home__layer--back" data-depth="0.6">
+          <ProductWindow v-bind="heroBackShot" alt="" :title="heroBack.nameAr" eager />
+          <p class="home__tag home__tag--back">
+            {{ heroBack.nameAr }} <span dir="ltr">{{ price(heroBack.priceIqd) }}</span> دينار
+          </p>
+        </div>
+        <div v-if="heroFront && heroFrontShot" class="home__layer home__layer--front" data-depth="1">
+          <ProductWindow v-bind="heroFrontShot" alt="" :title="heroFront.nameAr" eager />
+          <p class="home__tag home__tag--front">
+            {{ heroFront.nameAr }} <span dir="ltr">{{ price(heroFront.priceIqd) }}</span> دينار
+          </p>
+        </div>
+        <div class="home__layer home__layer--code" data-depth="1.5">
+          <div class="home__code">
+            <div class="home__code-bar"><span class="home__code-file" dir="ltr">checkout.ts</span></div>
+            <pre class="home__code-body" dir="ltr"><code><span class="home__code-k">export async function</span> <span class="home__code-f">checkout</span>(cart) {
+  <span class="home__code-k">const</span> invoice = <span class="home__code-k">await</span> invoices.<span class="home__code-f">create</span>(cart)
+  <span class="home__code-k">await</span> stock.<span class="home__code-f">move</span>(cart.items)
+  <span class="home__code-k">return</span> <span class="home__code-f">print</span>(invoice)
+}</code></pre>
+          </div>
+        </div>
       </div>
     </section>
-
-    <!-- The services once more as a running strip between the hero and the products. -->
-    <div class="home__marquee" aria-hidden="true">
-      <div class="home__marquee-track">
-        <p v-for="copy in 3" :key="copy" class="home__marquee-copy">
-          <span v-for="service in services" :key="service.title" class="home__marquee-item">{{
-            service.title
-          }}</span>
-        </p>
-      </div>
-    </div>
 
     <section
       id="ready"
@@ -371,48 +356,60 @@ async function startMotion() {
         </div>
       </div>
 
-      <ul role="list" class="home__products">
-        <li
-          v-for="solution in solutions"
-          :key="solution.slug"
-          class="home__product"
-        >
-          <div v-if="productArt[solution.slug]" class="home__product-art">
-            <img
-              class="home__product-image"
-              :src="productArt[solution.slug]"
-              alt=""
-              width="640"
-              height="520"
-              loading="lazy"
-              decoding="async"
+      <article
+        v-for="solution in solutions"
+        :key="solution.slug"
+        class="home__product"
+        :class="`home__product--${productLook[solution.slug] ?? 'violet'}`"
+        :data-theme="productLook[solution.slug] === 'sand' ? 'light' : undefined"
+        :aria-labelledby="`product-${solution.slug}`"
+      >
+        <div class="home__product-body">
+          <p class="home__chip">
+            <span class="home__chip-text">يعمل على {{ solution.platform }}</span>
+          </p>
+          <h3 :id="`product-${solution.slug}`" class="home__name">
+            {{ solution.nameAr }}
+            <span class="home__latin" dir="ltr">{{ solution.nameEn }}</span>
+          </h3>
+          <p class="home__tagline">{{ solution.tagline }}</p>
+          <p class="home__desc">{{ solution.description }}</p>
+          <ul role="list" class="home__features">
+            <li v-for="feature in solution.features.slice(0, 4)" :key="feature">{{ feature }}</li>
+          </ul>
+          <p class="home__price">
+            <span class="home__price-figure">{{ price(solution.priceIqd) }}</span>
+            <span class="home__price-unit">دينار عراقي</span>
+          </p>
+          <div class="home__actions">
+            <ActionLink
+              look="solid"
+              :to="whatsappAsk(solution.nameAr)"
+              new-tab
+              label="اسأل عنه على واتساب"
+              :hidden-suffix="solution.nameAr"
             />
+            <NuxtLink class="home__link" :to="`/solutions/${solution.slug}`"
+              >تفاصيل {{ solution.nameAr }}</NuxtLink
+            >
           </div>
-          <div class="home__product-body">
-            <p class="home__chip">
-              <span class="home__chip-text">يعمل على {{ solution.platform }}</span>
-            </p>
-            <h3 class="home__name">{{ solution.nameAr }}</h3>
-            <p class="home__latin"><span dir="ltr">{{ solution.nameEn }}</span></p>
-            <p class="home__tagline">{{ solution.tagline }}</p>
-            <p class="home__price">
-              <span class="home__price-figure">{{ price(solution.priceIqd) }}</span>
-              <span class="home__price-unit">دينار عراقي</span>
-            </p>
-            <div class="home__actions">
-              <ActionLink
-                :to="whatsappAsk(solution.nameAr)"
-                new-tab
-                label="اسأل عنه على واتساب"
-                :hidden-suffix="solution.nameAr"
-              />
-              <NuxtLink class="home__link" :to="`/solutions/${solution.slug}`"
-                >تفاصيل {{ solution.nameAr }}</NuxtLink
-              >
-            </div>
-          </div>
-        </li>
-      </ul>
+        </div>
+
+        <div v-if="solution.images.length" class="home__product-visual">
+          <ProductWindow
+            v-if="solution.images[0]"
+            v-bind="solution.images[0]"
+            :title="solution.nameAr"
+            class="home__shot home__shot--main"
+          />
+          <ProductWindow
+            v-if="solution.images[1]"
+            v-bind="solution.images[1]"
+            :title="solution.nameAr"
+            class="home__shot home__shot--second"
+          />
+        </div>
+      </article>
     </section>
 
     <section
@@ -420,25 +417,59 @@ async function startMotion() {
       class="home__section home__services"
       aria-labelledby="services-title"
     >
-      <div class="home__head home__head--stacked">
+      <div class="home__head home__head--split">
         <h2 id="services-title" class="home__heading">خدماتنا</h2>
-        <p class="home__intro" data-reveal>
-          من تصميم الواجهة وبرمجتها إلى إدارة السيرفر الذي يشغّلها.
-        </p>
-        <p class="home__more" data-reveal>
-          <NuxtLink class="home__link" to="/services">تفاصيل الخدمات</NuxtLink>
-        </p>
+        <div class="home__head-aside" data-reveal>
+          <p class="home__intro">
+            من تصميم الواجهة وبرمجتها إلى إدارة السيرفر الذي يشغّلها.
+          </p>
+          <p class="home__more">
+            <NuxtLink class="home__link" to="/services">تفاصيل الخدمات</NuxtLink>
+          </p>
+        </div>
       </div>
 
-      <!-- The titles step along the brand lean, each starting on a leaning spine. -->
-      <div class="home__stairs-frame">
-        <span class="home__stairs-spine" aria-hidden="true" />
-        <ul role="list" class="home__stairs">
-          <li v-for="service in services" :key="service.title" class="home__stair">
-            {{ service.title }}
-          </li>
-        </ul>
-      </div>
+      <ul role="list" class="home__bento">
+        <li
+          v-for="(service, index) in services"
+          :key="service.title"
+          class="home__tile"
+          :class="`home__tile--${serviceArt[index] ?? 'plain'}`"
+        >
+          <div class="home__tile-art" aria-hidden="true">
+            <div v-if="serviceArt[index] === 'web'" class="home__mini-browser">
+              <span class="home__mini-url" />
+              <span class="home__mini-hero" />
+              <span class="home__mini-line" />
+              <span class="home__mini-line home__mini-line--short" />
+              <span class="home__mini-cards"><span /><span /><span /></span>
+            </div>
+            <div v-else-if="serviceArt[index] === 'mobile'" class="home__mini-phone">
+              <span class="home__mini-notch" />
+              <span v-for="row in 5" :key="row" class="home__mini-row" />
+              <span class="home__mini-fab" />
+            </div>
+            <div v-else-if="serviceArt[index] === 'ledger'" class="home__mini-ledger" dir="ltr">
+              <span v-for="row in 4" :key="row" class="home__mini-entry"><span /><span /></span>
+              <span class="home__mini-total"><span /><span /></span>
+            </div>
+            <pre v-else-if="serviceArt[index] === 'server'" class="home__mini-terminal" dir="ltr"><span class="home__mini-ok">$</span> deploy --production
+<span class="home__mini-ok">✓</span> build      12.4s
+<span class="home__mini-ok">✓</span> migrate     0.8s
+<span class="home__mini-live">●</span> online</pre>
+            <div v-else class="home__mini-sketch">
+              <span class="home__mini-idea" />
+              <span class="home__mini-arrow" />
+              <span class="home__mini-built" />
+            </div>
+          </div>
+          <h3 class="home__tile-title">{{ service.title }}</h3>
+          <p class="home__tile-text">{{ service.text }}</p>
+          <p v-if="serviceArt[index] === 'custom'" class="home__tile-more">
+            <ActionLink to="/contact" label="حدّثنا عن فكرتك" />
+          </p>
+        </li>
+      </ul>
     </section>
 
     <section
@@ -447,30 +478,44 @@ async function startMotion() {
       aria-labelledby="company-title"
     >
       <p class="home__backdrop" aria-hidden="true">{{ company.addressParts.city }}</p>
-      <div class="home__company-text">
+      <div class="home__company-lead">
         <h2 id="company-title" class="home__heading">
           شركة ناشئة من {{ company.addressParts.city }}
         </h2>
-        <p class="home__goal">هدفنا أن نبني برمجيات تخدم الأعمال في العراق.</p>
+        <blockquote class="home__quote" data-reveal>
+          <p>هدفنا أن نبني برمجيات تخدم الأعمال في العراق.</p>
+        </blockquote>
         <p class="home__more" data-reveal>
           <NuxtLink class="home__link" to="/about">قصتنا</NuxtLink>
         </p>
       </div>
 
-      <!-- Each year kept on one line: the spaces keep figure and label apart when read aloud. -->
-      <ol role="list" class="home__years">
-        <li class="home__year home__year--idea">
-          <span class="home__year-figure">{{ company.founded.idea }}</span>
-          <span class="home__year-node" aria-hidden="true" />
-          <span class="home__year-label">بداية الفكرة</span>
-        </li>
-        <li class="home__year home__year--launch">
-          <span class="home__year-figure">{{ company.founded.launch }}</span>
-          <span class="home__year-node" aria-hidden="true" />
-          <span class="home__year-label">انطلاق الشركة</span>
-        </li>
-        <li class="home__years-bar" role="presentation" aria-hidden="true" />
-      </ol>
+      <div class="home__company-facts" data-reveal>
+        <!-- Each year kept on one line: the spaces keep figure and label apart when read aloud. -->
+        <ol role="list" class="home__years">
+          <li class="home__year home__year--idea">
+            <span class="home__year-figure">{{ company.founded.idea }}</span>
+            <span class="home__year-node" aria-hidden="true" />
+            <span class="home__year-label">بداية الفكرة</span>
+          </li>
+          <li class="home__year home__year--launch">
+            <span class="home__year-figure">{{ company.founded.launch }}</span>
+            <span class="home__year-node" aria-hidden="true" />
+            <span class="home__year-label">انطلاق الشركة</span>
+          </li>
+          <li class="home__years-bar" role="presentation" aria-hidden="true" />
+        </ol>
+        <dl class="home__facts">
+          <div class="home__fact">
+            <dt>المقر</dt>
+            <dd>{{ company.address }}</dd>
+          </div>
+          <div class="home__fact">
+            <dt>الدوام</dt>
+            <dd>{{ company.hours.days }}، {{ company.hours.time }}</dd>
+          </div>
+        </dl>
+      </div>
     </section>
 
     <section
@@ -540,19 +585,10 @@ $edge: max(
   calc((100cqi - var(--container-max)) / 2 + var(--page-gutter))
 );
 
-// Below this width everything stacks; from here products pair art and text.
 $medium: 48em;
-// From here the hero becomes a poster with the artwork on the call bar's line.
 $wide: 64em;
 // From here the contact band starts on the content edge with the brand lean.
 $band-lean: 80em;
-
-// The call bar's height (ActionLink's bar uses the same clamp) and where its top edge meets the
-// artwork: 124 of its 520 units, just under the نقطة, so the bar covers the top of the bowl.
-$bar-h: clamp(4rem, 3.2rem + 2vw, 5.25rem);
-$art-top: calc(124 / 520);
-// The drawing ends at 400 of 520 units; the space reserved under the bar stops there.
-$art-bottom: calc(400 / 520);
 
 .home {
   container-type: inline-size;
@@ -564,7 +600,7 @@ $art-bottom: calc(400 / 520);
 
   &__section {
     padding-inline: $edge;
-    padding-block-start: clamp(var(--space-9), 10vw, var(--space-10));
+    padding-block-start: clamp(var(--space-9), 9vw, var(--space-10));
   }
 
   &__heading {
@@ -608,73 +644,59 @@ $art-bottom: calc(400 / 520);
     }
   }
 
-  &__head--stacked {
-    max-inline-size: 40rem;
+  // A tag, so it leans; its text stands upright.
+  &__chip {
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-small);
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--text-muted);
+    transform: $lean;
+  }
+
+  &__chip-text {
+    display: block;
+    transform: $upright;
   }
 
   // ---------------------------------------------------------------------------
-  // Hero: the headline, then the call bar as the line the letter ن hangs from
+  // Hero: the offer on one side, real screens of the products on the other
   // ---------------------------------------------------------------------------
 
-  // The bar sits on the artwork's line at every width: the art spans the rows around the bar, and
-  // those rows are exactly the parts of the art above and below its line.
   &__hero {
-    --art-w: min(100cqi - 2 * #{$edge}, 26rem);
-    --art-h: calc(var(--art-w) * 520 / 640);
-
     position: relative;
     isolation: isolate;
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows:
-      auto
-      calc(var(--art-h) * #{$art-top})
-      minmax(#{$bar-h}, auto)
-      calc(var(--art-h) * (#{$art-bottom} - #{$art-top}) - #{$bar-h})
-      auto;
-    padding: clamp(var(--space-6), 5vw, var(--space-8)) $edge var(--space-8);
+    gap: var(--space-8);
+    align-items: center;
+    padding: clamp(var(--space-7), 6vw, var(--space-9)) $edge clamp(var(--space-8), 7vw, var(--space-10));
 
-    // A faint dot field behind the whole hero, the same grid as the artwork's, fading to the edges.
+    // An engineering grid behind the screens, fading out toward the text.
     &::before {
       content: "";
       position: absolute;
       inset: 0;
       z-index: -1;
-      background-image: radial-gradient(circle, var(--border) 1.2px, transparent 1.6px);
-      background-size: 24px 24px;
-      mask-image: radial-gradient(ellipse 70% 60% at 30% 55%, black 10%, transparent 75%);
-      opacity: 0.6;
+      background-image:
+        linear-gradient(color-mix(in srgb, var(--border) 70%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--border) 70%, transparent) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 60% 70% at 25% 50%, black, transparent 75%);
       pointer-events: none;
     }
 
-    // Wide: the art takes its own column and hangs from the bottom of row 3, so the headline above
-    // can be as tall as it needs.
     @media (width >= $wide) {
-      --art-w: calc((100cqi - 2 * #{$edge}) * 0.44);
-
-      grid-template-columns: minmax(0, 1fr) var(--art-w);
-      grid-template-rows:
-        auto
-        $bar-h
-        calc(var(--art-h) * (#{$art-bottom} - #{$art-top}) - #{$bar-h});
-      column-gap: var(--space-6);
-      align-content: center;
-      min-block-size: min(calc(100svh - var(--header-height)), 62rem);
-      padding-block: var(--space-7);
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      gap: clamp(var(--space-6), 4vw, var(--space-9));
+      min-block-size: min(calc(100svh - var(--header-height)), 54rem);
     }
   }
 
   &__hero-text {
     position: relative;
     z-index: 2;
-    grid-row: 1;
-    grid-column: 1 / -1;
-    padding-block-end: var(--space-5);
-
-    @media (width >= $wide) {
-      align-self: end;
-      padding-block-end: var(--space-7);
-    }
   }
 
   &__kicker {
@@ -694,14 +716,14 @@ $art-bottom: calc(400 / 520);
     inline-size: var(--space-6);
     block-size: 4px;
     border-radius: var(--radius-pill);
-    background-color: var(--border-strong);
+    background-color: var(--accent);
     transform: $lean;
   }
 
   &__title {
     margin: 0;
-    font-size: clamp(2.25rem, 1rem + 4.6vw, 5.5rem);
-    line-height: 1.2;
+    font-size: clamp(2.25rem, 1.3rem + 3.4vw, 4.25rem);
+    line-height: 1.25;
     font-weight: 800;
   }
 
@@ -710,150 +732,197 @@ $art-bottom: calc(400 / 520);
     text-wrap: balance;
   }
 
-  &__hero-art {
+  // The half that answers "made for you", set off by a leaning lime underline.
+  &__title-mark {
     position: relative;
-    z-index: 1;
-    grid-row: 2 / 5;
-    grid-column: 1 / -1;
-    align-self: start;
-    justify-self: center;
-    inline-size: var(--art-w);
-
-    @media (width >= $wide) {
-      grid-row: 1 / -1;
-      grid-column: 2;
-      align-self: end;
-      // Its empty bottom strip hangs below the grid instead of pushing it apart.
-      margin-block-end: calc(var(--art-h) * (#{$art-bottom} - 1));
-    }
-  }
-
-  // The lime call bar. It runs past the window's inline-end edge; the page clips it, so its
-  // slanted far end never shows and nothing scrolls sideways.
-  &__call {
-    position: relative;
-    z-index: 2; // in front of the artwork: the bowl hangs from it
-    margin-inline-end: calc(-1 * #{$edge} - var(--space-7));
-    transform-origin: left center; // the window edge in RTL: the bar grows out of it
-    grid-row: 3;
-    grid-column: 1 / -1;
-    align-self: start;
-
-    @media (width >= $wide) {
-      grid-row: 2;
-    }
-  }
-
-  &__hero-actions {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-3) var(--space-6);
-    grid-row: 5;
-    grid-column: 1 / -1;
-    margin-block-start: var(--space-6);
-
-    @media (width >= $wide) {
-      grid-row: 3;
-      grid-column: 1;
-      align-self: start;
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Marquee: the services, running
-  // ---------------------------------------------------------------------------
-
-  &__marquee {
-    margin-block-start: var(--space-7);
-    padding-block: var(--space-4);
-    border-block: 1px solid var(--border);
-    background-color: var(--surface);
-    overflow: hidden;
-  }
-
-  // Three copies side by side; the loop moves the track a third of its width, so the second copy
-  // lands exactly where the first began.
-  &__marquee-track {
-    display: flex;
-    inline-size: max-content;
-  }
-
-  &__marquee-copy {
-    display: flex;
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.25rem, 1rem + 1.2vw, 2rem);
-    font-weight: 700;
-    line-height: 1.6;
+    z-index: 0;
     white-space: nowrap;
-  }
-
-  // Each title followed by a lime نقطة.
-  &__marquee-item {
-    display: inline-flex;
-    align-items: center;
 
     &::after {
       content: "";
-      inline-size: var(--point-md);
-      block-size: var(--point-md);
-      margin-inline: var(--space-6);
-      border-radius: 50%;
+      position: absolute;
+      inset-inline: 0.05em;
+      inset-block-end: 0.02em;
+      z-index: -1;
+      block-size: 0.18em;
+      border-radius: var(--radius-pill);
       background-color: var(--accent);
+      opacity: 0.85;
+      transform: $lean;
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Ready-made products: art and text, the second one mirrored
-  // ---------------------------------------------------------------------------
-
-  &__products {
-    display: grid;
-    gap: clamp(var(--space-8), 8vw, var(--space-10));
-    padding: 0;
-    list-style: none;
+  &__lede {
+    max-inline-size: 30rem;
+    margin-block-start: var(--space-5);
+    font-size: var(--text-lead);
+    line-height: 1.85;
+    color: var(--text-muted);
   }
 
-  &__product {
-    display: grid;
-    gap: var(--space-6);
+  &__hero-actions {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    gap: var(--space-4);
+    margin-block-start: var(--space-7);
+  }
 
-    @media (width >= $medium) {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      column-gap: clamp(var(--space-6), 5vw, var(--space-9));
+  // The screens: positioned on a fixed-ratio stage, so the composition holds at every width.
+  &__stage {
+    position: relative;
+    aspect-ratio: 1.12;
+    margin-inline-end: calc(-0.35 * #{$edge});
 
-      &:nth-child(even) {
-        grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    @media (width >= $wide) {
+      margin-inline-end: calc(-1 * #{$edge} + var(--space-4));
+    }
+  }
 
-        .home__product-art {
-          order: 1;
-        }
+  &__layer {
+    position: absolute;
+
+    &--back {
+      inset-block-start: 0;
+      inset-inline-end: 0;
+      inline-size: 88%;
+    }
+
+    &--front {
+      z-index: 1;
+      inset-block-end: 9%;
+      inset-inline-start: 0;
+      inline-size: 66%;
+    }
+
+    &--code {
+      z-index: 2;
+      inset-block-end: 0;
+      inset-inline-end: 2%;
+      inline-size: 54%;
+
+      // On small phones the code would cover the screens; the screens carry the hero there.
+      @media (width < 30em) {
+        display: none;
       }
     }
   }
 
-  // The drawing on a raised panel with the same dot grid; it tilts toward the pointer.
-  &__product-art {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    background-color: var(--surface);
-    background-image: radial-gradient(
-      ellipse at 50% 40%,
-      color-mix(in srgb, var(--accent) 7%, transparent),
-      transparent 65%
-    );
+  // A price tag on each screen: real facts, leaning like every tag.
+  &__tag {
+    position: absolute;
+    z-index: 3;
+    display: inline-flex;
+    gap: 0.3em;
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    font-size: clamp(0.6875rem, 0.6rem + 0.3vw, 0.875rem);
+    font-weight: 700;
+    line-height: 1.7;
+    white-space: nowrap;
+    transform: $lean;
+
+    &--back {
+      inset-block-start: -0.9rem;
+      inset-inline-end: 14%;
+      background-color: var(--nuqta-accent);
+      color: var(--white);
+    }
+
+    &--front {
+      inset-block-end: -0.9rem;
+      inset-inline-start: 10%;
+      background-color: var(--dalaly-ground);
+      color: var(--dalaly-ink);
+    }
   }
 
-  &__product-image {
-    display: block;
-    inline-size: 100%;
-    block-size: auto;
+  // The code window: a few lines of the kind of code behind a checkout.
+  &__code {
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg);
+    box-shadow: 0 1.5rem 3rem -1rem color-mix(in srgb, black 60%, transparent);
+  }
+
+  &__code-bar {
+    display: flex;
+    align-items: center;
+    block-size: 1.75rem;
+    padding-inline: var(--space-3);
+    border-block-end: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+    background-color: var(--surface);
+  }
+
+  &__code-file {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  &__code-body {
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: clamp(0.4375rem, 0.25rem + 0.55vw, 0.75rem);
+    line-height: 1.75;
+    text-align: left;
+    white-space: pre;
+    color: var(--text);
+  }
+
+  &__code-k {
+    color: var(--nuqta-accent);
+  }
+
+  &__code-f {
+    color: var(--accent);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Products: a showcase each, coloured like the product itself
+  // ---------------------------------------------------------------------------
+
+  &__product {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: var(--space-7);
+    margin-block-end: var(--space-7);
+    padding: clamp(var(--space-6), 5vw, var(--space-9));
+    border-radius: var(--radius-xl);
+    color: var(--text);
+
+    @media (width >= $wide) {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      align-items: center;
+      column-gap: clamp(var(--space-6), 4vw, var(--space-9));
+    }
+
+    // Nuqta Plus: dark, with its own violet light behind the screens.
+    &--violet {
+      border: 1px solid var(--border);
+      background:
+        radial-gradient(ellipse 70% 80% at 15% 50%, color-mix(in srgb, var(--nuqta-accent) 26%, transparent), transparent 70%),
+        var(--surface);
+    }
+
+    // Dalaly: its own warm paper ground and dark ink (the light theme's tokens, scoped here).
+    &--sand {
+      background-color: var(--dalaly-ground);
+      color: var(--dalaly-ink);
+
+      @media (width >= $wide) {
+        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+
+        .home__product-visual {
+          order: -1;
+        }
+      }
+    }
   }
 
   &__product-body {
@@ -862,42 +931,71 @@ $art-bottom: calc(400 / 520);
     align-items: flex-start;
   }
 
-  // A tag, so it leans; its text stands upright.
-  &__chip {
-    margin-block-end: var(--space-5);
-    padding: var(--space-1) var(--space-3);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    font-size: var(--text-small);
-    font-weight: 500;
-    line-height: 1.6;
-    color: var(--text-muted);
-    transform: $lean;
-  }
-
-  &__chip-text {
-    display: block;
-    transform: $upright;
-  }
-
   &__name {
-    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+    margin: var(--space-5) 0 0;
     font-size: var(--text-name);
     line-height: 1.25;
     font-weight: 800;
   }
 
   &__latin {
-    margin-block-start: var(--space-1);
-    font-family: var(--font-display);
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-muted);
   }
 
   &__tagline {
-    margin-block-start: var(--space-4);
+    margin-block-start: var(--space-3);
+    font-family: var(--font-display);
     font-size: var(--text-lead);
-    line-height: 1.7;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  &__desc {
+    max-inline-size: 32rem;
+    margin-block-start: var(--space-3);
+    line-height: 1.85;
+    color: var(--text-muted);
+  }
+
+  // Four of the product's features, each after a point in the product's colour.
+  &__features {
+    display: grid;
+    gap: var(--space-2) var(--space-5);
+    margin-block-start: var(--space-5);
+    padding: 0;
+    list-style: none;
+    font-size: 0.9375rem;
+    font-weight: 500;
+
+    @media (width >= $medium) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    li {
+      display: flex;
+      gap: var(--space-2);
+      line-height: 1.7;
+
+      &::before {
+        content: "";
+        flex: none;
+        inline-size: var(--point-sm);
+        block-size: var(--point-sm);
+        margin-block-start: 0.65em;
+        border-radius: 50%;
+        background-color: var(--nuqta-accent);
+      }
+    }
+
+    .home__product--sand & li::before {
+      background-color: var(--dalaly-accent);
+    }
   }
 
   &__price {
@@ -932,97 +1030,366 @@ $art-bottom: calc(400 / 520);
     margin-block-start: var(--space-6);
   }
 
-  // ---------------------------------------------------------------------------
-  // Services: the titles step along the brand lean
-  // ---------------------------------------------------------------------------
-
-  // Each row starts tan(10deg) of a row's pitch further along, so the starts form a leaning line;
-  // the spine is drawn on that line with the same lean.
-  &__stairs-frame {
-    --pitch: calc(var(--text-flow) * 1.35 + var(--space-5));
-    --step: calc(var(--pitch) * 0.1763);
-
+  // The main screen runs out past the panel's edge (the panel clips it); the second screen sits
+  // over its lower corner.
+  &__product-visual {
     position: relative;
-    padding-inline-start: calc(var(--space-6) + var(--space-2));
-  }
+    padding-block-end: 12%;
 
-  &__stairs-spine {
-    position: absolute;
-    inset-block: 0;
-    inset-inline-start: var(--space-2);
-    inline-size: var(--stroke);
-    border-radius: var(--radius-pill);
-    background-color: var(--border-strong);
-    transform-origin: top center;
+    @media (width >= $wide) {
+      margin-inline-end: calc(-1 * clamp(var(--space-6), 5vw, var(--space-9)) - var(--space-6));
+    }
 
-    // A decorative bar, so it leans, once the rows step along it.
-    @media (width >= $medium) {
-      transform: $lean;
+    .home__product--sand & {
+      @media (width >= $wide) {
+        margin-inline: calc(-1 * clamp(var(--space-6), 5vw, var(--space-9)) - var(--space-6)) 0;
+      }
     }
   }
 
-  &__stairs {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-5);
-    padding: 0;
-    list-style: none;
+  &__shot--second {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: -4%;
+    inline-size: 52%;
+
+    .home__product--sand & {
+      inset-inline: auto -4%;
+    }
   }
 
-  &__stair {
-    position: relative;
-    font-family: var(--font-display);
-    font-size: var(--text-flow);
-    font-weight: 700;
-    line-height: 1.35;
-    text-wrap: balance;
-    transition: color var(--duration-fast) var(--ease-out);
+  // ---------------------------------------------------------------------------
+  // Services: a mosaic of tiles, each with a small drawing of the work
+  // ---------------------------------------------------------------------------
+
+  &__bento {
+    display: grid;
+    gap: var(--space-4);
+    padding: 0;
+    list-style: none;
 
     @media (width >= $medium) {
-      @for $i from 2 through 8 {
-        &:nth-child(#{$i}) {
-          margin-inline-start: calc(var(--step) * #{$i - 1});
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (width >= $wide) {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+
+  &__tile {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background-color: var(--surface);
+    transition:
+      border-color var(--duration-base) var(--ease-out),
+      translate var(--duration-base) var(--ease-out);
+
+    @media (hover: hover) {
+      &:hover {
+        border-color: var(--border-strong);
+        translate: 0 -4px;
+      }
+    }
+
+    &--custom {
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 55%),
+        var(--surface);
+    }
+
+    @media (width >= $medium) {
+      &--web,
+      &--custom {
+        grid-column: 1 / -1;
+      }
+
+      &--mobile {
+        grid-row: span 2;
+      }
+    }
+
+    @media (width >= $wide) {
+      &--web {
+        grid-column: span 4;
+      }
+
+      &--mobile,
+      &--ledger,
+      &--server {
+        grid-column: span 2;
+      }
+
+      &--custom {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto auto 1fr;
+        column-gap: var(--space-8);
+        align-items: start;
+
+        .home__tile-art {
+          grid-column: 2;
+          grid-row: 1 / -1;
+          margin: 0;
         }
       }
     }
+  }
 
-    // Its point on the spine.
-    &::before {
-      content: "";
-      position: absolute;
-      inset-block-start: calc(0.675em - var(--point-md) / 2);
-      inset-inline-start: calc(-1 * (var(--space-6) + var(--point-md) / 2));
-      inline-size: var(--point-md);
-      block-size: var(--point-md);
-      border-radius: 50%;
-      background-color: var(--border-strong);
-      transition:
-        background-color var(--duration-fast) var(--ease-out),
-        scale var(--duration-base) var(--ease-out);
-    }
+  &__tile-art {
+    display: grid;
+    place-items: center;
+    block-size: 10rem;
+    margin-block-end: var(--space-6);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, var(--border) 1px, transparent 1.4px);
+    background-size: 16px 16px;
 
-    @media (hover: hover) {
-      &:hover::before {
-        background-color: var(--accent);
-        scale: 1.5;
+    .home__tile--mobile & {
+      @media (width >= $medium) {
+        flex: 1;
+        block-size: auto;
+        min-block-size: 16rem;
       }
     }
   }
 
+  &__tile-title {
+    margin: 0;
+    font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.625rem);
+    line-height: 1.4;
+    font-weight: 700;
+  }
+
+  &__tile-text {
+    max-inline-size: 34rem;
+    margin-block-start: var(--space-2);
+    line-height: 1.8;
+    color: var(--text-muted);
+  }
+
+  &__tile-more {
+    margin-block-start: var(--space-5);
+  }
+
+  // The small drawings: quiet outlines with one lime detail each.
+  &__mini-browser {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    inline-size: min(78%, 22rem);
+    padding: 0.6rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+  }
+
+  &__mini-url {
+    block-size: 0.5rem;
+    inline-size: 45%;
+    border-radius: var(--radius-pill);
+    background-color: var(--border);
+  }
+
+  &__mini-hero {
+    block-size: 1.6rem;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent) 70%, transparent),
+      color-mix(in srgb, var(--accent) 15%, transparent)
+    );
+  }
+
+  &__mini-line {
+    block-size: 0.4rem;
+    inline-size: 80%;
+    border-radius: var(--radius-pill);
+    background-color: var(--border-strong);
+
+    &--short {
+      inline-size: 55%;
+    }
+  }
+
+  &__mini-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+
+    span {
+      block-size: 1.5rem;
+      border-radius: var(--radius-sm);
+      background-color: var(--surface-raised);
+    }
+  }
+
+  &__mini-phone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    inline-size: 7.5rem;
+    padding: 1.4rem 0.6rem 2.4rem;
+    border: 2px solid var(--border-strong);
+    border-radius: 1.4rem;
+    background-color: var(--surface);
+  }
+
+  &__mini-notch {
+    position: absolute;
+    inset-block-start: 0.45rem;
+    inset-inline: 35%;
+    block-size: 0.3rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--border-strong);
+  }
+
+  &__mini-row {
+    block-size: 1.2rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--surface-raised);
+  }
+
+  &__mini-fab {
+    position: absolute;
+    inset-block-end: 0.55rem;
+    inset-inline-start: 0.6rem;
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+    border-radius: 50%;
+    background-color: var(--accent);
+  }
+
+  &__mini-ledger {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    inline-size: min(80%, 14rem);
+  }
+
+  &__mini-entry,
+  &__mini-total {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+
+    span {
+      block-size: 0.45rem;
+      border-radius: var(--radius-pill);
+      background-color: var(--border-strong);
+
+      &:first-child {
+        inline-size: 55%;
+      }
+
+      &:last-child {
+        inline-size: 22%;
+      }
+    }
+  }
+
+  &__mini-total {
+    margin-block-start: 0.3rem;
+    padding-block-start: 0.5rem;
+    border-block-start: 1px dashed var(--border-strong);
+
+    span:last-child {
+      block-size: 0.6rem;
+      background-color: var(--accent);
+    }
+  }
+
+  &__mini-terminal {
+    margin: 0;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.7;
+    text-align: left;
+    color: var(--text-muted);
+  }
+
+  &__mini-ok {
+    color: var(--accent);
+  }
+
+  &__mini-live {
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent);
+  }
+
+  &__mini-sketch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  &__mini-idea {
+    inline-size: 3.5rem;
+    block-size: 3.5rem;
+    border: 2px dashed var(--border-strong);
+    border-radius: 50%;
+  }
+
+  // A decorative bar, so it leans.
+  &__mini-arrow {
+    inline-size: 3rem;
+    block-size: 4px;
+    border-radius: var(--radius-pill);
+    background-color: var(--border-strong);
+    transform: $lean;
+  }
+
+  &__mini-built {
+    position: relative;
+    inline-size: 5rem;
+    block-size: 3.5rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-raised);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset-block-start: -0.4rem;
+      inset-inline-end: -0.4rem;
+      inline-size: 0.8rem;
+      block-size: 0.8rem;
+      border-radius: 50%;
+      background-color: var(--accent);
+      box-shadow: var(--glow-accent);
+    }
+  }
+
   // ---------------------------------------------------------------------------
-  // Company: the goal, the city behind it, and the years
+  // Company: an editorial spread — the goal as a pull quote, the facts beside it
   // ---------------------------------------------------------------------------
 
   &__company {
     position: relative;
     isolation: isolate;
-    padding-block-end: var(--space-6);
+    display: grid;
+    gap: var(--space-8);
+    margin-block-start: clamp(var(--space-9), 9vw, var(--space-10));
+    padding-block: clamp(var(--space-8), 8vw, var(--space-10));
+    border-block: 1px solid var(--border);
+    background-color: var(--surface);
 
     @media (width >= $wide) {
-      display: grid;
       grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
       align-items: end;
-      column-gap: var(--space-8);
+      column-gap: var(--space-9);
     }
   }
 
@@ -1039,20 +1406,34 @@ $art-bottom: calc(400 / 520);
     line-height: 1;
     white-space: nowrap;
     color: transparent;
-    -webkit-text-stroke: 1px var(--border);
+    -webkit-text-stroke: 1px var(--border-strong);
+    opacity: 0.6;
     translate: 50% -50%; // RTL: inline start is the right edge
     pointer-events: none;
     user-select: none;
   }
 
-  &__goal {
-    max-inline-size: 18em;
-    margin-block-start: var(--space-7);
+  // The goal, set as a pull quote after a leaning lime bar.
+  &__quote {
+    position: relative;
+    margin: var(--space-6) 0 0;
+    padding-inline-start: var(--space-6);
     font-family: var(--font-display);
-    font-size: var(--text-flow);
+    font-size: clamp(1.75rem, 1.2rem + 2.2vw, 3.25rem);
     font-weight: 700;
-    line-height: 1.6;
+    line-height: 1.5;
     text-wrap: balance;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block: 0.3em;
+      inset-inline-start: 0;
+      inline-size: 5px;
+      border-radius: var(--radius-pill);
+      background-color: var(--accent);
+      transform: $lean;
+    }
   }
 
   // Idea, then launch: figure, node and label rows shared through subgrid, so the bar
@@ -1062,15 +1443,8 @@ $art-bottom: calc(400 / 520);
     grid-template-columns: auto minmax(var(--space-7), 1fr) auto;
     grid-template-rows: auto auto auto;
     row-gap: var(--space-3);
-    max-inline-size: 28rem;
-    margin-block-start: var(--space-8);
     padding: 0;
     list-style: none;
-
-    @media (width >= $wide) {
-      max-inline-size: none;
-      margin-block-start: 0;
-    }
   }
 
   // A decorative bar, so it leans: from the 2020 node to the 2024 node, with air at both ends.
@@ -1136,6 +1510,30 @@ $art-bottom: calc(400 / 520);
     color: var(--text-muted);
   }
 
+  &__facts {
+    display: grid;
+    gap: var(--space-4);
+    margin: var(--space-7) 0 0;
+    padding-block-start: var(--space-6);
+    border-block-start: 1px solid var(--border);
+  }
+
+  &__fact {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: var(--space-4);
+    line-height: 1.7;
+
+    dt {
+      color: var(--text-muted);
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Closing: the lime contact band
   // ---------------------------------------------------------------------------
@@ -1144,9 +1542,9 @@ $art-bottom: calc(400 / 520);
     padding-block-end: var(--space-9);
   }
 
-  // Lime from window edge to window edge, glowing like the call bar, with a dark dot pattern
-  // drifting across it. From $band-lean it starts on the content edge with the brand lean and its
-  // far end runs past the window edge (the page clips it).
+  // Lime from window edge to window edge, glowing, with a quiet pattern of dark points toward the
+  // window edge. From $band-lean it starts on the content edge with the brand lean and its far end
+  // runs past the window edge (the page clips it).
   &__band {
     // The band is lime: dark text, and a dark focus ring so it stays visible.
     --focus: var(--on-accent);
@@ -1198,18 +1596,17 @@ $art-bottom: calc(400 / 520);
     }
   }
 
-  // Dark points on the lime, strongest toward the window edge, fading toward the text.
   &__band-pattern {
     position: absolute;
-    inset: -15% 0;
+    inset: 0;
     z-index: -1;
     background-image: radial-gradient(
       circle,
-      color-mix(in srgb, var(--on-accent) 30%, transparent) 1.6px,
-      transparent 2px
+      color-mix(in srgb, var(--on-accent) 22%, transparent) 1.4px,
+      transparent 1.8px
     );
     background-size: 20px 20px;
-    mask-image: linear-gradient(to right, black, transparent 70%);
+    mask-image: linear-gradient(to right, black, transparent 55%);
     pointer-events: none;
   }
 
@@ -1271,21 +1668,58 @@ $art-bottom: calc(400 / 520);
   }
 }
 
-// Until GSAP takes over (it adds .home--motion), the hero's parts wait hidden; if it never
-// arrives, they fade in on their own after a moment. Reduced motion and no JavaScript skip all this.
+// The hero's entrance: plain CSS, so it starts with the first paint. The text arrives first and
+// fast; the screens settle in behind it.
 @media (prefers-reduced-motion: no-preference) {
-  .js .home__hero [data-intro] {
-    animation: home-late-reveal var(--duration-slow) var(--ease-out) 2.5s both;
+  .home__hero-text > * {
+    animation: home-rise 0.7s var(--ease-out) both;
+
+    @for $i from 2 through 5 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{($i - 1) * 0.07}s;
+      }
+    }
   }
 
-  .home--motion .home__hero [data-intro] {
-    animation: none;
+  .home__title-mark::after {
+    animation: home-draw 0.8s var(--ease-out) 0.45s both;
+  }
+
+  .home__layer {
+    animation: home-settle 1.1s var(--ease-out) both;
+
+    &--back {
+      animation-delay: 0.1s;
+    }
+
+    &--front {
+      animation-delay: 0.25s;
+    }
+
+    &--code {
+      animation-delay: 0.4s;
+    }
   }
 }
 
-@keyframes home-late-reveal {
+@keyframes home-rise {
   from {
     opacity: 0;
+    translate: 0 1rem;
+  }
+}
+
+@keyframes home-settle {
+  from {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 2rem;
+  }
+}
+
+@keyframes home-draw {
+  from {
+    scale: 0 1;
   }
 }
 </style>

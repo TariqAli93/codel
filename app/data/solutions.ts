@@ -21,7 +21,7 @@ export interface Solution {
   priceIqd: number
   platform: string
   // Files live in public/solutions/<slug>/. Add
-  // { src: '/solutions/<slug>/<file>', alt: '...', width: <px>, height: <px> } to show a screenshot.
+  // { src: '/images/solutions/<slug>/<file>', alt: '...', width: <px>, height: <px> } to show a screenshot.
   images: SolutionImage[]
 }
 
@@ -46,7 +46,7 @@ export const solutions: Solution[] = [
     ],
     priceIqd: 175000,
     platform: 'ويندوز',
-    images: []
+    images: [{ src: '/images/solutions/nuqta-plus/pos.webp', alt: 'شاشة نقطة البيع في نقطة بلس: بطاقات المنتجات بأسعارها، والسلة على الجانب', width: 1600, height: 900 }, { src: '/images/solutions/nuqta-plus/dashboard.webp', alt: 'الشاشة الرئيسية في نقطة بلس: مبيعات اليوم وأرباحه وفواتيره، وعمليات سريعة، ومخطط الأداء', width: 1600, height: 900 }]
   },
   {
     slug: 'dalaly',
@@ -67,6 +67,6 @@ export const solutions: Solution[] = [
     ],
     priceIqd: 150000,
     platform: 'ويندوز',
-    images: []
+    images: [{ src: '/images/solutions/dalaly/properties.webp', alt: 'قائمة عروض البيع في دلالي: العقارات بنوعها وموقعها ومساحتها وسعرها وحالتها', width: 1366, height: 768 }, { src: '/images/solutions/dalaly/dashboard.webp', alt: 'لوحة التحكم في دلالي: عمليات سريعة، ومهام ومتابعات، ومطابقة العروض لطلبات الزبائن', width: 1366, height: 768 }]
   }
 ]
