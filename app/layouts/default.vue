@@ -1,122 +1,140 @@
 <script setup lang="ts">
-import { company } from '~/data/company'
+import { company } from "~/data/company";
 
 interface NavLink {
-  to: string
-  label: string
+  to: string;
+  label: string;
   // Drawn as the leaning button at the end of the bar.
-  cta?: boolean
+  cta?: boolean;
   // Listed in the footer only: in the header the logo goes home.
-  footerOnly?: boolean
+  footerOnly?: boolean;
 }
 
 const links: NavLink[] = [
-  { to: '/', label: 'الرئيسية', footerOnly: true },
-  { to: '/solutions', label: 'حلولنا' },
-  { to: '/services', label: 'خدماتنا' },
-  { to: '/about', label: 'من نحن' },
-  { to: '/faq', label: 'الأسئلة الشائعة' },
-  { to: '/contact', label: 'تواصل معنا', cta: true }
-]
+  { to: "/", label: "الرئيسية", footerOnly: true },
+  { to: "/solutions", label: "حلولنا" },
+  { to: "/services", label: "خدماتنا" },
+  { to: "/about", label: "من نحن" },
+  { to: "/faq", label: "الأسئلة الشائعة" },
+  { to: "/contact", label: "تواصل معنا", cta: true },
+];
 
-const headerLinks = links.filter((link) => !link.footerOnly)
+const headerLinks = links.filter((link) => !link.footerOnly);
 
 // Site-wide share tags. Each page sets its own title, description, og:title and og:description.
 // canonical and og:url need the real domain, so they only appear once company.siteUrl is filled in.
-const route = useRoute()
-const ogImage = '/brand/og.png'
-const pageUrl = computed(() => (company.siteUrl ? `${company.siteUrl}${route.path}` : undefined))
+const route = useRoute();
+const ogImage = "/brand/og.png";
+const pageUrl = computed(() =>
+  company.siteUrl ? `${company.siteUrl}${route.path}` : undefined,
+);
 
 useSeoMeta({
-  ogType: 'website',
-  ogLocale: 'ar_IQ',
+  ogType: "website",
+  ogLocale: "ar_IQ",
   ogSiteName: company.name,
   ogImage: company.siteUrl ? `${company.siteUrl}${ogImage}` : ogImage,
   ogImageWidth: 1200,
   ogImageHeight: 630,
-  ogImageAlt: 'شعار Codel باللون الأبيض على خلفية داكنة',
-  ogUrl: pageUrl
-})
+  ogImageAlt: "شعار Codel باللون الأبيض على خلفية داكنة",
+  ogUrl: pageUrl,
+});
 
 useHead(() => ({
-  link: pageUrl.value ? [{ rel: 'canonical', href: pageUrl.value }] : []
-}))
+  link: pageUrl.value ? [{ rel: "canonical", href: pageUrl.value }] : [],
+}));
 
 // Marks <html class="js"> before the first paint. Without JavaScript the class is missing and the
 // small-screen header keeps the links as a plain list instead of a menu button that could not open.
 useHead({
-  script: [{ key: 'js-flag', innerHTML: "document.documentElement.classList.add('js')" }]
-})
+  script: [
+    {
+      key: "js-flag",
+      innerHTML: "document.documentElement.classList.add('js')",
+    },
+  ],
+});
 
 // A page that draws its own full-width sections sets definePageMeta({ fullWidth: true }) (the home page).
-const fullWidth = computed(() => route.meta.fullWidth === true)
+const fullWidth = computed(() => route.meta.fullWidth === true);
 
 // The path without a trailing slash: static hosts can redirect to one.
-const path = computed(() => route.path.replace(/\/+$/, '') || '/')
+const path = computed(() => route.path.replace(/\/+$/, "") || "/");
 
 // /solutions/<slug> keeps "حلولنا" marked: the link's section is current, not only its exact page.
-const inSection = (to: string) => to !== '/' && path.value.startsWith(`${to}/`)
+const inSection = (to: string) => to !== "/" && path.value.startsWith(`${to}/`);
 
 // Small-screen menu. Same breakpoint as $nav-wide in the styles below.
-const wideQuery = '(min-width: 60em)'
-const menuOpen = ref(false)
-const header = ref<HTMLElement | null>(null)
-const menuButton = ref<HTMLButtonElement | null>(null)
+const wideQuery = "(min-width: 60em)";
+const menuOpen = ref(false);
+const header = ref<HTMLElement | null>(null);
+const menuButton = ref<HTMLButtonElement | null>(null);
 
 function closeMenu(restoreFocus = false) {
-  if (!menuOpen.value) return
-  menuOpen.value = false
-  if (restoreFocus) menuButton.value?.focus()
+  if (!menuOpen.value) return;
+  menuOpen.value = false;
+  if (restoreFocus) menuButton.value?.focus();
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') closeMenu(true)
+  if (event.key === "Escape") closeMenu(true);
 }
 
 // A press or a focus move outside the header closes the menu.
 function onPointerDown(event: PointerEvent) {
-  if (event.target instanceof Node && !header.value?.contains(event.target)) closeMenu()
+  if (event.target instanceof Node && !header.value?.contains(event.target))
+    closeMenu();
 }
 
 function onFocusOut(event: FocusEvent) {
-  if (event.relatedTarget instanceof Node && !header.value?.contains(event.relatedTarget)) closeMenu()
+  if (
+    event.relatedTarget instanceof Node &&
+    !header.value?.contains(event.relatedTarget)
+  )
+    closeMenu();
 }
 
 function onWideChange(event: MediaQueryListEvent) {
-  if (event.matches) closeMenu()
+  if (event.matches) closeMenu();
 }
 
 function stopListening() {
-  document.removeEventListener('keydown', onKeydown)
-  document.removeEventListener('pointerdown', onPointerDown)
+  document.removeEventListener("keydown", onKeydown);
+  document.removeEventListener("pointerdown", onPointerDown);
 }
 
 watch(menuOpen, (open) => {
   if (open) {
-    document.addEventListener('keydown', onKeydown)
-    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener("keydown", onKeydown);
+    document.addEventListener("pointerdown", onPointerDown);
   } else {
-    stopListening()
+    stopListening();
   }
-})
+});
 
-watch(() => route.fullPath, () => closeMenu())
+watch(
+  () => route.fullPath,
+  () => closeMenu(),
+);
 
 // After a page change, keyboard and screen-reader users carry on from the new page's content.
-const main = ref<HTMLElement | null>(null)
-watch(() => route.path, () => nextTick(() => main.value?.focus({ preventScroll: true })))
+const main = ref<HTMLElement | null>(null);
+watch(
+  () => route.path,
+  () => nextTick(() => main.value?.focus({ preventScroll: true })),
+);
 
-let wideMedia: MediaQueryList | undefined
+let wideMedia: MediaQueryList | undefined;
 
 onMounted(() => {
-  wideMedia = window.matchMedia(wideQuery)
-  wideMedia.addEventListener('change', onWideChange)
-})
+  wideMedia = window.matchMedia(wideQuery);
+  wideMedia.addEventListener("change", onWideChange);
+});
 
 onBeforeUnmount(() => {
-  wideMedia?.removeEventListener('change', onWideChange)
-  stopListening()
-})
+  wideMedia?.removeEventListener("change", onWideChange);
+  stopListening();
+});
 </script>
 
 <template>
@@ -132,7 +150,7 @@ onBeforeUnmount(() => {
             alt="Codel"
             width="126"
             height="22"
-          >
+          />
         </NuxtLink>
 
         <nav class="layout__nav" aria-label="القائمة الرئيسية">
@@ -150,7 +168,12 @@ onBeforeUnmount(() => {
             </span>
           </button>
 
-          <ul id="site-menu" role="list" class="layout__menu" :class="{ 'layout__menu--open': menuOpen }">
+          <ul
+            id="site-menu"
+            role="list"
+            class="layout__menu"
+            :class="{ 'layout__menu--open': menuOpen }"
+          >
             <li
               v-for="link in headerLinks"
               :key="link.to"
@@ -182,7 +205,13 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <main id="main" ref="main" class="layout__main" :class="{ 'layout__main--full': fullWidth }" tabindex="-1">
+    <main
+      id="main"
+      ref="main"
+      class="layout__main"
+      :class="{ 'layout__main--full': fullWidth }"
+      tabindex="-1"
+    >
       <slot />
     </main>
 
@@ -196,14 +225,18 @@ onBeforeUnmount(() => {
             width="160"
             height="28"
             loading="lazy"
-          >
-          <p class="layout__footer-about">كودل شركة برمجيات عراقية في {{ company.addressParts.city }}.</p>
+          />
+          <p class="layout__footer-about">
+            كودل شركة برمجيات عراقية في {{ company.addressParts.city }}.
+          </p>
         </div>
 
         <nav class="layout__footer-nav" aria-label="روابط الموقع">
           <ul role="list" class="layout__footer-links">
             <li v-for="link in links" :key="link.to">
-              <NuxtLink class="layout__footer-link" :to="link.to">{{ link.label }}</NuxtLink>
+              <NuxtLink class="layout__footer-link" :to="link.to">{{
+                link.label
+              }}</NuxtLink>
             </li>
           </ul>
         </nav>
@@ -268,7 +301,8 @@ $footer-three: 64em;
   &__header {
     position: relative;
     z-index: 20;
-    background-color: var(--bg);
+    background-color: transparent;
+    padding-block-start: var(--space-3);
 
     .js & {
       position: sticky;
@@ -290,12 +324,12 @@ $footer-three: 64em;
 
     // The bottom rule.
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       inset-inline: 0;
       inset-block-end: 0;
       block-size: 1px;
-      background-color: var(--border);
+      background-color: transparent;
       pointer-events: none;
     }
   }
@@ -311,6 +345,9 @@ $footer-three: 64em;
     min-block-size: var(--header-height);
     margin-inline: auto;
     padding-inline: var(--page-gutter);
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
   }
 
   &__brand {
@@ -364,13 +401,13 @@ $footer-three: 64em;
 
     // Current page or section: heavier, with the lime bar under the words so it is never colour
     // alone. On the label, so the bar fits the words in the header and in the panel.
-    &[aria-current='page'],
+    &[aria-current="page"],
     &--section {
       font-weight: 600;
       color: var(--text);
 
       .layout__link-label::after {
-        content: '';
+        content: "";
         position: absolute;
         inset-inline: 0;
         inset-block-end: calc(var(--space-2) * -1);
@@ -432,7 +469,7 @@ $footer-three: 64em;
 
       &::before,
       &::after {
-        content: '';
+        content: "";
         position: absolute;
         inset-inline: 0;
         block-size: var(--stroke);
@@ -452,7 +489,7 @@ $footer-three: 64em;
       }
     }
 
-    [aria-expanded='true'] &__menu-icon {
+    [aria-expanded="true"] &__menu-icon {
       &::before {
         transform: translate(0, 5px) rotate(45deg);
       }
@@ -555,7 +592,8 @@ $footer-three: 64em;
     gap: var(--space-7) var(--space-8);
     max-inline-size: var(--container-max);
     margin-inline: auto;
-    padding: clamp(var(--space-7), 7vw, var(--space-9)) var(--page-gutter) var(--space-7);
+    padding: clamp(var(--space-7), 7vw, var(--space-9)) var(--page-gutter)
+      var(--space-7);
 
     @media (width >= $footer-two) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -612,7 +650,7 @@ $footer-three: 64em;
       }
     }
 
-    &[aria-current='page'] {
+    &[aria-current="page"] {
       font-weight: 600;
       color: var(--text);
     }
