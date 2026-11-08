@@ -118,21 +118,26 @@ $dot-size: 6px;
     // clientX counts from the left, so the inline start has to be the left on this RTL site too.
     direction: ltr;
     border-radius: 50%;
+    // Black or white, whichever stands out from what lies under each pixel: no surface list to keep.
+    backdrop-filter: invert(1) grayscale(1) contrast(100);
     pointer-events: none;
     will-change: transform;
   }
 
+  // The filter fills the whole box; the mask keeps only the border's shape, so the middle stays clear.
   &__ring {
     box-sizing: border-box;
     inline-size: $ring-size;
     block-size: $ring-size;
-    border: 1.5px solid var(--cursor-color);
+    border: 1.5px solid transparent;
+    mask:
+      linear-gradient(black 0 0) padding-box exclude,
+      linear-gradient(black 0 0) border-box;
   }
 
   &__dot {
     inline-size: $dot-size;
     block-size: $dot-size;
-    background-color: var(--cursor-color);
   }
 }
 </style>
