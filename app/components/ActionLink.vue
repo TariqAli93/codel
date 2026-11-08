@@ -29,6 +29,7 @@ const hiddenText = computed(() =>
     class="action"
     :class="`action--${look}`"
     :to="to"
+    :external="to.startsWith('#')"
     :target="newTab ? '_blank' : undefined"
     :rel="newTab ? 'noopener noreferrer' : undefined"
   >
