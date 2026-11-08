@@ -216,8 +216,9 @@ async function startMotion() {
       ScrollTrigger.batch(all(".home__tile"), {
         start: "top 88%",
         once: true,
+        // A tile that already holds focus (keyboard got there first) is left as it is.
         onEnter: (batch) =>
-          gsap.from(batch, {
+          gsap.from(batch.filter((tile) => !tile.contains(document.activeElement)), {
             opacity: 0,
             y: 40,
             duration: 0.9,
@@ -362,6 +363,10 @@ async function startMotion() {
       if (element && target && element.contains(target))
         trigger.animation?.progress(1);
     }
+    // Reveals started by a batch callback have no trigger animation: finish those on the way up.
+    for (let node = target; node && node !== root; node = node.parentElement) {
+      for (const tween of gsap.getTweensOf(node)) tween.progress(1);
+    }
   };
   root.addEventListener("focusin", onFocus);
 
@@ -421,51 +426,39 @@ async function startMotion() {
 
       <!-- Real screens of the products; decorative here, described in the products below. -->
       <div class="home__stage" aria-hidden="true">
-        <div
-          v-if="heroBack && heroBackShot"
-          class="home__layer home__layer--back"
-          data-depth="0.6"
-        >
-          <ProductWindow
-            v-bind="heroBackShot"
-            alt=""
-            :title="heroBack.nameAr"
-            eager
-          />
-          <p class="home__tag home__tag--back">
-            {{ heroBack.nameAr }}
-            <span dir="ltr">{{ price(heroBack.priceIqd) }}</span> دينار
-          </p>
-        </div>
-        <div
-          v-if="heroFront && heroFrontShot"
-          class="home__layer home__layer--front"
-          data-depth="1"
-        >
-          <ProductWindow
-            v-bind="heroFrontShot"
-            alt=""
-            :title="heroFront.nameAr"
-            eager
-          />
-          <p class="home__tag home__tag--front">
-            {{ heroFront.nameAr }}
-            <span dir="ltr">{{ price(heroFront.priceIqd) }}</span> دينار
-          </p>
-        </div>
-        <div class="home__layer home__layer--code" data-depth="1.5">
-          <div class="home__code">
-            <div class="home__code-bar">
-              <span class="home__code-file" dir="ltr">checkout.ts</span>
-            </div>
-            <pre
-              class="home__code-body"
-              dir="ltr"
-            ><code><span class="home__code-k">export async function</span> <span class="home__code-f">checkout</span>(cart) {
-  <span class="home__code-k">const</span> invoice = <span class="home__code-k">await</span> invoices.<span class="home__code-f">create</span>(cart)
-  <span class="home__code-k">await</span> stock.<span class="home__code-f">move</span>(cart.items)
-  <span class="home__code-k">return</span> <span class="home__code-f">print</span>(invoice)
-}</code></pre>
+        <div class="home__stage-light" />
+        <div class="home__stage-scene">
+          <div
+            v-if="heroBack && heroBackShot"
+            class="home__layer home__layer--back"
+            data-depth="0.5"
+          >
+            <ProductWindow
+              v-bind="heroBackShot"
+              alt=""
+              :title="heroBack.nameAr"
+              eager
+            />
+            <p class="home__tag home__tag--back">
+              {{ heroBack.nameAr }}
+              <span dir="ltr">{{ price(heroBack.priceIqd) }}</span> دينار
+            </p>
+          </div>
+          <div
+            v-if="heroFront && heroFrontShot"
+            class="home__layer home__layer--front"
+            data-depth="1"
+          >
+            <ProductWindow
+              v-bind="heroFrontShot"
+              alt=""
+              :title="heroFront.nameAr"
+              eager
+            />
+            <p class="home__tag home__tag--front">
+              {{ heroFront.nameAr }}
+              <span dir="ltr">{{ price(heroFront.priceIqd) }}</span> دينار
+            </p>
           </div>
         </div>
       </div>
@@ -751,6 +744,11 @@ $medium: 48em;
 $wide: 64em;
 // From here the contact band starts on the content edge with the brand lean.
 $band-lean: 80em;
+// The hero's tiers, measured on the page's own width (the .home container, so a scrollbar never
+// tips the layout): phones below $hero-tablet, a wide stage under the text below $hero-split, and two
+// columns from $hero-split, where the headline still fits its column on two lines.
+$hero-tablet: 46rem;
+$hero-split: 58.75rem;
 
 .home {
   container-type: inline-size;
@@ -861,7 +859,7 @@ $band-lean: 80em;
       pointer-events: none;
     }
 
-    @media (width >= $wide) {
+    @container (width >= #{$hero-split}) {
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
       gap: clamp(var(--space-7), 5vw, var(--space-10));
       min-block-size: min(calc(100svh - var(--header-height)), 50rem);
@@ -901,7 +899,7 @@ $band-lean: 80em;
     font-weight: 800;
 
     // Wide: sized to its column, so the second line stays whole (it runs about 10em).
-    @media (width >= $wide) {
+    @container (width >= #{$hero-split}) {
       font-size: min(3.5rem, (100cqi - 2 * #{$edge}) * 0.046);
     }
   }
@@ -1026,16 +1024,20 @@ $band-lean: 80em;
 
   // The screens on a fixed-ratio stage, lit in each product's colour. Wide screens turn the scene
   // toward the text; phones get flat, focused crops so the screens stay legible.
+  // The screens on a fixed-ratio stage, lit in each product's colours: flat, focused crops on
+  // phones; a wide, shallow stage under the text on tablets; from $hero-split their own column,
+  // turned toward the text.
   &__stage {
     position: relative;
     aspect-ratio: 1.02;
     margin-inline-end: calc(-0.5 * #{$edge});
 
-    @media (width >= $medium) {
-      aspect-ratio: 1.2;
+    @container (width >= #{$hero-tablet}) {
+      aspect-ratio: 1.55;
+      margin-inline-end: 0;
     }
 
-    @media (width >= $wide) {
+    @container (width >= #{$hero-split}) {
       aspect-ratio: 1.08;
       margin-inline-end: calc(-1 * #{$edge} + var(--space-5));
       perspective: 2400px;
@@ -1081,14 +1083,14 @@ $band-lean: 80em;
     position: absolute;
     inset: 0;
 
-    @media (width >= $wide) {
+    @container (width >= #{$hero-split}) {
       transform-style: preserve-3d;
       transform: rotateY(-9deg) rotateX(4deg);
     }
   }
 
-  // Phones: the back screen full width, cropped to its menu and headings; the front screen over its
-  // lower corner, cropped the same way. From $medium both show whole.
+  // Phones: the back screen full width, cropped to its menu and headings, and the front screen over
+  // its lower corner, cropped the same way. From $hero-tablet both show whole.
   &__layer {
     position: absolute;
 
@@ -1100,15 +1102,16 @@ $band-lean: 80em;
       inset-inline-end: 0;
       inline-size: 100%;
 
-      @media (width >= $medium) {
+      @container (width >= #{$hero-tablet}) {
         --window-ratio: auto;
         --window-zoom: 1;
 
-        inset-block-start: 3%;
-        inline-size: 86%;
+        inset-block-start: 2%;
+        inline-size: 72%;
       }
 
-      @media (width >= $wide) {
+      @container (width >= #{$hero-split}) {
+        inline-size: 86%;
         translate: 0 0 -40px;
       }
     }
@@ -1120,18 +1123,20 @@ $band-lean: 80em;
       z-index: 1;
       inset-block-end: 0;
       inset-inline-start: 0;
-      inline-size: 66%;
-    }
+      inline-size: 64%;
 
-    &--code {
-      z-index: 2;
-      inset-block-end: 0;
-      inset-inline-end: 2%;
-      inline-size: 54%;
+      @container (width >= #{$hero-tablet}) {
+        --window-ratio: auto;
+        --window-zoom: 1;
 
-      // On small phones the code would cover the screens; the screens carry the hero there.
-      @media (width < 30em) {
-        display: none;
+        inset-block-end: 4%;
+        inline-size: 56%;
+      }
+
+      @container (width >= #{$hero-split}) {
+        inset-block-end: 5%;
+        inline-size: 62%;
+        translate: 0 0 60px;
       }
     }
   }
@@ -1166,50 +1171,6 @@ $band-lean: 80em;
       background-color: var(--dalaly-ground);
       color: var(--dalaly-ink);
     }
-  }
-
-  // The code window: a few lines of the kind of code behind a checkout.
-  &__code {
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
-    border-radius: var(--radius-lg);
-    background-color: var(--bg);
-    box-shadow: 0 1.5rem 3rem -1rem color-mix(in srgb, black 60%, transparent);
-  }
-
-  &__code-bar {
-    display: flex;
-    align-items: center;
-    block-size: 1.75rem;
-    padding-inline: var(--space-3);
-    border-block-end: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
-    background-color: var(--surface);
-  }
-
-  &__code-file {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    color: var(--text-muted);
-  }
-
-  &__code-body {
-    margin: 0;
-    padding: var(--space-3) var(--space-4);
-    overflow: hidden;
-    font-family: var(--font-mono);
-    font-size: clamp(0.4375rem, 0.25rem + 0.55vw, 0.75rem);
-    line-height: 1.75;
-    text-align: left;
-    white-space: pre;
-    color: var(--text);
-  }
-
-  &__code-k {
-    color: var(--nuqta-accent);
-  }
-
-  &__code-f {
-    color: var(--accent);
   }
 
   // ---------------------------------------------------------------------------
