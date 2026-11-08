@@ -139,12 +139,17 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
-// Page gutter and motion: site-level tokens, not in tokens.json v1 yet.
+// Page rhythm and motion: site-level tokens, not in tokens.json v1 yet.
 // Motion is optional: the reduced-motion block at the end of this file switches it off.
 :root {
   --page-gutter: clamp(var(--space-4), 5vw, var(--space-6));
+  --section-gap: clamp(var(--space-8), 8vw, var(--space-10)); // between a page's sections
+  --head-gap: var(--space-7); // between a section's heading and its content
+  --panel-pad: clamp(var(--space-5), 5vw, var(--space-9)); // inside large panels
+  --measure: 42rem; // the widest a running paragraph gets
+  --touch-target: 44px; // the smallest a standalone link gets (WCAG 2.5.5)
 
-  --duration-fast: 120ms; // feedback: hover, press, colour
+  --duration-fast: 150ms; // feedback: hover, press, colour
   --duration-base: 220ms; // UI transitions: menu, indicators
   --duration-slow: 480ms; // larger moves and fades
   --duration-entrance: 800ms; // the page-load sequence (home hero only)
@@ -154,32 +159,39 @@
 }
 
 // Type scale, points, strokes and glow: site-level tokens, not in tokens.json v1 yet.
-// Roles: what you act on, tags and decorative bars lean (--slant-angle); a lime point marks
-// what is live now, and sits small inside outline buttons. Lime fills only the hero call bar, the
-// home contact band and the header button, and only they glow (--glow-accent, on its own layer).
+// Roles: what you act on, tags and decorative bars lean (--slant-angle); a lime point marks what
+// is live now. Lime fills the solid buttons and the home contact band; the solid buttons carry the
+// one glow (--glow-accent, on its own layer), and a light ground switches it off.
 :root {
   --text-hero: clamp(3.5rem, 0.5rem + 9vw, 7.5rem); // the home h1 (a ceiling: it fits its measure)
-  --text-title: clamp(2rem, 1.35rem + 2.6vw, 3.75rem); // section headings
-  --text-name: clamp(1.75rem, 1.35rem + 1.6vw, 2.75rem); // product names
+  --text-page: clamp(2.5rem, 2.0714rem + 2.1429vw, 4rem); // every other h1
+  --text-title: clamp(2rem, 1.7143rem + 1.4286vw, 3rem); // section headings
+  --text-name: clamp(1.625rem, 1.4464rem + 0.8929vw, 2.25rem); // product names
   --text-figure: clamp(
-    1.875rem,
-    1.4rem + 2.4vw,
-    3.5rem
+    1.5rem,
+    1.3571rem + 0.7143vw,
+    2rem
   ); // prices and years; always below --text-title
   --text-flow: clamp(
     1.5rem,
-    1.1rem + 1.8vw,
-    2.625rem
+    1.2857rem + 1.0714vw,
+    2.25rem
   ); // running display lines: services, statements
+  --text-card: clamp(1.25rem, 1.2143rem + 0.1786vw, 1.375rem); // card titles, the menu panel
   --text-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.3125rem); // ledes
+  --text-sub: 1.125rem; // h5, h6
+  --text-body: 1rem; // running text, larger buttons
+  --text-ui: 0.9375rem; // navigation, smaller buttons, labels
   --text-small: 0.875rem;
+  --text-caption: 0.75rem; // window title bars
 
   --point-sm: 0.375rem; // every point except the year nodes
   --point-md: 0.75rem; // the year nodes
-  --stroke: 2px; // menu bars and the call bar's divider
+  --stroke: 2px; // menu bars
 
-  // Product accents, taken from each product's own interface (home page showcases only).
+  // Product accents, taken from each product's own interface.
   --nuqta-accent: #7367f0;
+  --nuqta-ground: color-mix(in srgb, var(--nuqta-accent) 12%, var(--surface));
   --dalaly-ground: #f4efe5;
   --dalaly-ink: #263236;
   --dalaly-accent: #b48f55;
@@ -188,6 +200,12 @@
     0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
     0 0 1rem color-mix(in srgb, var(--accent) 30%, transparent),
     0 0 2.5rem color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+// A lime glow cannot be seen on a light ground. Must stay after the block above: the two selectors
+// have equal specificity, so on <html> order decides.
+[data-theme="light"] {
+  --glow-accent: none;
 }
 
 // -----------------------------------------------------------------------------
@@ -214,7 +232,7 @@ html {
 body {
   min-height: 100vh;
   font-family: var(--font-sans);
-  font-size: 1rem; // body
+  font-size: var(--text-body); // body
   line-height: 1.75;
   color: var(--text);
   background-color: var(--bg);
@@ -278,28 +296,28 @@ h6 {
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: var(--text-page);
+  line-height: 1.2;
+  font-weight: 800;
+}
+h2 {
+  font-size: var(--text-title);
   line-height: 1.25;
   font-weight: 800;
-} // display-lg
-h2 {
-  font-size: 2.25rem;
+}
+h3 {
+  font-size: var(--text-name);
   line-height: 1.3;
   font-weight: 700;
-} // heading-xl
-h3 {
-  font-size: 1.75rem;
-  line-height: 1.4;
-  font-weight: 700;
-} // heading-lg
+}
 h4 {
-  font-size: 1.375rem;
+  font-size: var(--text-card);
   line-height: 1.45;
   font-weight: 600;
 } // heading-md
 h5,
 h6 {
-  font-size: 1.125rem;
+  font-size: var(--text-sub);
   line-height: 1.5;
   font-weight: 600;
 } // heading-sm
@@ -318,7 +336,7 @@ a {
 
 @media (hover: hover) {
   a:hover {
-    text-decoration-color: var(--accent);
+    text-decoration-color: var(--accent-text);
   }
 }
 

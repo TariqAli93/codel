@@ -27,42 +27,23 @@ useSeoMeta({
   <NuxtLayout>
     <section class="error">
       <p class="error__code">خطأ {{ status }}</p>
-      <h1>{{ heading }}</h1>
-      <p class="error__text">{{ text }}</p>
-      <p class="error__actions">
-        <NuxtLink to="/">العودة إلى الصفحة الرئيسية</NuxtLink>
-      </p>
+      <PageHead :title="heading" :lede="text">
+        <ActionLink to="/" label="العودة إلى الصفحة الرئيسية" />
+        <ActionLink look="text" to="/contact" label="تواصل معنا" />
+      </PageHead>
     </section>
   </NuxtLayout>
 </template>
 
 <style scoped lang="scss">
 .error {
-  max-inline-size: 40rem;
-  padding-block: var(--space-7);
+  max-inline-size: var(--measure);
 
   &__code {
     margin-block-end: var(--space-3);
-    font-size: 0.875rem;
+    font-size: var(--text-small);
     font-weight: 600;
-    color: var(--accent-text);
-  }
-
-  &__text {
-    font-size: 1.125rem;
     color: var(--text-muted);
-  }
-
-  &__actions {
-    margin-block-start: var(--space-4);
-    font-weight: 600;
-
-    // Standalone link: 44px touch target (WCAG 2.5.5).
-    a {
-      display: inline-flex;
-      align-items: center;
-      min-block-size: 44px;
-    }
   }
 }
 </style>

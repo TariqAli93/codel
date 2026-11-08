@@ -7,8 +7,7 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description, rob
 </script>
 
 <template>
-  <section>
-    <h1>الشروط والأحكام</h1>
-    <p>هذه الصفحة قيد الإعداد.</p>
-  </section>
+  <PageHead title="الشروط والأحكام" lede="هذه الصفحة قيد الإعداد.">
+    <ActionLink look="text" to="/" label="العودة إلى الصفحة الرئيسية" />
+  </PageHead>
 </template>

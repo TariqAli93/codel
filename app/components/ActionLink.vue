@@ -1,23 +1,41 @@
 <script setup lang="ts">
-// One link for actions. Both looks lean with the brand slant and keep their content upright:
-// 'solid' is the lime button with the lime glow, for the page's main call,
-// 'ink' is the dark call button for a lime ground (the contact band),
-// 'outline' is an outlined button with a small lime point at its start.
+// One link for actions. Three looks are buttons, leaning pills with their content turned back
+// upright: 'solid' is the lime button with the lime glow, for the page's main call; 'ink' is the
+// dark call button for a lime ground; 'outline' is the outlined button for a secondary action.
+// 'text' is a plain underlined link with no lean. Its colours read --link-color, --link-rule,
+// --link-rule-hover and --link-active, so a lime ground can set its own.
 const props = withDefaults(
   defineProps<{
     to: string
-    look?: 'solid' | 'ink' | 'outline'
+    look?: 'solid' | 'ink' | 'outline' | 'text'
+    // Buttons only. Without it solid and ink are lg, outline is md.
+    size?: 'md' | 'lg'
     newTab?: boolean
-    label: string
-    // Shown after the label, left to right (the phone number); the outline look does not show it.
+    // The default slot replaces it when the label needs markup.
+    label?: string
+    // Shown after the label, left to right (the phone number).
     detail?: string
     // Read by screen readers only, after the label (e.g. the product a shared label is about).
     hiddenSuffix?: string
+    // The solid look's lime glow.
+    glow?: boolean
   }>(),
-  { look: 'outline', newTab: false, detail: undefined, hiddenSuffix: undefined }
+  {
+    look: 'outline',
+    size: undefined,
+    newTab: false,
+    label: undefined,
+    detail: undefined,
+    hiddenSuffix: undefined,
+    glow: true
+  }
 )
 
-const showDetail = computed(() => props.look !== 'outline' && Boolean(props.detail))
+const classes = computed(() => [
+  `action--${props.look}`,
+  props.look === 'text' ? undefined : `action--${props.size ?? (props.look === 'outline' ? 'md' : 'lg')}`,
+  { 'action--glow': props.look === 'solid' && props.glow }
+])
 
 const hiddenText = computed(() =>
   [props.hiddenSuffix, props.newTab ? '(يفتح في نافذة جديدة)' : undefined].filter(Boolean).join(' ')
@@ -27,14 +45,17 @@ const hiddenText = computed(() =>
 <template>
   <NuxtLink
     class="action"
-    :class="`action--${look}`"
+    :class="classes"
     :to="to"
     :external="to.startsWith('#')"
+    :no-prefetch="to.startsWith('#')"
     :target="newTab ? '_blank' : undefined"
     :rel="newTab ? 'noopener noreferrer' : undefined"
   >
-    <!-- Kept on one line: the spaces keep the parts apart in the link's accessible name. -->
-    <span class="action__content"><span class="action__label">{{ label }}</span> <span v-if="showDetail" class="action__divider" aria-hidden="true" /> <span v-if="showDetail" class="action__detail" dir="ltr">{{ detail }}</span> <span v-if="hiddenText" class="action__hidden">{{ hiddenText }}</span></span>
+    <!-- Kept on one line (and out of the formatter's reach): the spaces keep the parts apart in
+         the link's accessible name. -->
+    <!-- prettier-ignore -->
+    <span class="action__content"><span class="action__label"><slot>{{ label }}</slot></span> <span v-if="detail" class="action__detail" dir="ltr">{{ detail }}</span> <span v-if="hiddenText" class="action__hidden">{{ hiddenText }}</span></span>
   </NuxtLink>
 </template>
 
@@ -45,25 +66,77 @@ $upright: skewX(var(--slant-angle));
 
 .action {
   position: relative;
-  text-decoration: none;
-  transform: $lean;
+  display: inline-flex;
+  align-items: center;
 
   &__content {
-    transform: $upright;
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-inline-size: 0;
   }
 
-  // The main call: a leaning lime button with a lime glow.
-  &--solid {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: var(--control-lg);
-    padding-inline: var(--space-6);
-    border-radius: var(--radius-sm);
-    background-color: var(--primary);
-    color: var(--on-primary);
+  // ---------------------------------------------------------------------------
+  // Buttons
+  // ---------------------------------------------------------------------------
+
+  &--solid,
+  &--ink,
+  &--outline {
+    justify-content: center;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    line-height: 1.4;
+    text-decoration: none;
+    transform: $lean;
     transition: background-color var(--duration-fast) var(--ease-out);
 
-    // The glow on its own layer, so hover only changes its opacity. It leans with the button.
+    .action__content {
+      justify-content: center;
+      gap: 0 var(--space-3);
+      padding-block: var(--space-2);
+      transform: $upright;
+    }
+  }
+
+  &--md {
+    min-block-size: var(--control-md);
+    padding-inline: var(--space-5);
+    font-size: var(--text-ui);
+  }
+
+  &--lg {
+    min-block-size: var(--control-lg);
+    padding-inline: var(--space-6);
+    font-size: var(--text-body);
+  }
+
+  &--solid {
+    background-color: var(--primary);
+    color: var(--on-primary);
+
+    // Hover styles only where a pointer can hover: on touch, :hover sticks after a tap.
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--primary-hover);
+      }
+    }
+
+    &:active {
+      background-color: var(--primary-active);
+    }
+
+    // On its own page (the header button on /contact) it goes quiet: there is nowhere to go.
+    &[aria-current='page'] {
+      background-color: transparent;
+      color: var(--text);
+      box-shadow: inset 0 0 0 1.5px var(--border-strong);
+    }
+  }
+
+  // The glow on its own layer, so hover only changes its opacity. It leans with the button.
+  &--glow {
     &::after {
       content: '';
       position: absolute;
@@ -75,81 +148,20 @@ $upright: skewX(var(--slant-angle));
       transition: opacity var(--duration-base) var(--ease-out);
     }
 
-    // The content steps forward on hover (forward is to the left in RTL).
     @media (hover: hover) {
-      &:hover {
-        background-color: var(--primary-hover);
-
-        &::after {
-          opacity: 0.8;
-        }
-
-        .action__content {
-          translate: calc(var(--space-2) * -1) 0;
-        }
+      &:hover::after {
+        opacity: 0.8;
       }
     }
 
-    &:active {
-      background-color: var(--primary-active);
+    &[aria-current='page']::after {
+      content: none;
     }
   }
 
-  &--solid &__content {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0 var(--space-3);
-    padding-block: var(--space-2);
-    transition: translate var(--duration-base) var(--ease-out);
-
-    // Narrow phones: the number under the label, no divider.
-    @media (width < 26em) {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0;
-    }
-  }
-
-  &--solid &__label {
-    font-family: var(--font-display);
-    font-size: 1.0625rem;
-    font-weight: 700;
-    line-height: 1.4;
-  }
-
-  // Leans inside the upright content, so it shares the button's slant.
-  &__divider {
-    inline-size: var(--stroke);
-    block-size: 1.375rem;
-    border-radius: var(--radius-pill);
-    background-color: currentColor;
-    opacity: 0.35;
-    transform: $lean;
-
-    @media (width < 26em) {
-      display: none;
-    }
-  }
-
-  &__detail {
-    font-size: 1.0625rem;
-    font-weight: 500;
-  }
-
-  // The call on a lime ground: dark with lime text, leaning like the lime button.
   &--ink {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: var(--control-lg);
-    padding-inline: var(--space-6);
-    border-radius: var(--radius-sm);
     background-color: var(--on-accent);
     color: var(--accent);
-    font-weight: 600;
-    transition:
-      background-color var(--duration-fast) var(--ease-out),
-      scale var(--duration-fast) var(--ease-out);
 
     @media (hover: hover) {
       &:hover {
@@ -158,66 +170,56 @@ $upright: skewX(var(--slant-angle));
     }
 
     &:active {
-      scale: 0.96;
+      background-color: var(--surface);
     }
   }
 
-  &--ink &__content {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0 var(--space-3);
-    padding-block: var(--space-2);
-  }
-
-  // A secondary action: a leaning outlined button with the lime point at the start of its
-  // upright content.
   &--outline {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: var(--control-md);
-    padding-inline: var(--space-4) var(--space-5);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
-    font-size: 0.9375rem;
-    font-weight: 600;
-    line-height: 1.5;
+    border: 1.5px solid var(--border-strong);
     color: var(--text);
-    transition:
-      border-color var(--duration-fast) var(--ease-out),
-      scale var(--duration-fast) var(--ease-out);
 
     @media (hover: hover) {
       &:hover {
-        border-color: var(--text);
-
-        .action__content::before {
-          scale: 1.5;
-        }
+        background-color: var(--surface-raised);
       }
     }
 
     &:active {
-      scale: 0.97;
+      background-color: var(--surface);
     }
   }
 
-  &--outline &__content {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
+  &__detail {
+    font-weight: 500;
+  }
 
-    // Nudged down to sit on the Arabic letter bodies rather than the line's centre.
-    &::before {
-      content: '';
-      flex: none;
-      inline-size: var(--point-sm);
-      block-size: var(--point-sm);
-      border-radius: 50%;
-      background-color: var(--accent);
-      translate: 0 0.08em;
-      transition: scale var(--duration-base) var(--ease-out);
+  // ---------------------------------------------------------------------------
+  // Text link
+  // ---------------------------------------------------------------------------
+
+  &--text {
+    gap: 0.3em;
+    min-block-size: var(--touch-target);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    color: var(--link-color, var(--text));
+    text-decoration-color: var(--link-rule, var(--border-strong));
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      text-decoration-color var(--duration-fast) var(--ease-out);
+
+    .action__content {
+      gap: 0.3em;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        text-decoration-color: var(--link-rule-hover, var(--accent-text));
+      }
+    }
+
+    &:active {
+      color: var(--link-active, var(--text-muted));
     }
   }
 

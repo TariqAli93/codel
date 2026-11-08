@@ -9,93 +9,54 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
 
 <template>
   <div class="contact">
-    <h1>تواصل معنا</h1>
-    <p class="contact__lede">يسعدنا استقبال استفسارك على الهاتف أو واتساب أو البريد الإلكتروني.</p>
+    <div>
+      <PageHead title="تواصل معنا" lede="يسعدنا استقبال استفسارك على الهاتف أو واتساب أو البريد الإلكتروني." />
+      <OpenStatus class="contact__status" />
+      <div class="contact__call">
+        <WhatsAppCall :detail="company.phones.main.display" />
+      </div>
+      <div class="contact__links">
+        <!-- Kept on one line (and out of the formatter's reach): the space keeps the words and the
+             number apart. -->
+        <!-- prettier-ignore -->
+        <ActionLink look="text" :to="company.phones.main.tel">أو اتصل <span dir="ltr">{{ company.phones.main.display }}</span></ActionLink>
+        <ActionLink look="text" to="/faq" label="الأسئلة الشائعة" />
+      </div>
+    </div>
 
-    <dl class="contact__list">
-      <div class="contact__row">
-        <dt>{{ company.phones.main.label }}</dt>
-        <dd class="contact__values">
-          <a :href="company.phones.main.tel" dir="ltr">{{ company.phones.main.display }}</a>
-          <a :href="company.phones.main.whatsapp" target="_blank" rel="noopener noreferrer">راسلنا على واتساب</a>
-        </dd>
-      </div>
-      <div class="contact__row">
-        <dt>{{ company.phones.secondary.label }}</dt>
-        <dd class="contact__values">
-          <a :href="company.phones.secondary.whatsapp" target="_blank" rel="noopener noreferrer" dir="ltr">{{ company.phones.secondary.display }}</a>
-        </dd>
-      </div>
-      <div class="contact__row">
-        <dt>البريد الإلكتروني</dt>
-        <dd class="contact__values">
-          <a :href="`mailto:${company.email}`" dir="ltr">{{ company.email }}</a>
-        </dd>
-      </div>
-      <div class="contact__row">
-        <dt>العنوان</dt>
-        <dd class="contact__values">{{ company.address }}</dd>
-      </div>
-      <div class="contact__row">
-        <dt>ساعات الدوام</dt>
-        <dd class="contact__values">{{ company.hours.days }}، {{ company.hours.time }}</dd>
-      </div>
-    </dl>
+    <ContactList />
   </div>
 </template>
 
 <style scoped lang="scss">
+$wide: 64em;
+
 .contact {
-  &__lede {
-    margin-block-end: var(--space-7);
-    font-size: 1.125rem;
-    color: var(--text-muted);
+  display: grid;
+  row-gap: var(--head-gap);
+
+  @media (width >= $wide) {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: start;
+    column-gap: var(--space-8);
   }
 
-  &__list {
-    max-inline-size: 40rem;
-    margin: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background-color: var(--surface);
+  &__status {
+    --status-point: var(--accent);
+
+    margin-block-start: var(--space-5);
   }
 
-  &__row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1) var(--space-5);
-    padding: var(--space-4) var(--space-5);
-
-    & + & {
-      border-block-start: 1px solid var(--border);
-    }
-
-    dt {
-      flex: 1 1 8rem;
-      color: var(--text-muted);
-    }
-
-    dd {
-      flex: 2 1 12rem;
-      min-inline-size: 0;
-      margin: 0;
-      overflow-wrap: anywhere;
-    }
+  &__call {
+    margin-block-start: var(--space-5);
   }
 
-  &__values {
+  &__links {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0 var(--space-5);
-    font-weight: 500;
-
-    // 44px touch target (WCAG 2.5.5).
-    a {
-      display: inline-flex;
-      align-items: center;
-      min-block-size: 44px;
-    }
+    margin-block-start: var(--space-3);
   }
 }
 </style>

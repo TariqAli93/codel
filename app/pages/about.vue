@@ -9,103 +9,85 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
 
 <template>
   <div class="about">
-    <h1>من نحن</h1>
-    <p class="about__lede">كودل شركة برمجيات عراقية ناشئة، مقرّها بغداد.</p>
+    <PageHead title="من نحن" lede="كودل شركة برمجيات عراقية ناشئة، مقرّها بغداد." />
 
     <section class="about__section" aria-labelledby="about-story">
-      <h2 id="about-story">قصتنا</h2>
-      <p>
-        بدأت كودل فكرةً في سنة {{ company.founded.idea }}، هدفها أن نبني برمجيات تخدم الأعمال في العراق.
-      </p>
-      <p>
-        احتاجت الفكرة وقتاً لتتحول إلى عمل حقيقي، وانطلقت الشركة في سنة {{ company.founded.launch }} من بغداد.
-      </p>
-      <p>
-        اليوم نقدّم برامج جاهزة، منها <NuxtLink to="/solutions/nuqta-plus">نقطة بلس</NuxtLink> لإدارة نقاط البيع والمخازن
-        و<NuxtLink to="/solutions/dalaly">دلالي</NuxtLink> لإدارة مكاتب العقارات. ونطوّر برمجيات حسب طلب العميل،
-        ونصمّم المواقع والتطبيقات، ونتولى إدارة السيرفرات.
-      </p>
-      <p>
-        نحن شركة ناشئة، ونتعامل مع كل مشروع على أنه خطوة في هذا الطريق.
-      </p>
+      <h2 id="about-story" class="about__heading">قصتنا</h2>
+      <div class="about__prose">
+        <p class="about__first">
+          بدأت كودل فكرةً في سنة {{ company.founded.idea }}، هدفها أن نبني برمجيات تخدم الأعمال في العراق.
+        </p>
+        <p>
+          احتاجت الفكرة وقتاً لتتحول إلى عمل حقيقي، وانطلقت الشركة في سنة {{ company.founded.launch }} من بغداد.
+        </p>
+        <p>
+          اليوم نقدّم برامج جاهزة، منها <NuxtLink to="/solutions/nuqta-plus">نقطة بلس</NuxtLink> لإدارة نقاط البيع والمخازن
+          و<NuxtLink to="/solutions/dalaly">دلالي</NuxtLink> لإدارة مكاتب العقارات. ونطوّر برمجيات حسب طلب العميل،
+          ونصمّم المواقع والتطبيقات، ونتولى إدارة السيرفرات.
+        </p>
+        <p>
+          نحن شركة ناشئة، ونتعامل مع كل مشروع على أنه خطوة في هذا الطريق.
+        </p>
+      </div>
     </section>
 
     <section class="about__section" aria-labelledby="about-timeline">
-      <h2 id="about-timeline">محطات</h2>
-      <ol class="about__timeline">
-        <li class="about__stop">
-          <span class="about__year">{{ company.founded.idea }}</span>
-          <span>بداية الفكرة</span>
-        </li>
-        <li class="about__stop">
-          <span class="about__year">{{ company.founded.launch }}</span>
-          <span>انطلاق الشركة</span>
-        </li>
-      </ol>
+      <h2 id="about-timeline" class="about__heading">محطات</h2>
+      <div class="about__prose">
+        <FoundingYears />
+      </div>
     </section>
 
     <section class="about__section" aria-labelledby="about-location">
-      <h2 id="about-location">أين نحن</h2>
-      <p>{{ company.address }}.</p>
-      <p>الدوام من {{ company.hours.days }}، {{ company.hours.time }}.</p>
-      <p class="about__more"><NuxtLink to="/contact">طرق التواصل</NuxtLink></p>
+      <h2 id="about-location" class="about__heading">أين نحن</h2>
+      <div class="about__prose">
+        <p>{{ company.address }}.</p>
+        <p>الدوام من {{ company.hours.days }}، {{ company.hours.time }}.</p>
+        <p><ActionLink look="text" to="/contact" label="طرق التواصل" /></p>
+      </div>
     </section>
+
+    <ClosingCall heading="لديك مشروع أو فكرة؟" text="أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني.">
+      <WhatsAppCall :glow="false" />
+    </ClosingCall>
   </div>
 </template>
 
 <style scoped lang="scss">
+$wide: 64em;
+
 .about {
-  &__lede {
-    font-size: 1.125rem;
+  &__section {
+    display: grid;
+    row-gap: var(--head-gap);
+    margin-block-start: var(--section-gap);
+
+    @media (width >= $wide) {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      align-items: start;
+      column-gap: var(--space-8);
+    }
+  }
+
+  &__heading {
+    margin: 0;
+  }
+
+  &__prose {
+    max-inline-size: var(--measure);
     color: var(--text-muted);
   }
 
-  &__section {
-    margin-block-start: var(--space-7);
-
-    p {
-      max-inline-size: 42rem;
-    }
-  }
-
-  &__more {
-    margin-block-start: var(--space-3);
-    font-weight: 600;
-
-    // Standalone link: 44px touch target (WCAG 2.5.5).
-    a {
-      display: inline-flex;
-      align-items: center;
-      min-block-size: 44px;
-    }
-  }
-
-  &__timeline {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-4);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  &__stop {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    min-inline-size: 12rem;
-    padding: var(--space-4) var(--space-5);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background-color: var(--surface);
-  }
-
-  &__year {
+  &__first {
     font-family: var(--font-display);
-    font-size: 2.25rem;
-    font-weight: 800;
-    line-height: 1.3;
-    color: var(--accent-text);
+    font-size: var(--text-flow);
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--text);
+
+    & + p {
+      margin-block-start: var(--space-5);
+    }
   }
 }
 </style>

@@ -9,66 +9,66 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
 
 <template>
   <div class="services">
-    <h1>خدماتنا</h1>
-    <p class="services__lede">خمس خدمات برمجية، من الموقع والتطبيق إلى البرامج الجاهزة والسيرفرات.</p>
+    <PageHead title="خدماتنا" lede="خمس خدمات برمجية، من الموقع والتطبيق إلى البرامج الجاهزة والسيرفرات.">
+      <WhatsAppCall />
+    </PageHead>
 
-    <ul class="services__list">
+    <ul role="list" class="services__list">
       <li v-for="service in services" :key="service.title" class="services__item">
         <h2 class="services__title">{{ service.title }}</h2>
         <p class="services__text">{{ service.text }}</p>
-        <NuxtLink class="services__link" to="/contact">استفسر عن هذه الخدمة</NuxtLink>
+        <div class="services__actions">
+          <WhatsAppCall look="text" :subject="service.title" label="استفسر عن هذه الخدمة" :hidden-suffix="service.title" />
+          <ActionLink v-if="service.related" look="text" :to="service.related" label="حلولنا الجاهزة" />
+        </div>
       </li>
     </ul>
+
+    <ClosingCall heading="لديك مشروع أو فكرة؟" text="أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني.">
+      <WhatsAppCall :glow="false" />
+    </ClosingCall>
   </div>
 </template>
 
 <style scoped lang="scss">
-.services {
-  &__lede {
-    margin-block-end: var(--space-7);
-    font-size: 1.125rem;
-    color: var(--text-muted);
-  }
+$wide: 64em;
 
+.services {
   &__list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
-    gap: var(--space-5);
-    margin: 0;
+    margin-block-start: var(--head-gap);
     padding: 0;
     list-style: none;
   }
 
   &__item {
-    display: flex;
-    flex-direction: column;
+    display: grid;
     gap: var(--space-3);
-    padding: var(--space-5);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background-color: var(--surface);
+    padding-block: var(--space-6);
+    border-block-start: 1px solid var(--border);
+
+    @media (width >= $wide) {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) auto;
+      column-gap: var(--space-7);
+      align-items: baseline;
+    }
   }
 
   &__title {
     margin: 0;
-    font-size: 1.375rem;
-    line-height: 1.45;
-    font-weight: 600;
+    font-size: var(--text-flow);
+    font-weight: 700;
+    line-height: 1.5;
   }
 
   &__text {
-    margin: 0;
+    line-height: 1.75;
     color: var(--text-muted);
   }
 
-  // Standalone link: 44px touch target (WCAG 2.5.5).
-  &__link {
-    display: inline-flex;
-    align-items: center;
-    align-self: flex-start;
-    min-block-size: 44px;
-    margin-block-start: auto;
-    font-weight: 600;
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

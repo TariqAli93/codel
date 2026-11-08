@@ -64,8 +64,8 @@ Notes:
 ## Brand assets
 
 - Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on. The page gutter, the motion tokens (durations, easing, stagger), the type scale, the point sizes, the stroke and the lime glow are site-level additions in the same file.
-- Imagery: the products' real screens. The hero layers a Nuqta Plus screen and a Dalaly screen in perspective, lit in the products' colours, over an engineering grid (phones get focused crops); each product has a showcase with two real screenshots (`public/images/solutions/<slug>/`, framed by `app/components/ProductWindow.vue`) in the product's own colours. Buttons, tags and decorative bars lean (the brand slant); lime marks what you act on and what is live now.
-- Motion: the hero's entrance is plain CSS (text first, then the screens). GSAP with ScrollTrigger and SplitText, loaded on the client, adds the rest: the hero's screens follow the pointer by depth and drift apart on scroll, section headings rise word by word, product screens open like a shutter and tilt toward the pointer, the service tiles rise row by row, the years bar draws and the contact band sweeps in. All of it is off under `prefers-reduced-motion: reduce`, and anything that takes keyboard focus is shown in its end state.
+- Imagery: the products' real screens. The hero layers a Nuqta Plus screen and a Dalaly screen that run off the page edge (phones get one focused crop); each product has a showcase with two real screenshots (`public/images/solutions/<slug>/`, framed by `app/components/ProductWindow.vue`) in the product's own colours. Buttons, tags and decorative bars lean (the brand slant); lime marks what you act on and what is live now.
+- Motion: the hero's entrance is plain CSS (text first, then the screens). GSAP with ScrollTrigger, loaded on the client, adds the rest: the hero's screens drift apart on scroll, headings and leads fade in with a small rise, each product's main screen is wiped in behind a leaning edge and its second screen fades in, and the years bar draws. All of it is off under `prefers-reduced-motion: reduce`, and anything that takes keyboard focus is shown in its end state.
 - Fonts are self-hosted in `public/fonts/`: Rubik (display and headings) and Readex Pro (body and UI), as subset variable woff2 files for Arabic and Latin. Both are licensed under the SIL Open Font License; the license texts are beside the files.
 - Logo files are in `public/brand/` (full logo and symbol, each in white, ink and lime). The favicon is `public/favicon.svg`: the symbol, ink on light browser themes and lime on dark ones.
 - `public/brand/og.png` (1200×630) is the share image: the white logo on the dark `--bg`, rendered from `codel-full-white.svg`.
@@ -103,11 +103,11 @@ tsconfig.json
 
 | ماذا تريد أن تغيّر | السطر |
 | --- | --- |
-| الرقم الأساسي (هاتف وواتساب) | 19 إلى 21 |
-| رقم الواتساب الثاني | 25 و 26 |
-| البريد الإلكتروني | 29 |
-| العنوان | 30، ونفس العنوان مقسّماً في السطر 32 (غيّر الاثنين معاً) |
-| ساعات الدوام | 33 (النص الذي يظهر للزائر)، ونفس الساعات بنظام 24 ساعة في السطر 35 (غيّر الاثنين معاً) |
+| الرقم الأساسي (هاتف وواتساب) | 21 إلى 23 |
+| رقم الواتساب الثاني | 27 و 28 |
+| البريد الإلكتروني | 31 |
+| العنوان | 32، ونفس العنوان مقسّماً في السطر 34 (غيّر الاثنين معاً) |
+| ساعات الدوام | 35 (النص الذي يظهر للزائر)، ونفس الساعات بنظام 24 ساعة في السطر 37 (غيّر الاثنين معاً) |
 
 - كل رقم يُكتب بثلاث صيغ. مثال للرقم 07824082356: الصيغة الظاهرة `'0782 408 2356'`، ورابط الاتصال `'tel:+9647824082356'`، ورابط واتساب `'https://wa.me/9647824082356'` (احذف الصفر الأول وضع 964 قبله).
 - غيّر الكلام بين علامتي `' '` فقط، ولا تحذف الفواصل أو الأقواس.
@@ -115,8 +115,8 @@ tsconfig.json
 
 ### 3. تغيير سعر برنامج: الملف `app/data/solutions.ts`
 
-- نقطة بلس: السطر 47، `priceIqd: 175000`
-- دلالي: السطر 68، `priceIqd: 150000`
+- نقطة بلس: السطر 49، `priceIqd: 175000`
+- دلالي: السطر 71، `priceIqd: 150000`
 
 اكتب الرقم بدون فواصل. يظهر السعر تلقائياً بصيغة "175,000 دينار عراقي" في صفحة الحلول وصفحة البرنامج والأسئلة الشائعة.
 
@@ -124,7 +124,7 @@ tsconfig.json
 
 1. ضع الصورة في المجلد `public/images/solutions/nuqta-plus/` (لنقطة بلس) أو `public/images/solutions/dalaly/` (لدلالي). أنشئ المجلد إذا لم يكن موجوداً. اسم الملف بأحرف إنكليزية صغيرة بدون مسافات، مثل `sales-screen.png`.
 2. اعرف مقاس الصورة بالبكسل: في ويندوز اضغط على الصورة بالزر الأيمن ← خصائص ← التفاصيل ← الأبعاد.
-3. في `app/data/solutions.ts` أضف الصورة داخل `images` (السطر 49 لنقطة بلس، السطر 70 لدلالي) بنفس شكل الصور الموجودة فيه:
+3. في `app/data/solutions.ts` أضف الصورة داخل `images` (السطر 52 لنقطة بلس، السطر 74 لدلالي) بنفس شكل الصور الموجودة فيه:
 
 ```ts
 images: [
@@ -143,6 +143,7 @@ images: [
 
 - `slug`: اسم قصير بالإنكليزي بأحرف صغيرة وشَرطات، مثل `my-program`. يصير عنوان الصفحة `/solutions/my-program`.
 - `nameAr` و `nameEn` و `tagline` و `description` و `features` و `priceIqd` و `platform` و `images`.
+- `look`: ألوان البرنامج، `'violet'` أو `'sand'`.
 
 يظهر البرنامج تلقائياً في الصفحة الرئيسية وصفحة الحلول والأسئلة الشائعة، وتُنشأ له صفحة خاصة.
 
@@ -156,7 +157,7 @@ images: [
 
 عدّل ثلاثة ملفات، ثم أعد البناء بالأمر `npm run generate`. في الأمثلة التالية ضع نطاقك مكان `https://example.com`:
 
-1. `app/data/company.ts` السطر 14: `siteUrl: 'https://example.com',` (مع `https://` وبدون `/` في النهاية). بهذا تحصل كل صفحة تلقائياً على رابط canonical و og:url ورابط كامل لصورة المشاركة.
+1. `app/data/company.ts` السطر 16: `siteUrl: 'https://example.com',` (مع `https://` وبدون `/` في النهاية). بهذا تحصل كل صفحة تلقائياً على رابط canonical و og:url ورابط كامل لصورة المشاركة.
 2. `public/robots.txt`: أضف في آخره سطراً: `Sitemap: https://example.com/sitemap.xml`
 3. `public/sitemap.xml`: ملف جديد فيه الصفحات الثماني العامة فقط. صفحات الوظائف والمدونة والخصوصية والشروط لا تُضاف.
 
@@ -178,7 +179,7 @@ images: [
 
 - **اسم النطاق (الدومين)**: مطلوب للخطوة 7 أعلاه.
 - **طريقة تسعير البرنامجين**: هل السعر دفعة واحدة، أم لكل جهاز، أم اشتراك؟ وماذا يحصل العميل مقابل السعر؟ الموقع الآن يعرض المبلغ فقط.
-- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وفي الصفحة الرئيسية: العنوان الرئيسي والسطر الصغير فوقه والجملة تحته، والجملتان تحت عنواني "حلولنا الجاهزة" و"خدماتنا"، ونصوص أزرار التواصل، ووصف كل برنامج ومميزاته الأربع الظاهرة في الصفحة الرئيسية، ورسالة واتساب الجاهزة التي يفتحها زر "اسأل عنه على واتساب"، وعبارتا حالة الدوام ("في الدوام الآن" و"خارج ساعات الدوام الآن").
+- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وفي الصفحة الرئيسية: العنوان الرئيسي والسطر الصغير فوقه والجملة تحته، والجملتان تحت عنواني "حلولنا الجاهزة" و"خدماتنا"، ونصوص أزرار التواصل، ووصف كل برنامج ومميزاته الأربع الظاهرة في الصفحة الرئيسية، ورسالة واتساب الجاهزة التي تفتحها أزرار "اسأل عنه على واتساب" و"استفسر عن هذه الخدمة" و"حدّثنا عن فكرتك"، وعبارتا حالة الدوام ("في الدوام الآن" و"خارج ساعات الدوام الآن")، وفي صفحة الحلول الجملة تحت العنوان ("برامج جاهزة للاستخدام، بأسعار معلنة.") وخاتمتها ("تحتاج حلاً غير موجود هنا؟" و"نبرمجه لك حسب طلبك.")، وخاتمة صفحتي الخدمات ومن نحن ("لديك مشروع أو فكرة؟" و"أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني.")، وفي صفحة الأسئلة الشائعة الجملة تحت العنوان ("إجابات عن خدماتنا وبرامجنا وأسعارها ودوامنا.") وخاتمتها ("لم تجد إجابتك؟" و"اسألنا مباشرة على واتساب.").
 - **الفريق والرؤية والوظائف والمقالات**: لا يوجد نص لها بعد.
 - **سياسة الخصوصية والشروط والأحكام**: يكتبها صاحب الشركة أو يوافق عليها (ومحامٍ إذا صار الموقع يجمع بيانات). الصفحتان الآن مؤقتتان ومخفيتان عن محركات البحث.
 - **صور البرنامجين وأي فيديو**: لم تُرفع أي صورة أو فيديو بعد. طريقة الإضافة في الخطوة 4.

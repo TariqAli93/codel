@@ -4,6 +4,8 @@
 export interface Service {
   title: string
   text: string
+  // A page with ready-made products for this service, when there is one.
+  related?: string
 }
 
 export const company = {
@@ -47,7 +49,8 @@ export const services: Service[] = [
   },
   {
     title: 'برامج الحسابات والمخازن والكاشيرات',
-    text: 'برامج لتنظيم الحسابات وحركة المخازن وعمل الكاشير في محلّك أو شركتك.'
+    text: 'برامج لتنظيم الحسابات وحركة المخازن وعمل الكاشير في محلّك أو شركتك.',
+    related: '/solutions'
   },
   {
     title: 'إدارة السيرفرات',

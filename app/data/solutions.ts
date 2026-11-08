@@ -20,7 +20,9 @@ export interface Solution {
   features: string[]
   priceIqd: number
   platform: string
-  // Files live in public/solutions/<slug>/. Add
+  // The colours of the product's showcase, taken from its own interface.
+  look: 'violet' | 'sand'
+  // Files live in public/images/solutions/<slug>/. Add
   // { src: '/images/solutions/<slug>/<file>', alt: '...', width: <px>, height: <px> } to show a screenshot.
   images: SolutionImage[]
 }
@@ -46,6 +48,7 @@ export const solutions: Solution[] = [
     ],
     priceIqd: 175000,
     platform: 'ويندوز',
+    look: 'violet',
     images: [{ src: '/images/solutions/nuqta-plus/pos.webp', alt: 'شاشة نقطة البيع في نقطة بلس: بطاقات المنتجات بأسعارها، والسلة على الجانب', width: 1600, height: 900 }, { src: '/images/solutions/nuqta-plus/dashboard.webp', alt: 'الشاشة الرئيسية في نقطة بلس: مبيعات اليوم وأرباحه وفواتيره، وعمليات سريعة، ومخطط الأداء', width: 1600, height: 900 }, { src: '/images/solutions/nuqta-plus/inventory.webp', alt: 'إدارة المخزون في نقطة بلس: قائمة البضاعة بأسعارها وكمياتها وحدّها الأدنى وحالة صلاحيتها', width: 1600, height: 900 }, { src: '/images/solutions/nuqta-plus/sales-report.webp', alt: 'تقرير المبيعات في نقطة بلس بالوضع الداكن: إجمالي المبيعات والخصومات وعدد الفواتير، وجدول الفواتير', width: 1600, height: 900 }]
   },
   {
@@ -67,6 +70,7 @@ export const solutions: Solution[] = [
     ],
     priceIqd: 150000,
     platform: 'ويندوز',
+    look: 'sand',
     images: [{ src: '/images/solutions/dalaly/properties.webp', alt: 'قائمة عروض البيع في دلالي: العقارات بنوعها وموقعها ومساحتها وسعرها وحالتها', width: 1366, height: 768 }, { src: '/images/solutions/dalaly/dashboard.webp', alt: 'لوحة التحكم في دلالي: عمليات سريعة، ومهام ومتابعات، ومطابقة العروض لطلبات الزبائن', width: 1366, height: 768 }, { src: '/images/solutions/dalaly/property.webp', alt: 'تفاصيل عقار في دلالي: السعر والموقع والمساحة والمالك، وصور العقار، وبيانات الموقع والقطعة', width: 1366, height: 768 }]
   }
 ]
