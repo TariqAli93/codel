@@ -139,6 +139,39 @@ Data files are plain typed constants, not utilities or composables. Do not add l
 The repository is public. Never commit tool output, caches, credentials or media; `graphify-out/`, `.claude-flow/`, `.claude/settings.local.json`, `.gemini/` and `.codex/` are gitignored.
 
 - **Agents** in `.claude/agents/`, taken from `msitarzewski/agency-agents` (MIT) at commit `b859c51`, each with a Codel header: `ux-architect`, `ui-designer`, `frontend-developer` (the only one that edits files), `ui-finish-gate-reviewer`, `accessibility-auditor`, `performance-benchmarker`. This file overrides anything in an agent's own text.
+
+### Agency Agents: dynamic routing and handoffs
+
+**Goal:** Use the specialist profiles already in `.claude/agents/` on demand instead of always invoking the same six. The six Codel-customized agents listed above are preferred whenever their role matches, but the rest of the roster remains eligible for relevant tasks. This document overrides every agent's upstream prompt. **Agent availability is not agent execution:** profiles are instructions; only a Claude Code session with working subagent delegation can actually run them.
+
+**Orchestrator (parent Claude Code session):** Treat orchestration as a responsibility of the main session, not as a new installed agent, service, dependency or always-running process. For each request:
+
+1. **Understand and bound.** Read this file and the relevant code; identify the outcome, touched routes/files, evidence needed and constraints. Keep unrelated redesigns and speculative product content out of scope. State unknown requirements rather than inventing facts.
+2. **Discover candidates.** Inspect names and YAML `description` fields in `.claude/agents/*.md` (including future additions); load full prompts only for shortlisted specialists. Choose agents by concrete task requirements, not agent count, alphabetical order or popularity. Prefer the six project-specific profiles over their generic upstream duplicates when skills overlap.
+3. **Select a lean team.** For a trivial change, use the parent session and/or 1–2 relevant roles; for a normal feature, 2–4; for a cross-cutting redesign or audit, typically 4–8. These are budgets, not mandatory quotas. Skip irrelevant roles. Avoid assigning both Codel and upstream variants to perform the same review.
+4. **Assign contracts.** Give each selected agent its scope, relevant files, task questions, project constraints, expected output, acceptance criteria and whether the assignment is read-only. Collect a concise report with evidence and file references; do not let agents silently expand the job.
+5. **Parallelize only independent read-only work.** UX, visual, SEO, security, code quality, i18n and performance analysis may happen concurrently if their inputs are independent. Resolve conflicting recommendations against `CLAUDE.md`, evidence, acceptance criteria and the project owner. Do not run concurrent write operations against shared files.
+6. **Implement with a single writer.** Under the current project policy, **only the Codel `frontend-developer` agent edits tracked repository files**, even when another specialist recommends a fix. Give it one consolidated, approved implementation brief. Split large changes into sequential, reviewable slices; if multiple subagents suggest edits, they must supply proposals rather than writing. Do not silently relax this rule for generic upstream agents.
+7. **Verify with targeted reviewers.** Re-select the reviewers relevant to the actual diff, not a fixed checklist of all agents. Verify user-visible behavior, Arabic/RTL, changed routes, responsive layouts and accessibility when affected. Run the available strict TypeScript check and `npm run build` only when the local environment allows it, without installing dependencies or disrupting a running Nuxt dev server. Performance claims require measured evidence.
+8. **Finish gate and handoff.** For UI work, `ui-finish-gate-reviewer` returns **PASS** or **HOLD** against the written design contract; for other work, use the relevant review agent (for example security/code review) with explicit blocking/nonblocking findings. On HOLD, `frontend-developer` fixes blockers and the relevant review is repeated. Report agent assignments, findings, checks run/not run, remaining risks, and changed files. Do not merge automatically.
+
+**Example routing (candidates, not a fixed pipeline):**
+
+| Task | Specialist agents to consider | Writer / gate |
+| --- | --- | --- |
+| Page layout, user journey, responsiveness | `ux-architect`, `ui-designer`, `design-brand-guardian` | `frontend-developer` / `ui-finish-gate-reviewer` |
+| Vue/Nuxt implementation or refactoring | `engineering-software-architect`, `engineering-code-reviewer`, `engineering-minimal-change-engineer` | `frontend-developer` / `engineering-code-reviewer` |
+| SEO and Arabic website copy | `marketing-seo-specialist`, `marketing-content-creator`, `engineering-i18n-engineer` | `frontend-developer` / targeted review |
+| Accessibility or RTL defects | `accessibility-auditor`, `engineering-i18n-engineer`, `testing-accessibility-auditor` (only for distinct audit scope) | `frontend-developer` / `accessibility-auditor` |
+| Security or dependency risk | `security-appsec-engineer`, `engineering-code-reviewer` | `frontend-developer` / `security-appsec-engineer` |
+| Web performance or regressions | `performance-benchmarker`, `engineering-frontend-developer` (advice only) | `frontend-developer` / `performance-benchmarker` |
+
+**Project guardrails (apply to all agents):** Nuxt 4.6.4, strict TypeScript, scoped SCSS and existing semantic tokens, Arabic-first RTL, dark theme, no invented owner facts, no unrequested dependencies or prohibited directories, and no gratuitous rewrites. Domain specialists cannot override a project rule with a generic example from their agent profile. Never add analytics, external services or marketing claims merely because an agent suggests them. Read-only roles must not edit files or run modifying commands. Keep design contracts and audit reports in the conversation, not new Markdown files.
+
+**Actual activation:** Invoke the selected profiles as subagents in a Claude Code session where that mechanism is available; a task router described in Markdown does not autonomously load or execute agents. If subagent invocation is unavailable, perform the same scoped workflow directly and explicitly disclose which agents did **not** run. Do not invent independent reviews, timings, test scores or PASS statuses.
+
+**Example prompt:** "Use dynamic Agency Agents routing for Codel. Inspect `.claude/agents/`, pick only agents relevant to auditing the Arabic home page's SEO, performance and accessibility, gather read-only independent findings, delegate any code edits solely to `frontend-developer`, then run the appropriate quality gates. Follow `CLAUDE.md` and list checks not executed."
+
 - **Graphify** (`graphify-out/`, local only) maps code, this file and the README. Use it for questions that cross files or link a rule to code: `graphify query "<symbol or rule name>" --budget 800` (it matches keywords, so name the thing). After code changes run `graphify update .` (no LLM cost). `.graphifyignore` replaces `.gitignore` for Graphify, so it repeats the secrets and build-output rules; keep it in step. An update keeps nodes from files it no longer reads, so prune those after changing the ignore list. Re-extracting this file or the README (`/graphify --update`) spends tokens; do it only when asked. For work inside one file, read the file.
 - **Codebase Memory** MCP (project `D-dev_projects-codel`) gives exact symbols, callers (`trace_path`) and the impact of a diff (`detect_changes`). It does not index `app/assets/`; search the SCSS with grep.
 - The ruflo plugins are switched off for this project in `.claude/settings.json`.
