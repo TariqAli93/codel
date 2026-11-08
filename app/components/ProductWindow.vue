@@ -43,6 +43,7 @@ withDefaults(
   border-radius: var(--radius-lg);
   background-color: var(--surface-raised);
   box-shadow:
+    var(--window-ring, 0 0 0 0 transparent),
     0 1.5rem 3rem -1rem color-mix(in srgb, black 55%, transparent),
     0 0.25rem 0.75rem color-mix(in srgb, black 25%, transparent);
 
@@ -67,11 +68,12 @@ withDefaults(
     color: var(--text-muted);
   }
 
-  // A parent can tune the frame with three custom properties. --window-lights: none hides the
-  // lights (the home hero, whose apps run on Windows). --window-ratio and --window-zoom crop the
-  // screen to a focused view: the view's shape, and how much wider than the frame the screenshot is
-  // drawn. The view keeps the screenshot's top and inline-start edge: in these RTL apps, the menu
-  // and the headings.
+  // A parent can tune the frame with four custom properties. --window-ring is a shadow drawn before
+  // the frame's own (a ring of the page's ground, to set one window off another). --window-lights:
+  // none hides the lights (the home hero, whose apps run on Windows). --window-ratio and
+  // --window-zoom crop the screen to a focused view: the view's shape, and how much wider than the
+  // frame the screenshot is drawn. The view keeps the screenshot's top and inline-start edge: in
+  // these RTL apps, the menu and the headings.
   &__lights {
     display: var(--window-lights, flex);
     gap: 0.3rem;

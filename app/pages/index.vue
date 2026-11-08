@@ -145,17 +145,18 @@ async function startMotion() {
   const context = gsap.context(() => {
     const media = gsap.matchMedia();
 
-    // Hero, from the tablet tier up: as it scrolls away the second screen rises over the main one,
-    // a little faster. The text never moves after its entrance; phones get no scroll motion.
+    // Hero, from the tablet tier up ($hero-tablet, 40rem, in the styles): as it scrolls away the
+    // second screen rises over the main one, a little faster. The text never moves after its
+    // entrance; phones get no scroll motion.
     media.add(
-      "(prefers-reduced-motion: no-preference) and (min-width: 46rem)",
+      "(prefers-reduced-motion: no-preference) and (min-width: 40rem)",
       () => {
         if (!hero) return;
         // The tiers follow the page's own width (a container query, the window without its
         // scrollbar), so just past this query the screens can still be stacked as on phones.
         const stacked = () =>
           hero.offsetWidth <
-          46 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+          40 * parseFloat(getComputedStyle(document.documentElement).fontSize);
         const depth = (selector: string, shift: number) => {
           const layer = hero.querySelector(selector);
           if (!layer) return;
@@ -172,7 +173,7 @@ async function startMotion() {
           });
         };
         depth(".home__layer--main", -4);
-        depth(".home__layer--second", -14);
+        depth(".home__layer--second", -8);
       },
     );
 
@@ -426,16 +427,10 @@ async function startMotion() {
       <p class="home__kicker">
         شركة برمجيات عراقية في {{ company.addressParts.city }}
       </p>
-      <!-- Kept on one line: the spaces keep the words apart when read aloud. -->
-      <h1 id="home-title" class="home__title">
-        <span class="home__title-line">برامج جاهزة،</span>
-        <span class="home__title-line"
-          ><span class="home__title-part">وبرمجيات</span>
-          <span class="home__title-part"
-            >على مقاسك<span class="home__title-stop">.</span></span
-          ></span
-        >
-      </h1>
+      <!-- Kept on one line (and out of the formatter's reach): the spaces keep the words apart
+           when read aloud. -->
+      <!-- prettier-ignore -->
+      <h1 id="home-title" class="home__title"><span class="home__title-line">برامج جاهزة،</span> <span class="home__title-line"><span class="home__title-part">وبرمجيات</span> <span class="home__title-part">على مقاسك<span class="home__title-stop" aria-hidden="true">.</span></span></span></h1>
       <p class="home__lede">
         نبيع برامج جاهزة بأسعار معلنة، ونصمّم ونبرمج المواقع والتطبيقات والأنظمة
         حسب طلبك.
@@ -452,18 +447,14 @@ async function startMotion() {
 
       <ul role="list" class="home__shortcuts" aria-label="برامجنا الجاهزة">
         <li v-for="solution in solutions" :key="solution.slug">
+          <!-- Kept on one line (and out of the formatter's reach): the spaces keep name, price
+               and tagline apart when read aloud. -->
+          <!-- prettier-ignore -->
           <NuxtLink
             class="home__shortcut"
             :class="`home__shortcut--${productLook[solution.slug] ?? 'violet'}`"
             :to="`/solutions/${solution.slug}`"
-          >
-            <!-- Kept on one line: the spaces keep name, price and tagline apart when read aloud. -->
-            <span class="home__shortcut-name">{{ solution.nameAr }}</span>
-            <span class="home__shortcut-price"
-              ><span dir="ltr">{{ price(solution.priceIqd) }}</span> دينار</span
-            >
-            <span class="home__shortcut-tagline">{{ solution.tagline }}</span>
-          </NuxtLink>
+          ><span class="home__shortcut-name">{{ solution.nameAr }}</span> <span class="home__shortcut-price"><span dir="ltr">{{ price(solution.priceIqd) }}</span> دينار عراقي</span> <span class="home__shortcut-tagline">{{ solution.tagline }}</span></NuxtLink>
         </li>
       </ul>
 
@@ -787,13 +778,19 @@ $band-lean: 80em;
 // tips the layout): one column on phones (the headline on three lines, one cropped screen between
 // the actions and the shortcuts); from $hero-tablet the headline on two lines, the shortcuts side
 // by side and both screens under them; from $hero-cover the cover: the headline across the
-// measure, the offer in a column under it and the screens beside it.
-$hero-tablet: 46rem;
-$hero-cover: 60rem;
-// The main screen's shape, height over width: pos.webp is 1600 by 900 (app/data/solutions.ts).
+// measure, the offer in a column under it and the screens beside it. The cover starts where its
+// main screen no longer needs its 47.5rem floor (1.2 times the room beside the column reaches it
+// at about 71.4rem), so the screen is always the larger part. The script's scroll motion repeats
+// $hero-tablet.
+$hero-tablet: 40rem;
+$hero-cover: 72rem;
+// pos.webp, the main screen (1600 by 900, app/data/solutions.ts), in shares of its size: its
+// shape (height over width), where its first row of cards starts (y = 215 of 900), and the middle
+// of the gutter between its third and fourth columns of cards from the menu (x = 884 to 893, so
+// 0.4447 of its width from the start edge).
 $main-shape: 0.5625;
-// Where pos.webp's first row of cards starts, as a share of its height: y = 215 of 900.
 $main-cards: 0.2389;
+$main-gutter: 0.4447;
 
 .home {
   container: home / inline-size;
@@ -880,7 +877,8 @@ $main-cards: 0.2389;
   // --main-w and --main-h are the main screen's frame from $hero-tablet: its inline size, and its
   // height (the title bar plus the screenshot at its shape). The hero cuts it at 80% of that height.
   // From $hero-cover: --hero-cover is the offer's column, --hero-gap the gap after it, and
-  // --hero-rest the room from the screens' start edge to the window edge.
+  // --hero-rest the room from the screens' start edge to the window edge. On very wide windows the
+  // main screen grows past its 75rem cap so that both screens still run off the end edge.
   &__hero {
     --hero-measure: calc(100cqi - 2 * #{$edge});
     // The longest of the three lines on phones, "برامج جاهزة،", in em at weight 700, plus 2%.
@@ -916,6 +914,11 @@ $main-cards: 0.2389;
         "short"
         "show";
       padding-block: clamp(var(--space-7), 5cqi, var(--space-9)) 0;
+
+      // Short windows (laptops): less room above the headline.
+      @media (height < 50rem) {
+        padding-block-start: var(--space-6);
+      }
     }
 
     // The cover: the headline across the measure; under it the offer's column on the start side
@@ -927,7 +930,10 @@ $main-cards: 0.2389;
       --hero-rest: calc(
         100cqi - #{$edge} - var(--hero-cover) - var(--hero-gap)
       );
-      --main-w: clamp(47.5rem, 1.2 * var(--hero-rest), 75rem);
+      --main-w: max(
+        clamp(47.5rem, 1.2 * var(--hero-rest), 75rem),
+        (var(--hero-rest) + var(--space-6)) / #{0.5 + $main-gutter}
+      );
 
       grid-template-columns: var(--hero-cover) minmax(0, 1fr);
       grid-template-rows: repeat(5, auto) 1fr;
@@ -953,7 +959,8 @@ $main-cards: 0.2389;
   }
 
   // Each line kept whole, the last word's full stop the one lime mark. Three lines on phones
-  // ("وبرمجيات" and "على مقاسك." apart), two from $hero-tablet, where short screens cap it too.
+  // ("وبرمجيات" and "على مقاسك." apart), two from $hero-tablet. In the cover the deck line sits
+  // --space-7 under it (--space-6 on short windows).
   &__title {
     grid-area: title;
     margin: 0;
@@ -966,20 +973,21 @@ $main-cards: 0.2389;
     color: var(--text);
 
     @container home (width >= #{$hero-tablet}) {
-      font-size: min(
-        var(--text-hero),
-        var(--hero-measure) / var(--title-fit),
-        15svh
-      );
       line-height: 1.2;
     }
 
     @container home (width >= #{$hero-cover}) {
-      margin-block-end: var(--space-6);
+      margin-block-end: var(--space-7);
+
+      @media (height < 50rem) {
+        margin-block-end: var(--space-6);
+      }
     }
   }
 
   // Each line and part only as wide as its words, so the entrance's wipe crosses the words alone.
+  // The lines never wrap: the fallback font (Readex Pro) sets the long line 8% wider than Rubik,
+  // so a line allowed to wrap would jump from three lines to two as Rubik arrives.
   &__title-line {
     display: block;
     inline-size: fit-content;
@@ -1021,8 +1029,9 @@ $main-cards: 0.2389;
     }
   }
 
-  // Phones: the call across the column (its leaning corners kept inside it), the other action
-  // under it at its own width. From $hero-tablet both on one row.
+  // Phones: the call across the column (its leaning corners kept inside it, and no wider than
+  // 22rem on large phones), the other action under it at its own width. From $hero-tablet both on
+  // one row.
   &__hero-actions {
     grid-area: actions;
     display: flex;
@@ -1034,6 +1043,7 @@ $main-cards: 0.2389;
     > :first-child {
       align-self: stretch;
       justify-content: center;
+      max-inline-size: 22rem;
       margin-inline: calc(var(--control-lg) * tan(var(--slant-angle)) / 2);
     }
 
@@ -1061,8 +1071,7 @@ $main-cards: 0.2389;
   }
 
   // Straight to a product: a point in its colour, its name and price, what it does under them.
-  // Stacked on phones; side by side from $hero-tablet (the second on the mid line the second screen
-  // starts from); stacked again in the cover's column.
+  // Stacked on phones; side by side from $hero-tablet; stacked again in the cover's column.
   &__shortcuts {
     grid-area: short;
     display: grid;
@@ -1188,12 +1197,13 @@ $main-cards: 0.2389;
   }
 
   // Its top edge on the main screen's first row of cards: past the frame's border and title bar,
-  // then $main-cards of the screenshot's height. Its start edge on the mid line (side by side),
-  // then about the middle of the room, running off the end edge by 14% of its width; never nearer
-  // the start than 30% of the room, so the main screen's menu and first cards stay in view.
+  // then $main-cards of the screenshot's height. Its ring's outer edge in the gutter after the
+  // main screen's third column of cards, so the menu and three whole columns stay in view. Set off
+  // from the main screen by a ring of the page's ground (ProductWindow's --window-ring).
   &__layer--second {
     --window-ratio: 1.5;
     --window-zoom: 1.5;
+    --window-ring: 0 0 0 var(--space-2) var(--bg);
 
     position: absolute;
     display: none;
@@ -1202,28 +1212,17 @@ $main-cards: 0.2389;
       inset-block-start: calc(
         1px + 1.75rem + (var(--main-w) - 2px) * #{$main-shape} * #{$main-cards}
       );
-      inset-inline-start: calc(50% + var(--hero-gap) / 2);
+      inset-inline-start: calc(
+        #{$main-gutter} * var(--main-w) + var(--space-2)
+      );
       display: block;
       inline-size: calc(0.5 * var(--main-w));
-    }
-
-    @container home (width >= #{$hero-cover}) {
-      inset-inline-start: max(30%, 100% - 0.43 * var(--main-w));
     }
   }
 
   // Windows apps: no window lights.
   &__screen {
     --window-lights: none;
-  }
-
-  // Written inside its layer so it outranks the window's own shadow, which it repeats after the
-  // ring.
-  &__layer--second &__screen {
-    box-shadow:
-      0 0 0 var(--space-2) var(--bg),
-      0 1.5rem 3rem -1rem color-mix(in srgb, black 55%, transparent),
-      0 0.25rem 0.75rem color-mix(in srgb, black 25%, transparent);
   }
 
   // ---------------------------------------------------------------------------
@@ -2074,8 +2073,9 @@ $main-cards: 0.2389;
     animation: home-fade var(--duration-slow) var(--ease-out) 400ms backwards;
   }
 
-  // On the windows, never on the layers the scroll moves. A shortcut pointed at or focused lifts
-  // its product's window.
+  // On the windows, never on the layers the scroll moves. The main screen fades in over the page's
+  // ground; the second is revealed whole from the reading start, so the main screen never shows
+  // through it. A shortcut pointed at or focused lifts its product's window.
   .home__screen {
     animation: home-arrive var(--duration-entrance) var(--ease-out) 120ms
       backwards;
@@ -2083,7 +2083,8 @@ $main-cards: 0.2389;
   }
 
   .home__layer--second .home__screen {
-    animation-delay: 280ms;
+    animation: home-reveal var(--duration-entrance) var(--ease-out) 280ms
+      backwards;
   }
 
   .home__hero:has(.home__shortcut--violet:focus-visible) .home__screen--violet,
@@ -2098,10 +2099,12 @@ $main-cards: 0.2389;
     }
   }
 
-  // Keyboard focus can get there first: what holds focus is shown at once, never half-faded.
+  // Keyboard focus can get there first: what holds focus is shown at once, never half-faded. The
+  // entrance is finished, not removed, so it never replays when focus moves on.
   .home__hero-actions > :focus-within,
   .home__shortcuts:focus-within {
-    animation: none;
+    animation-duration: 0s;
+    animation-delay: 0s;
   }
 }
 
@@ -2148,6 +2151,19 @@ $main-cards: 0.2389;
   from {
     opacity: 0;
     translate: 0 1.5rem;
+  }
+}
+
+// Revealed from the inline start (the right edge, RTL only) while it rises, opaque throughout. The
+// other three sides are clipped wide of the frame, so its ring and shadow are never cut.
+@keyframes home-reveal {
+  from {
+    clip-path: inset(-1rem -3rem -4rem 100%);
+    translate: 0 1.5rem;
+  }
+
+  to {
+    clip-path: inset(-1rem -3rem -4rem -3rem);
   }
 }
 </style>
