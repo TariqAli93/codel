@@ -246,6 +246,8 @@ onBeforeUnmount(() => {
         </address>
       </div>
     </footer>
+
+    <DotRingCursor />
   </div>
 </template>
 
