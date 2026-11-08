@@ -47,20 +47,16 @@ const price = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const whatsappAsk = (nameAr: string) =>
   `${company.phones.main.whatsapp}?text=${encodeURIComponent(`مرحباً، أرغب بالاستفسار عن ${nameAr}`)}`;
 
-// The hero shows one real screen of each of the first two products: the first product's second
-// screenshot (its home screen) behind, the second product's first screenshot in front.
-const [heroBack, heroFront] = solutions;
-const heroBackShot = heroBack?.images[1] ?? heroBack?.images[0];
-const heroFrontShot = heroFront?.images[0];
+// The hero's cover: the first product's first screen, large, and the second product's first screen
+// in front of it (wide screens only, so it loads lazily and phones never fetch it).
+const [heroMain, heroSecond] = solutions;
+const heroMainShot = heroMain?.images[0];
+const heroSecondShot = heroSecond?.images[0];
 
-// The hero's screens are the page's largest paint. Each is drawn twice (finished and as a plan,
-// one request per file), and the plan copy comes first in the page, so ask for both files early
-// and at high priority instead of letting the plan's request set the pace.
-const heroShots = [heroBackShot, heroFrontShot].filter(
-  (shot): shot is SolutionImage => shot !== undefined,
-);
+// The main screen is the page's largest paint: ask for it early, at high priority.
+const heroPreload: SolutionImage[] = heroMainShot ? [heroMainShot] : [];
 useHead({
-  link: heroShots.map((shot) => ({
+  link: heroPreload.map((shot) => ({
     rel: "preload" as const,
     as: "image" as const,
     href: shot.src,
@@ -110,8 +106,8 @@ onBeforeUnmount(() => {
 });
 
 // Scroll and pointer motion (GSAP), fetched while the page hydrates and set up after mount, so the
-// server render and hydration never see it. The hero's entrance is plain CSS and needs none of it:
-// its content is on screen within half a second whatever the network does.
+// server render and hydration never see it. The hero's entrance is plain CSS and waits on none of
+// it: its text is on screen within half a second whatever the network does.
 const loadMotion = () =>
   Promise.all([
     import("gsap"),
@@ -138,101 +134,45 @@ async function startMotion() {
     gsap.utils.toArray<HTMLElement>(selector, scope);
   const ease = "expo.out";
 
-  const hero = root.querySelector<HTMLElement>(".home__hero");
-  const heroText = root.querySelector<HTMLElement>(".home__hero-text");
-  const shortcuts = root.querySelector<HTMLElement>(".home__shortcuts");
-  const stage = root.querySelector<HTMLElement>(".home__stage");
-  const shipped = root.querySelector<HTMLElement>(".home__shipped");
-  // The two pieces that read the seam's live values (see @property in the styles).
-  const seamParts = all(".home__shipped, .home__shipped-view");
-
   // The brand lean, read from the stylesheet so the wipes below lean with everything else.
   const slant =
     (parseFloat(getComputedStyle(root).getPropertyValue("--slant-angle")) ||
       10) *
     (Math.PI / 180);
 
-  // The seam's entrance sweep is plain CSS. Scroll and pointer take the seam over only once it
-  // has finished (or after 1.6s at most), so the two never pull at it together.
-  const sweepDone = () => {
-    const running = (shipped?.getAnimations() ?? []).map((animation) =>
-      animation.finished.catch(() => undefined),
-    );
-    if (!running.length) return Promise.resolve();
-    return Promise.race([
-      Promise.all(running),
-      new Promise((resolve) => setTimeout(resolve, 1600)),
-    ]);
-  };
+  const hero = root.querySelector<HTMLElement>(".home__hero");
 
   const context = gsap.context(() => {
     const media = gsap.matchMedia();
 
-    // Hero: as the page scrolls on, the seam sweeps on past the window edge (every product is
-    // finished by the time "حلولنا الجاهزة" arrives), and the text and the two screens drift apart
-    // by depth. Both copies of a screen always move together. Half the drift on phones.
+    // Hero, from the tablet tier up: as it scrolls away the second screen rises over the main one,
+    // a little faster. The text never moves after its entrance; phones get no scroll motion.
     media.add(
-      {
-        motion: "(prefers-reduced-motion: no-preference)",
-        tablet: "(min-width: 46rem)",
-        split: "(min-width: 60rem)",
-      },
-      (self) => {
-        const conditions: gsap.Conditions = self.conditions ?? {};
-        const { motion, tablet, split } = conditions;
-        if (!motion || !hero || !heroText || !stage) return;
-        const depth = tablet ? 1 : 0.5;
-        const drift = () => ({
-          trigger: hero,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-          invalidateOnRefresh: true,
-        });
-        // The text sinks at most into the free space under it (above the shortcuts in two
-        // columns, above the stage in one), so it never runs into either.
-        const below = split && shortcuts ? shortcuts : stage;
-        const room = () =>
-          below.offsetTop - (heroText.offsetTop + heroText.offsetHeight) - 8;
-        gsap.to(heroText, {
-          y: () => Math.max(0, Math.min(56 * depth, room())),
-          ease: "none",
-          scrollTrigger: drift(),
-        });
-        gsap.to(all(".home__layer--back", stage), {
-          yPercent: -10 * depth,
-          ease: "none",
-          scrollTrigger: drift(),
-        });
-        gsap.to(all(".home__layer--front", stage), {
-          yPercent: -24 * depth,
-          ease: "none",
-          scrollTrigger: drift(),
-        });
-
-        // In two columns the seam leaves as the hero scrolls away; in one column the stage sits
-        // below the text, so the seam waits until the stage itself is in view.
-        const build = split
-          ? { trigger: hero, start: "top top", end: "bottom 60%" }
-          : { trigger: stage, start: "center 55%", end: "bottom top" };
-        let live = true;
-        void sweepDone().then(() => {
-          if (!live || !seamParts.length) return;
-          self.add(() => {
-            gsap.fromTo(
-              seamParts,
-              { "--seam-scroll": 0 },
-              {
-                "--seam-scroll": 1,
-                ease: "none",
-                scrollTrigger: { ...build, scrub: 0.6 },
-              },
-            );
+      "(prefers-reduced-motion: no-preference) and (min-width: 46rem)",
+      () => {
+        if (!hero) return;
+        // The tiers follow the page's own width (a container query, the window without its
+        // scrollbar), so just past this query the screens can still be stacked as on phones.
+        const stacked = () =>
+          hero.offsetWidth <
+          46 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const depth = (selector: string, shift: number) => {
+          const layer = hero.querySelector(selector);
+          if (!layer) return;
+          gsap.to(layer, {
+            yPercent: () => (stacked() ? 0 : shift),
+            ease: "none",
+            scrollTrigger: {
+              trigger: hero,
+              start: "top top",
+              end: "bottom top",
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
           });
-        });
-        return () => {
-          live = false;
         };
+        depth(".home__layer--main", -4);
+        depth(".home__layer--second", -14);
       },
     );
 
@@ -257,9 +197,9 @@ async function startMotion() {
         });
       }
 
-      // Products: the main screen is wiped in from the reading start behind a leaning edge, like
-      // the hero's seam; the second screen slides in over it, then the text follows. While the
-      // product passes, the screens drift apart.
+      // Products: the main screen is wiped in from the reading start behind a leaning edge; the
+      // second screen slides in over it, then the text follows. While the product passes, the
+      // screens drift apart.
       for (const product of all(".home__product")) {
         const main = product.querySelector<HTMLElement>(".home__shot--main");
         const second = product.querySelector(".home__shot--second");
@@ -410,112 +350,11 @@ async function startMotion() {
       }
     });
 
-    // Pointer: the hero's screens follow the pointer a little, by depth (both copies of a screen
-    // together), and over the stage the seam leans toward it; product screens tilt.
+    // Pointer: product screens tilt toward it.
     media.add(
       "(prefers-reduced-motion: no-preference) and (hover: hover)",
       () => {
         const detach: Array<() => void> = [];
-        if (stage && hero) {
-          const follow = (selector: string, rangeX: number, rangeY: number) => {
-            const targets = all(selector, stage);
-            const motion = { duration: 0.8, ease: "power3.out" };
-            return {
-              rangeX,
-              rangeY,
-              x: gsap.quickTo(targets, "x", motion),
-              y: gsap.quickTo(targets, "y", motion),
-            };
-          };
-          const layers = [
-            follow(".home__layer--back", 8, 5),
-            follow(".home__layer--front", 16, 10),
-          ];
-
-          // The seam's lean toward the pointer, eased through a plain value into --seam-drift.
-          const seam = { drift: 0 };
-          const toDrift = gsap.quickTo(seam, "drift", {
-            duration: 1,
-            ease: "power3.out",
-            onUpdate: () => {
-              for (const part of seamParts)
-                part.style.setProperty("--seam-drift", seam.drift.toFixed(4));
-            },
-          });
-
-          // Measured on entry and on resize, never on every move. Tops are kept relative to the
-          // page, so they stay right while the page scrolls under a still pointer.
-          let heroBox = { left: 0, top: 0, width: 1, height: 1 };
-          let stageBox = { left: 0, top: 0, right: 0, bottom: 0, width: 1 };
-          let rest = 0.6;
-          let seamFree = false;
-          void sweepDone().then(() => {
-            seamFree = true;
-          });
-          const measure = () => {
-            const h = hero.getBoundingClientRect();
-            const s = stage.getBoundingClientRect();
-            heroBox = {
-              left: h.left,
-              top: h.top + window.scrollY,
-              width: Math.max(h.width, 1),
-              height: Math.max(h.height, 1),
-            };
-            stageBox = {
-              left: s.left,
-              top: s.top + window.scrollY,
-              right: s.right,
-              bottom: s.bottom + window.scrollY,
-              width: Math.max(s.width, 1),
-            };
-            rest =
-              parseFloat(
-                getComputedStyle(stage).getPropertyValue("--seam-rest"),
-              ) || rest;
-          };
-          const move = (event: PointerEvent) => {
-            if (event.pointerType === "touch") return;
-            const x = event.clientX;
-            const y = event.clientY + window.scrollY;
-            const dx = (x - heroBox.left) / heroBox.width - 0.5;
-            const dy = (y - heroBox.top) / heroBox.height - 0.5;
-            for (const layer of layers) {
-              layer.x(dx * 2 * layer.rangeX);
-              layer.y(dy * 2 * layer.rangeY);
-            }
-            const over =
-              x >= stageBox.left &&
-              x <= stageBox.right &&
-              y >= stageBox.top &&
-              y <= stageBox.bottom;
-            if (!seamFree) return;
-            // The pointer's share of the stage from its start edge: the right edge (RTL only).
-            const share = (stageBox.right - x) / stageBox.width;
-            toDrift(
-              over ? gsap.utils.clamp(-0.06, 0.06, 0.4 * (share - rest)) : 0,
-            );
-          };
-          const leave = () => {
-            for (const layer of layers) {
-              layer.x(0);
-              layer.y(0);
-            }
-            toDrift(0);
-          };
-          measure();
-          hero.addEventListener("pointerenter", measure);
-          hero.addEventListener("pointermove", move);
-          hero.addEventListener("pointerleave", leave);
-          window.addEventListener("resize", measure);
-          detach.push(() => {
-            hero.removeEventListener("pointerenter", measure);
-            hero.removeEventListener("pointermove", move);
-            hero.removeEventListener("pointerleave", leave);
-            window.removeEventListener("resize", measure);
-            for (const part of seamParts)
-              part.style.removeProperty("--seam-drift");
-          });
-        }
         for (const visual of all(".home__product-visual")) {
           gsap.set(visual, { transformPerspective: 1400 });
           const tiltX = gsap.quickTo(visual, "rotationX", {
@@ -549,8 +388,8 @@ async function startMotion() {
 
   // Keyboard focus can reach an element before its reveal has run or finished: whatever holds
   // focus jumps to its end state at once, so nothing is ever focused half-faded.
-  // Scrubbed motion (the hero's seam and drift, the parallax) follows the scroll position and has
-  // no end state to jump to, so it is left alone.
+  // Scrubbed motion (the hero's depth, the parallax) follows the scroll position and has no end
+  // state to jump to, so it is left alone.
   const onFocus = (event: FocusEvent) => {
     const target = event.target as HTMLElement | null;
     for (const trigger of ScrollTrigger.getAll()) {
@@ -584,96 +423,31 @@ async function startMotion() {
 <template>
   <div ref="page" class="home">
     <section class="home__hero" aria-labelledby="home-title">
-      <div class="home__hero-text">
-        <p class="home__kicker">
-          <span class="home__kicker-bar" aria-hidden="true" />
-          شركة برمجيات عراقية في {{ company.addressParts.city }}
-        </p>
-        <!-- The lines kept on one line: the spaces keep the words apart when read aloud. -->
-        <h1 id="home-title" class="home__title">
-          <span class="home__title-line">برامج جاهزة،</span>
-          <span class="home__title-line"
-            >وبرمجيات <span class="home__title-mark">على مقاسك.</span></span
-          >
-        </h1>
-        <p class="home__lede">
-          نبيع برامج جاهزة بأسعار معلنة، ونصمّم ونبرمج المواقع والتطبيقات
-          والأنظمة حسب طلبك.
-        </p>
-        <div class="home__hero-actions">
-          <ActionLink
-            look="solid"
-            :to="company.phones.main.whatsapp"
-            new-tab
-            label="راسلنا على واتساب"
-          />
-          <ActionLink to="#ready" label="تصفح حلولنا الجاهزة" />
-        </div>
-      </div>
-
-      <!-- Real screens of the products; decorative here, described in the products below. A
-           leaning seam cuts them: finished on the start side, drawn as a plan past it. -->
-      <div class="home__stage" aria-hidden="true">
-        <div class="home__plan">
-          <div
-            v-if="heroBack && heroBackShot"
-            class="home__layer home__layer--back"
-            :class="`home__layer--${productLook[heroBack.slug] ?? 'violet'}`"
-            data-depth="0.5"
-          >
-            <ProductWindow v-bind="heroBackShot" alt="" plan />
-          </div>
-          <div
-            v-if="heroFront && heroFrontShot"
-            class="home__layer home__layer--front"
-            :class="`home__layer--${productLook[heroFront.slug] ?? 'violet'}`"
-            data-depth="1"
-          >
-            <ProductWindow v-bind="heroFrontShot" alt="" plan />
-          </div>
-        </div>
-        <div class="home__shipped">
-          <div class="home__shipped-view">
-            <div
-              v-if="heroBack && heroBackShot"
-              class="home__layer home__layer--back"
-              :class="`home__layer--${productLook[heroBack.slug] ?? 'violet'}`"
-              data-depth="0.5"
-            >
-              <ProductWindow
-                v-bind="heroBackShot"
-                alt=""
-                :title="heroBack.nameAr"
-                eager
-              />
-              <p class="home__tag">
-                <span class="home__tag-text"
-                  ><span dir="ltr">{{ price(heroBack.priceIqd) }}</span>
-                  دينار</span
-                >
-              </p>
-            </div>
-            <div
-              v-if="heroFront && heroFrontShot"
-              class="home__layer home__layer--front"
-              :class="`home__layer--${productLook[heroFront.slug] ?? 'violet'}`"
-              data-depth="1"
-            >
-              <ProductWindow
-                v-bind="heroFrontShot"
-                alt=""
-                :title="heroFront.nameAr"
-                eager
-              />
-              <p class="home__tag">
-                <span class="home__tag-text"
-                  ><span dir="ltr">{{ price(heroFront.priceIqd) }}</span>
-                  دينار</span
-                >
-              </p>
-            </div>
-          </div>
-        </div>
+      <p class="home__kicker">
+        شركة برمجيات عراقية في {{ company.addressParts.city }}
+      </p>
+      <!-- Kept on one line: the spaces keep the words apart when read aloud. -->
+      <h1 id="home-title" class="home__title">
+        <span class="home__title-line">برامج جاهزة،</span>
+        <span class="home__title-line"
+          ><span class="home__title-part">وبرمجيات</span>
+          <span class="home__title-part"
+            >على مقاسك<span class="home__title-stop">.</span></span
+          ></span
+        >
+      </h1>
+      <p class="home__lede">
+        نبيع برامج جاهزة بأسعار معلنة، ونصمّم ونبرمج المواقع والتطبيقات والأنظمة
+        حسب طلبك.
+      </p>
+      <div class="home__hero-actions">
+        <ActionLink
+          look="solid"
+          :to="company.phones.main.whatsapp"
+          new-tab
+          label="راسلنا على واتساب"
+        />
+        <ActionLink to="#ready" label="تصفح حلولنا الجاهزة" />
       </div>
 
       <ul role="list" class="home__shortcuts" aria-label="برامجنا الجاهزة">
@@ -683,12 +457,45 @@ async function startMotion() {
             :class="`home__shortcut--${productLook[solution.slug] ?? 'violet'}`"
             :to="`/solutions/${solution.slug}`"
           >
-            <!-- Kept on one line: the space keeps name and tagline apart when read aloud. -->
+            <!-- Kept on one line: the spaces keep name, price and tagline apart when read aloud. -->
             <span class="home__shortcut-name">{{ solution.nameAr }}</span>
+            <span class="home__shortcut-price"
+              ><span dir="ltr">{{ price(solution.priceIqd) }}</span> دينار</span
+            >
             <span class="home__shortcut-tagline">{{ solution.tagline }}</span>
           </NuxtLink>
         </li>
       </ul>
+
+      <!-- Real screens of the products; decorative here, described in the products below. Each
+           layer is placed (and moved by scroll); the window inside it arrives and lifts. -->
+      <div class="home__showcase" aria-hidden="true">
+        <div
+          v-if="heroMain && heroMainShot"
+          class="home__layer home__layer--main"
+        >
+          <ProductWindow
+            v-bind="heroMainShot"
+            alt=""
+            :title="heroMain.nameAr"
+            eager
+            class="home__screen"
+            :class="`home__screen--${productLook[heroMain.slug] ?? 'violet'}`"
+          />
+        </div>
+        <div
+          v-if="heroSecond && heroSecondShot"
+          class="home__layer home__layer--second"
+        >
+          <ProductWindow
+            v-bind="heroSecondShot"
+            alt=""
+            :title="heroSecond.nameAr"
+            class="home__screen"
+            :class="`home__screen--${productLook[heroSecond.slug] ?? 'violet'}`"
+          />
+        </div>
+      </div>
     </section>
 
     <section
@@ -977,15 +784,16 @@ $wide: 64em;
 // From here the contact band starts on the content edge with the brand lean.
 $band-lean: 80em;
 // The hero's tiers, measured on the page's own width (the `home` container, so a scrollbar never
-// tips the layout; named, because the stage is a container too): one column on phones (text,
-// stage, shortcuts); from $hero-tablet a wider stage that runs off the end edge; from $hero-split
-// two columns, the stage running the hero's full height to the window edge; from $hero-wide the
-// text column is wide enough for the shortcuts side by side; from $hero-max the screens stop
-// growing and the extra width stays empty.
+// tips the layout): one column on phones (the headline on three lines, one cropped screen between
+// the actions and the shortcuts); from $hero-tablet the headline on two lines, the shortcuts side
+// by side and both screens under them; from $hero-cover the cover: the headline across the
+// measure, the offer in a column under it and the screens beside it.
 $hero-tablet: 46rem;
-$hero-split: 60rem;
-$hero-wide: 80rem;
-$hero-max: 110rem;
+$hero-cover: 60rem;
+// The main screen's shape, height over width: pos.webp is 1600 by 900 (app/data/solutions.ts).
+$main-shape: 0.5625;
+// Where pos.webp's first row of cards starts, as a share of its height: y = 215 of 900.
+$main-cards: 0.2389;
 
 .home {
   container: home / inline-size;
@@ -1065,190 +873,214 @@ $hero-max: 110rem;
   }
 
   // ---------------------------------------------------------------------------
-  // Hero: the offer, and the products' screens cut by the leaning seam
+  // Hero: a cover. The offer, and real screens of the products off the end edge
   // ---------------------------------------------------------------------------
 
-  // --hero-col is the text column (a cqi length on the page's width): the headline is sized to it.
+  // --hero-measure is the content column (a cqi length on the page's width): the headline fits it.
+  // --main-w and --main-h are the main screen's frame from $hero-tablet: its inline size, and its
+  // height (the title bar plus the screenshot at its shape). The hero cuts it at 80% of that height.
+  // From $hero-cover: --hero-cover is the offer's column, --hero-gap the gap after it, and
+  // --hero-rest the room from the screens' start edge to the window edge.
   &__hero {
-    --hero-col: calc(100cqi - 2 * #{$edge});
-    --hero-gap: var(--space-6);
+    --hero-measure: calc(100cqi - 2 * #{$edge});
+    // The longest of the three lines on phones, "برامج جاهزة،", in em at weight 700, plus 2%.
+    --title-fit: 5.7;
 
     position: relative;
-    isolation: isolate;
+    overflow: clip;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    row-gap: var(--hero-gap);
-    padding-block: clamp(var(--space-5), 5vw, var(--space-8)) var(--space-6);
+    grid-template-areas:
+      "kicker"
+      "title"
+      "lede"
+      "actions"
+      "show"
+      "short";
+    padding-block: var(--space-6) var(--space-7);
     padding-inline: $edge;
     border-block-end: 1px solid var(--border);
 
     @container home (width >= #{$hero-tablet}) {
-      --hero-col: min(100cqi - 2 * #{$edge}, 34rem);
-      --hero-gap: var(--space-7);
+      // The longer of the two lines, "وبرمجيات على مقاسك.", in em at weight 700, plus 2%.
+      --title-fit: 9.78;
+      --hero-gap: var(--space-6);
+      --main-w: calc(1.12 * (100cqi - #{$edge}));
+      --main-h: calc(var(--main-w) * #{$main-shape} + 1.75rem);
+
+      grid-template-areas:
+        "kicker"
+        "title"
+        "lede"
+        "actions"
+        "short"
+        "show";
+      padding-block: clamp(var(--space-7), 5cqi, var(--space-9)) 0;
     }
 
-    // Two columns: the text on the start side, the stage the hero's full height beside it, running
-    // to the window edge; the shortcuts at the foot of the text column.
-    @container home (width >= #{$hero-split}) {
-      --hero-col: clamp(22rem, 42cqi, 34rem);
-      --hero-gap: clamp(var(--space-6), 4cqi, var(--space-8));
+    // The cover: the headline across the measure; under it the offer's column on the start side
+    // and the screens beside it from the same line, running off the end edge. The last row takes
+    // whatever the screens need beyond the column.
+    @container home (width >= #{$hero-cover}) {
+      --hero-cover: clamp(27rem, 0.4 * var(--hero-measure), 30rem);
+      --hero-gap: clamp(var(--space-6), 4cqi, var(--space-7));
+      --hero-rest: calc(
+        100cqi - #{$edge} - var(--hero-cover) - var(--hero-gap)
+      );
+      --main-w: clamp(47.5rem, 1.2 * var(--hero-rest), 75rem);
 
-      grid-template-columns: var(--hero-col) minmax(0, 1fr);
-      grid-template-rows: minmax(0, 1fr) auto;
+      grid-template-columns: var(--hero-cover) minmax(0, 1fr);
+      grid-template-rows: repeat(5, auto) 1fr;
       grid-template-areas:
-        "text stage"
-        "short stage";
+        "kicker kicker"
+        "title title"
+        "lede show"
+        "actions show"
+        "short show"
+        ". show";
       column-gap: var(--hero-gap);
-      row-gap: 0;
-      min-block-size: min(calc(100svh - var(--header-height)), 60rem);
-      padding-block: 0;
       padding-inline: $edge 0;
     }
   }
 
-  &__hero-text {
-    position: relative;
-    z-index: 2;
-    max-inline-size: var(--hero-col);
-
-    @container home (width >= #{$hero-split}) {
-      grid-area: text;
-      align-self: start;
-      padding-block-start: clamp(var(--space-7), 5cqi, var(--space-9));
-    }
-  }
-
   &__kicker {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    margin-block-end: var(--space-5);
-    font-size: 0.9375rem;
+    grid-area: kicker;
+    margin-block-end: var(--space-3);
+    font-size: 1rem;
     font-weight: 500;
     line-height: 1.7;
     color: var(--text-muted);
   }
 
-  // A decorative bar, so it leans. Quiet: the seam is the hero's lime line.
-  &__kicker-bar {
-    flex: none;
-    inline-size: var(--space-6);
-    block-size: 4px;
-    border-radius: var(--radius-pill);
-    background-color: var(--border-strong);
-    transform: $lean;
-  }
-
-  // Three lines, each a step further in so their start edges lean like the seam (the letters
-  // stay upright): "برامج جاهزة،", then "وبرمجيات" quieter, then "على مقاسك." measured.
+  // Each line kept whole, the last word's full stop the one lime mark. Three lines on phones
+  // ("وبرمجيات" and "على مقاسك." apart), two from $hero-tablet, where short screens cap it too.
   &__title {
-    --title-step: calc(tan(var(--slant-angle)) * 1.3em);
-
+    grid-area: title;
     margin: 0;
-    font-size: min(var(--text-hero), var(--hero-col) / 6.2);
-    line-height: 1.3;
-    font-weight: 800;
-  }
-
-  &__title-line {
-    --write-lean: calc(tan(var(--slant-angle)) * 1.95em);
-
-    display: block;
-    inline-size: fit-content;
-
-    & + & {
-      // This line also holds the third (the mark), so its reveal edge spans two lines.
-      --write-lean: calc(tan(var(--slant-angle)) * 3.9em);
-
-      padding-inline-start: var(--title-step);
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-  }
-
-  // The half that answers "made for you", measured by a dimension line: a lime bar under the
-  // words with a leaning tick at each end, clear of the letters' tails.
-  &__title-mark {
-    --write-lean: calc(tan(var(--slant-angle)) * 1.95em);
-    --measure-stroke: max(var(--stroke), 0.035em);
-    --measure-y: 0.01em;
-
-    position: relative;
-    display: block;
-    inline-size: fit-content;
-    margin-inline-start: var(--title-step);
-    font-weight: 800;
+    font-family: var(--font-display);
+    font-size: min(var(--text-hero), var(--hero-measure) / var(--title-fit));
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: start;
+    text-wrap: wrap;
     color: var(--text);
-    white-space: nowrap;
 
-    &::before,
-    &::after {
-      content: "";
-      position: absolute;
-      inset-inline: 0;
-    }
-
-    &::before {
-      inset-block-end: var(--measure-y);
-      block-size: var(--measure-stroke);
-      background-color: var(--accent);
-      // Drawn from the inline start, which is the right edge (the site is RTL only).
-      transform-origin: right center;
-    }
-
-    // Two ticks: a box with only its inline borders, leaning, centred on the bar.
-    &::after {
-      inset-block-end: calc(
-        var(--measure-y) + var(--measure-stroke) / 2 - 0.15em
+    @container home (width >= #{$hero-tablet}) {
+      font-size: min(
+        var(--text-hero),
+        var(--hero-measure) / var(--title-fit),
+        15svh
       );
-      block-size: 0.3em;
-      border-inline: var(--measure-stroke) solid var(--accent);
-      transform: $lean;
+      line-height: 1.2;
     }
+
+    @container home (width >= #{$hero-cover}) {
+      margin-block-end: var(--space-6);
+    }
+  }
+
+  // Each line and part only as wide as its words, so the entrance's wipe crosses the words alone.
+  &__title-line {
+    display: block;
+    inline-size: fit-content;
+    white-space: nowrap;
+  }
+
+  &__title-part {
+    display: block;
+    inline-size: fit-content;
+
+    @container home (width >= #{$hero-tablet}) {
+      display: inline-block;
+    }
+  }
+
+  // A box of its own, so the entrance can grow it from its point.
+  &__title-stop {
+    display: inline-block;
+    color: var(--accent-text);
   }
 
   &__lede {
-    max-inline-size: 30rem;
+    grid-area: lede;
+    max-inline-size: 27em;
     margin-block-start: var(--space-5);
     font-size: var(--text-lead);
-    line-height: 1.9;
+    font-weight: 400;
+    line-height: 1.8;
     color: var(--text-muted);
+
+    @container home (width >= #{$hero-tablet}) {
+      max-inline-size: 32rem;
+    }
+
+    // The deck line: the lede's top is the screens' top.
+    @container home (width >= #{$hero-cover}) {
+      max-inline-size: 27em;
+      margin-block-start: 0;
+    }
   }
 
+  // Phones: the call across the column (its leaning corners kept inside it), the other action
+  // under it at its own width. From $hero-tablet both on one row.
   &__hero-actions {
+    grid-area: actions;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: var(--space-4);
     margin-block-start: var(--space-6);
+
+    > :first-child {
+      align-self: stretch;
+      justify-content: center;
+      margin-inline: calc(var(--control-lg) * tan(var(--slant-angle)) / 2);
+    }
+
+    // Its leaning corner on the same start line as the call's.
+    > :last-child {
+      margin-inline-start: calc(
+        var(--control-md) * tan(var(--slant-angle)) / 2
+      );
+    }
+
+    @container home (width >= #{$hero-tablet}) {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+
+      > :first-child {
+        align-self: auto;
+        margin-inline: 0;
+      }
+
+      > :last-child {
+        margin-inline-start: 0;
+      }
+    }
   }
 
-  // Straight to a product: its name and what it does, after a point in the product's colour.
+  // Straight to a product: a point in its colour, its name and price, what it does under them.
+  // Stacked on phones; side by side from $hero-tablet (the second on the mid line the second screen
+  // starts from); stacked again in the cover's column.
   &__shortcuts {
-    position: relative;
-    z-index: 2;
+    grid-area: short;
     display: grid;
-    gap: var(--space-2) var(--space-6);
-    max-inline-size: 34rem;
-    margin: 0;
-    padding: var(--space-4) 0 0;
-    border-block-start: 1px solid var(--border);
+    gap: var(--space-4);
+    margin: var(--space-6) 0 0;
+    padding: 0;
     list-style: none;
 
-    @media (width >= $medium) {
+    @container home (width >= #{$hero-tablet}) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--hero-gap);
+      margin-block-start: var(--space-7);
     }
 
-    // At the foot of the text column; one product a row until the column is wide enough for two.
-    @container home (width >= #{$hero-split}) {
-      grid-area: short;
-      align-self: end;
+    @container home (width >= #{$hero-cover}) {
       grid-template-columns: minmax(0, 1fr);
-      margin-block: var(--space-6);
-    }
-
-    @container home (width >= #{$hero-wide}) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-self: start;
+      margin-block: var(--space-7);
     }
   }
 
@@ -1257,12 +1089,16 @@ $hero-max: 110rem;
 
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
+    align-items: baseline;
     column-gap: var(--space-3);
     min-block-size: 44px;
-    padding-block: var(--space-2);
     text-decoration: none;
     color: var(--text);
+
+    // Side by side, the price right after the name, so it never reads as the next product's.
+    @container home (#{$hero-tablet} <= width < #{$hero-cover}) {
+      grid-template-columns: auto auto minmax(0, 1fr);
+    }
 
     &--sand {
       --shortcut-colour: var(--dalaly-accent);
@@ -1270,335 +1106,124 @@ $hero-max: 110rem;
 
     &::before {
       content: "";
-      grid-row: 1 / 3;
-      inline-size: var(--point-md);
-      block-size: var(--point-md);
+      grid-row: 1;
+      align-self: center;
+      inline-size: var(--point-sm);
+      block-size: var(--point-sm);
       border-radius: 50%;
       background-color: var(--shortcut-colour);
     }
 
-    // Forward is to the left in RTL.
-    &::after {
-      content: "←" / "";
-      grid-column: 3;
-      grid-row: 1 / 3;
-      color: var(--text-muted);
-      transition:
-        translate var(--duration-base) var(--ease-out),
-        color var(--duration-fast) var(--ease-out);
-    }
-
     @media (hover: hover) {
-      &:hover::after {
-        color: var(--text);
-        translate: -0.3rem 0;
-      }
-
       &:hover .home__shortcut-name {
-        text-decoration: underline;
-        text-decoration-color: var(--shortcut-colour);
-        text-underline-offset: 0.3em;
+        text-decoration-color: var(--accent);
       }
     }
   }
 
+  // The site's plain-link underline, on the name only.
   &__shortcut-name {
-    font-weight: 700;
+    grid-column: 2;
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
     line-height: 1.5;
+    text-decoration: underline;
+    text-decoration-color: var(--border-strong);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.3em;
+    transition: text-decoration-color var(--duration-fast) var(--ease-out);
+  }
+
+  &__shortcut-price {
+    grid-column: 3;
+    font-size: var(--text-small);
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: nowrap;
+    color: var(--text);
   }
 
   &__shortcut-tagline {
-    grid-column: 2;
+    grid-column: 2 / -1;
     font-size: var(--text-small);
     line-height: 1.6;
     color: var(--text-muted);
   }
 
-  // The stage: the plan (the screens as lime line drawings on an engineering grid) under the
-  // shipped side (the same screens, finished), which a leaning seam cuts. --seam-rest is the
-  // shipped share at rest, from the stage's start edge; scroll (--seam-scroll, 0 to 1) carries the
-  // seam past the window edge and the pointer leans it a little (--seam-drift). Both are written by
-  // GSAP on the shipped box and its view; without it the seam simply rests. All sizes come from
-  // the stage, so nothing shifts.
-  &__stage {
-    --seam-rest: 0.64;
-    --grid-major: color-mix(in srgb, var(--border) 80%, transparent);
-    --grid-minor: color-mix(in srgb, var(--border) 35%, transparent);
-
+  // The screens: on phones one, cropped to its menu, search and first cards, its whole frame in
+  // view. From $hero-tablet the main screen whole and large, the hero cutting it at 80% of its
+  // height, and the second in front of it over its end half, cropped to its top and start corner
+  // and set off from it by a ring of the page's ground. Both run off the end edge, never toward
+  // the text.
+  &__showcase {
+    grid-area: show;
     position: relative;
-    z-index: 1;
-    overflow: clip;
-    container: stage / inline-size;
-    justify-self: stretch;
-    aspect-ratio: 1.05;
-    margin-inline: calc(-1 * #{$edge});
+    margin-block-start: var(--space-7);
 
     @container home (width >= #{$hero-tablet}) {
-      --seam-rest: 0.6;
-
-      aspect-ratio: 1.5;
-      margin-inline: 0 calc(-1 * #{$edge});
+      block-size: calc(0.8 * var(--main-h));
     }
 
-    // The full height of the hero, from half-way across the gap to the window edge.
-    @container home (width >= #{$hero-split}) {
-      grid-area: stage;
-      align-self: stretch;
-      aspect-ratio: auto;
-      margin-inline: calc(-0.5 * var(--hero-gap)) 0;
+    @container home (width >= #{$hero-cover}) {
+      align-self: start;
+      margin-block-start: 0;
     }
   }
 
-  &__plan {
-    position: absolute;
-    inset: 0;
+  // Each layer places a screen (and from $hero-tablet the scroll moves it); the window inside it
+  // arrives and lifts (see the end of this file).
+  &__layer--main {
+    --window-ratio: 1.25;
+    --window-zoom: 2;
 
-    // The drawing board, fading out at the top and toward the next section.
-    &::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--grid-major) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
-        linear-gradient(var(--grid-minor) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
-      background-size:
-        56px 56px,
-        56px 56px,
-        14px 14px,
-        14px 14px;
-      mask-image: linear-gradient(
-        transparent,
-        black 14%,
-        black 62%,
-        transparent
+    inline-size: calc(1.2 * var(--hero-measure));
+
+    @container home (width >= #{$hero-tablet}) {
+      --window-ratio: auto;
+      --window-zoom: 1;
+
+      inline-size: var(--main-w);
+    }
+  }
+
+  // Its top edge on the main screen's first row of cards: past the frame's border and title bar,
+  // then $main-cards of the screenshot's height. Its start edge on the mid line (side by side),
+  // then about the middle of the room, running off the end edge by 14% of its width; never nearer
+  // the start than 30% of the room, so the main screen's menu and first cards stay in view.
+  &__layer--second {
+    --window-ratio: 1.5;
+    --window-zoom: 1.5;
+
+    position: absolute;
+    display: none;
+
+    @container home (width >= #{$hero-tablet}) {
+      inset-block-start: calc(
+        1px + 1.75rem + (var(--main-w) - 2px) * #{$main-shape} * #{$main-cards}
       );
+      inset-inline-start: calc(50% + var(--hero-gap) / 2);
+      display: block;
+      inline-size: calc(0.5 * var(--main-w));
     }
 
-    // The front drawing is a sheet over the back one: its ground hides the lines behind it.
-    .home__layer--front .window {
-      background-color: color-mix(in srgb, var(--bg) 88%, transparent);
-    }
-  }
-
-  // The finished side: a box from the seam to well past the stage's start edge (so its leaning
-  // start edge never uncovers the plan next to the text), leaning like the buttons. Its view leans
-  // back and moves back by exactly as much, so the screens inside stay still while the cut moves.
-  &__shipped,
-  &__shipped-view {
-    --shipped: calc(
-      var(--seam-rest) + (1.15 - var(--seam-rest)) * var(--seam-scroll, 0) +
-        var(--seam-drift, 0) * (1 - var(--seam-scroll, 0))
-    );
-  }
-
-  &__shipped {
-    --overshoot: 60cqi;
-
-    position: absolute;
-    z-index: 1;
-    inset-block: 0;
-    inset-inline-start: calc(-1 * var(--overshoot));
-    overflow: hidden;
-    inline-size: calc(100cqi + var(--overshoot));
-    clip-path: inset(0);
-    transform: $lean;
-    // Physical x (the site is RTL only): the box's left edge is the seam, (1 - shipped) of the
-    // stage from its left edge, so a larger share moves it toward the window edge.
-    translate: calc((1 - var(--shipped)) * 100cqi) 0;
-
-    // The seam: lime, leaning with the box, its ends fading out. Not a control.
-    &::after {
-      content: "";
-      position: absolute;
-      inset-block: 0;
-      inset-inline-end: 0;
-      inline-size: var(--stroke);
-      background-color: var(--accent);
-      mask-image: linear-gradient(
-        transparent 3%,
-        black 18%,
-        black 85%,
-        transparent
-      );
-
-      @container home (width >= #{$hero-split}) {
-        inline-size: calc(var(--stroke) * 1.5);
-      }
+    @container home (width >= #{$hero-cover}) {
+      inset-inline-start: max(30%, 100% - 0.43 * var(--main-w));
     }
   }
 
-  // Exactly over the stage box, on the page's own ground.
-  &__shipped-view {
-    position: absolute;
-    inset-block: 0;
-    inset-inline-end: 0;
-    inline-size: 100cqi;
-    background-color: var(--bg);
-    transform: $upright;
-    translate: calc((var(--shipped) - 1) * 100cqi) 0;
+  // Windows apps: no window lights.
+  &__screen {
+    --window-lights: none;
   }
 
-  // One screen of each product, placed the same in the plan and on the shipped side so the cut
-  // lines up. Phones: the back screen bleeds off the end edge, the front screen over its lower
-  // corner, both cropped to their menus and headings. From $hero-tablet both show whole.
-  &__layer {
-    position: absolute;
-
-    &--violet {
-      --layer-colour: var(--nuqta-accent);
-    }
-
-    &--sand {
-      --layer-colour: var(--dalaly-accent);
-    }
-
-    &--back {
-      --window-ratio: 1.3;
-      --window-zoom: 1.55;
-
-      inset-block-start: 8%;
-      inset-inline-end: -6%;
-      inline-size: 92%;
-
-      @container home (width >= #{$hero-tablet}) {
-        --window-ratio: auto;
-        --window-zoom: 1;
-
-        inset-block-start: 7%;
-        inset-inline-end: -2%;
-        inline-size: 74%;
-      }
-
-      @container home (width >= #{$hero-split}) {
-        inset-block-start: 6%;
-        inset-inline-end: -22%;
-        inline-size: 112%;
-      }
-
-      @container home (width >= #{$hero-max}) {
-        inline-size: min(112%, 60rem);
-      }
-    }
-
-    &--front {
-      --window-ratio: 1.35;
-      --window-zoom: 1.9;
-
-      z-index: 1;
-      inset-block-end: 7%;
-      inset-inline-start: 4%;
-      inline-size: 66%;
-
-      @container home (width >= #{$hero-tablet}) {
-        --window-ratio: auto;
-        --window-zoom: 1;
-
-        inset-block-end: 6%;
-        inset-inline-start: 12%;
-        inline-size: 54%;
-      }
-
-      @container home (width >= #{$hero-split}) {
-        inset-block: 50% auto;
-        inset-inline-start: 2%;
-        inline-size: 72%;
-      }
-
-      @container home (width >= #{$hero-max}) {
-        inline-size: min(72%, 40rem);
-      }
-    }
-  }
-
-  // On the shipped side: a ring in the product's colour, shown while its shortcut is pointed at.
-  &__shipped-view &__layer::before {
-    content: "";
-    position: absolute;
-    inset: -5px;
-    z-index: 1;
-    border: 1px solid var(--layer-colour);
-    border-radius: calc(var(--radius-lg) + 5px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--duration-base) var(--ease-out);
-  }
-
-  // A price tag at each screen's start-side corner, on the shipped side only: real facts, leaning
-  // like every tag, its text upright, after a point in the product's colour.
-  &__tag {
-    position: absolute;
-    z-index: 2;
-    inset-inline-start: calc(-1 * var(--space-2));
-    margin: 0;
-    padding: 0.2rem var(--space-3);
-    border-radius: var(--radius-sm);
-    background-color: var(--surface-raised);
-    font-size: clamp(0.6875rem, 0.62rem + 0.25vw, 0.8125rem);
-    font-weight: 700;
-    line-height: 1.7;
-    white-space: nowrap;
-    color: var(--text);
-    box-shadow: 0 0.5rem 1rem -0.25rem
-      color-mix(in srgb, black 45%, transparent);
-    transform: $lean;
-    transition: translate var(--duration-base) var(--ease-out);
-
-    // Hung off the frame like a tab, clear of the window's title.
-    .home__layer--back & {
-      inset-block-end: calc(100% - 0.35rem);
-    }
-
-    .home__layer--front & {
-      inset-block-start: calc(100% - 0.35rem);
-    }
-  }
-
-  &__tag-text {
-    display: flex;
-    align-items: center;
-    gap: 0.3em;
-    transform: $upright;
-
-    &::before {
-      content: "";
-      flex: none;
-      inline-size: var(--point-sm);
-      block-size: var(--point-sm);
-      margin-inline-end: 0.2em;
-      border-radius: 50%;
-      background-color: var(--layer-colour);
-    }
-  }
-
-  // A shortcut pointed at or focused lights its screen: the ring shows and the tag lifts.
-  &__hero:has(.home__shortcut--violet:focus-visible)
-    &__shipped-view
-    &__layer--violet,
-  &__hero:has(.home__shortcut--sand:focus-visible)
-    &__shipped-view
-    &__layer--sand {
-    &::before {
-      opacity: 1;
-    }
-
-    .home__tag {
-      translate: 0 -4px;
-    }
-  }
-
-  @media (hover: hover) {
-    &__hero:has(.home__shortcut--violet:hover) &__shipped-view &__layer--violet,
-    &__hero:has(.home__shortcut--sand:hover) &__shipped-view &__layer--sand {
-      &::before {
-        opacity: 1;
-      }
-
-      .home__tag {
-        translate: 0 -4px;
-      }
-    }
+  // Written inside its layer so it outranks the window's own shadow, which it repeats after the
+  // ring.
+  &__layer--second &__screen {
+    box-shadow:
+      0 0 0 var(--space-2) var(--bg),
+      0 1.5rem 3rem -1rem color-mix(in srgb, black 55%, transparent),
+      0 0.25rem 0.75rem color-mix(in srgb, black 25%, transparent);
   }
 
   // ---------------------------------------------------------------------------
@@ -2404,122 +2029,76 @@ $hero-max: 110rem;
   }
 }
 
-// The seam's live values: plain numbers that do not inherit. GSAP writes them on the shipped box
-// and its view, which compute their own share from them, so a frame restyles those two only.
-@property --seam-scroll {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 0;
-}
-
-@property --seam-drift {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 0;
-}
-
-@property --shipped {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 0;
-}
-
-// The hero's entrance: plain CSS, so it starts with the first paint and needs no JavaScript. The
-// text arrives first and fast (on screen within half a second); the plan is drawn, then the seam
-// sweeps in from the start edge to its rest, finishing the screens as it passes. Every keyframe
-// runs toward the resting style, which is what shows without motion or JavaScript.
+// The hero's entrance: plain CSS, so it starts with the first paint and waits for nothing. The
+// text arrives first and fast (the headline reads by about 450ms), then the screens. Every
+// keyframe runs toward the resting style, which is what shows without motion or JavaScript.
 @media (prefers-reduced-motion: no-preference) {
   .home__kicker {
     animation: home-rise var(--duration-slow) var(--ease-out) backwards;
   }
 
-  // Each line is written in from its start, behind an edge that leans like the seam.
-  .home__title-line {
-    animation: home-write var(--duration-slow) var(--ease-out) 60ms backwards;
+  // The headline is wiped in from the reading start: the first line, then each part of the second.
+  .home__title-line:first-child,
+  .home__title-part {
+    animation: home-wipe var(--duration-slow) var(--ease-out) backwards;
+  }
 
-    & + .home__title-line {
-      animation-delay: 140ms;
+  .home__title-part {
+    animation-delay: var(--stagger);
+
+    & + .home__title-part {
+      animation-delay: calc(2 * var(--stagger));
     }
   }
 
-  .home__title-mark {
-    animation: home-write var(--duration-slow) var(--ease-out) 220ms backwards;
-
-    &::before {
-      animation: home-measure var(--duration-slow) var(--ease-out) 560ms
-        backwards;
-    }
-
-    &::after {
-      animation: home-fade var(--duration-base) var(--ease-out) 880ms backwards;
-    }
+  // Grown from the point itself, which sits just above the baseline.
+  .home__title-stop {
+    transform-origin: 50% 75%;
+    animation: home-grow var(--duration-base) var(--ease-out) 480ms backwards;
   }
 
   .home__lede {
-    animation: home-rise var(--duration-slow) var(--ease-out) 200ms backwards;
+    animation: home-rise var(--duration-slow) var(--ease-out) 160ms backwards;
   }
 
+  // The individual translate property: the links lean with transform.
   .home__hero-actions > * {
-    animation: home-forward var(--duration-slow) var(--ease-out) 280ms backwards;
+    animation: home-forward var(--duration-slow) var(--ease-out) 240ms backwards;
 
     & + * {
-      animation-delay: 360ms;
+      animation-delay: 320ms;
     }
   }
 
   .home__shortcuts {
-    animation: home-rise var(--duration-slow) var(--ease-out) 440ms backwards;
+    animation: home-fade var(--duration-slow) var(--ease-out) 400ms backwards;
   }
 
-  // Both copies of a screen settle together, so the cut always lines up. The window settles, not
-  // its layer: GSAP moves the layer, and would freeze a running CSS move into its own transform.
-  .home__layer > .window {
-    animation: home-settle var(--duration-entrance) var(--ease-out) 120ms
+  // On the windows, never on the layers the scroll moves. A shortcut pointed at or focused lifts
+  // its product's window.
+  .home__screen {
+    animation: home-arrive var(--duration-entrance) var(--ease-out) 120ms
       backwards;
+    transition: translate var(--duration-base) var(--ease-out);
   }
 
-  .home__layer--front > .window {
-    animation-delay: 200ms;
+  .home__layer--second .home__screen {
+    animation-delay: 280ms;
   }
 
-  // The traced drawings move with scroll and pointer: on their own layers they are traced once,
-  // not again on every frame.
-  .home__plan .home__layer {
-    will-change: transform;
+  .home__hero:has(.home__shortcut--violet:focus-visible) .home__screen--violet,
+  .home__hero:has(.home__shortcut--sand:focus-visible) .home__screen--sand {
+    translate: 0 -4px;
   }
 
-  // The plan is drawn top to bottom, like a plotter.
-  .home__plan {
-    animation: home-plot var(--duration-slow) var(--ease-in-out) 240ms backwards;
-  }
-
-  // The seam sweeps in from the start edge: the box and its view move in mirror image, with the
-  // same timing, so the screens stay still while the cut passes over them.
-  .home__shipped {
-    animation: home-ship var(--duration-entrance) var(--ease-in-out) 700ms
-      backwards;
-
-    &::after {
-      animation: home-fade var(--duration-base) var(--ease-out) 700ms backwards;
-    }
-  }
-
-  .home__shipped-view {
-    animation: home-ship-view var(--duration-entrance) var(--ease-in-out) 700ms
-      backwards;
-  }
-
-  // The prices arrive as the seam passes them.
-  .home__tag {
-    animation: home-tag var(--duration-base) var(--ease-out) 1000ms backwards;
-
-    .home__layer--front & {
-      animation-delay: 1180ms;
+  @media (hover: hover) {
+    .home__hero:has(.home__shortcut--violet:hover) .home__screen--violet,
+    .home__hero:has(.home__shortcut--sand:hover) .home__screen--sand {
+      translate: 0 -4px;
     }
   }
 
   // Keyboard focus can get there first: what holds focus is shown at once, never half-faded.
-  .home__hero-text > :focus-within,
   .home__hero-actions > :focus-within,
   .home__shortcuts:focus-within {
     animation: none;
@@ -2533,11 +2112,29 @@ $hero-max: 110rem;
   }
 }
 
+// From the inline start, the right edge (the site is RTL only), past the words' ends so no mark is
+// cut; with `backwards` fill nothing is left clipping once it ends.
+@keyframes home-wipe {
+  from {
+    clip-path: inset(-30% -0.1em -30% 100%);
+  }
+
+  to {
+    clip-path: inset(-30% -0.1em -30% -0.1em);
+  }
+}
+
+@keyframes home-grow {
+  from {
+    scale: 0;
+  }
+}
+
 // Forward is to the left (RTL): from a little to the right.
 @keyframes home-forward {
   from {
     opacity: 0;
-    translate: 1.5rem 0;
+    translate: 1rem 0;
   }
 }
 
@@ -2547,70 +2144,10 @@ $hero-max: 110rem;
   }
 }
 
-// A leaning edge travels from the right (the inline start, RTL only) to past the left; the same
-// four points throughout, reaching a quarter beyond the line box so no marks are cut. With
-// `backwards` fill nothing is left clipping once it ends.
-@keyframes home-write {
-  from {
-    clip-path: polygon(
-      calc(100% + 1em + var(--write-lean)) -25%,
-      calc(100% + 3em) -25%,
-      calc(100% + 3em) 125%,
-      calc(100% + 1em) 125%
-    );
-  }
-
-  to {
-    clip-path: polygon(
-      -0.5em -25%,
-      calc(100% + 3em) -25%,
-      calc(100% + 3em) 125%,
-      calc(-0.5em - var(--write-lean)) 125%
-    );
-  }
-}
-
-@keyframes home-measure {
-  from {
-    scale: 0 1;
-  }
-}
-
-@keyframes home-settle {
+@keyframes home-arrive {
   from {
     opacity: 0;
     translate: 0 1.5rem;
-    scale: 0.97;
-  }
-}
-
-@keyframes home-plot {
-  from {
-    clip-path: inset(0 0 100% 0);
-  }
-
-  to {
-    clip-path: inset(0);
-  }
-}
-
-// From past the start edge (nothing shipped) to the resting share.
-@keyframes home-ship {
-  from {
-    translate: 115cqi 0;
-  }
-}
-
-@keyframes home-ship-view {
-  from {
-    translate: -115cqi 0;
-  }
-}
-
-@keyframes home-tag {
-  from {
-    opacity: 0;
-    translate: 0 0.4rem;
   }
 }
 </style>
