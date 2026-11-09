@@ -260,6 +260,28 @@ $upright: skewX(var(--slant-angle));
 // Footer: stacked below the first, two columns between, three from the second.
 $footer-two: 48em;
 $footer-three: 64em;
+// Glassmorphism: frost that also dims what passes under it, a dark tint and a light film on top.
+// Together they keep white text readable when the glass is over the lime band or a sand panel.
+$glass-filter: blur(20px) saturate(1.6) brightness(0.65);
+
+@mixin glass {
+  border: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--text) 10%, transparent),
+      color-mix(in srgb, var(--text) 4%, transparent)
+    ),
+    color-mix(in srgb, var(--bg) 50%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text) 25%, transparent),
+    var(--shadow-md);
+  // Safari before 18 reads only the prefixed property; the default targets would strip it.
+  /* autoprefixer: ignore next */
+  -webkit-backdrop-filter: $glass-filter;
+  backdrop-filter: $glass-filter;
+}
 
 .layout {
   display: flex;
@@ -336,8 +358,12 @@ $footer-three: 64em;
     }
   }
 
-  // Same width and gutters as the page content, so logo and links line up with it.
+  // Same width and gutters as the page content, so logo and links line up with it. The glass is on a
+  // pseudo-element: a backdrop-filter on the bar itself would leave the menu panel inside it with
+  // nothing to blur.
   &__bar {
+    position: relative;
+    z-index: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -347,9 +373,15 @@ $footer-three: 64em;
     min-block-size: var(--header-height);
     margin-inline: auto;
     padding-inline: var(--page-gutter);
-    background-color: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      @include glass;
+    }
   }
 
   &__brand {
@@ -385,14 +417,15 @@ $footer-three: 64em;
     font-size: var(--text-ui);
     font-weight: 500;
     line-height: 1.4;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: color var(--duration-fast) var(--ease-out);
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: text-decoration-color var(--duration-fast) var(--ease-out);
 
     // Hover styles only where a pointer can hover: on touch, :hover sticks after a tap.
     @media (hover: hover) {
       &:hover {
-        color: var(--text);
+        text-decoration-color: var(--accent-text);
       }
     }
 
@@ -406,7 +439,7 @@ $footer-three: 64em;
     &[aria-current="page"],
     &--section {
       font-weight: 600;
-      color: var(--text);
+      text-decoration-line: none;
 
       .layout__link-label::after {
         content: "";
@@ -434,7 +467,7 @@ $footer-three: 64em;
       align-items: center;
       min-block-size: var(--control-md);
       padding-inline: var(--space-4);
-      border: 1.5px solid var(--border-strong);
+      border: 1.5px solid color-mix(in srgb, var(--text) 45%, transparent);
       border-radius: var(--radius-pill);
       background-color: transparent;
       font-size: var(--text-ui);
@@ -508,13 +541,12 @@ $footer-three: 64em;
       flex-direction: column;
       flex-wrap: nowrap;
       align-items: stretch;
-      max-block-size: calc(100dvh - var(--header-height));
+      margin-block-start: var(--space-2);
+      max-block-size: calc(100dvh - var(--header-height) - var(--space-5));
       overflow-y: auto;
       overscroll-behavior: contain;
       padding: var(--space-3) var(--page-gutter) var(--space-6);
-      border-block-end: 1px solid var(--border);
-      background-color: var(--bg);
-      box-shadow: var(--shadow-md);
+      @include glass;
       visibility: hidden;
       opacity: 0;
       transform: translateY(calc(var(--space-2) * -1));
