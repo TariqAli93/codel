@@ -438,6 +438,7 @@ $wide: 64em;
     cursor: pointer;
     transition:
       border-color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out),
       color var(--duration-fast) var(--ease-out);
 
     img {
@@ -457,6 +458,10 @@ $wide: 64em;
           opacity: 1;
         }
       }
+    }
+
+    &:active {
+      background-color: var(--surface-raised);
     }
 
     // The heavier border takes its width from the padding, so the thumbnail never moves.

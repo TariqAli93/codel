@@ -1116,7 +1116,9 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
     border-radius: var(--radius-md);
     text-decoration: none;
     color: var(--text);
-    transition: border-color var(--duration-fast) var(--ease-out);
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
 
     @container home (width >= #{$hero-tablet}) {
       padding-block: var(--space-2);
@@ -1143,6 +1145,10 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
       &:hover {
         border-color: var(--accent);
       }
+    }
+
+    &:active {
+      background-color: var(--surface-raised);
     }
 
     // A card sits half on the slab, where the lime ring alone would vanish: a halo of the page's
@@ -1438,7 +1444,7 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
     padding-block-end: var(--section-gap);
   }
 
-  // Lime from window edge to window edge, glowing. From $band-lean it starts on the content edge
+  // Lime from window edge to window edge. From $band-lean it starts on the content edge
   // with the brand lean and its far end runs past the window edge (the page clips it).
   &__band {
     // The band is lime: dark text and links, and a dark focus ring so it stays visible.
@@ -1454,16 +1460,12 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
     padding: clamp(var(--space-7), 7vw, var(--space-9)) $edge;
     color: var(--on-accent);
 
-    // The fill and the glow on their own layers, so they can lean while the text stays upright.
-    &::before,
-    &::after {
+    // The fill on its own layer, so it can lean while the text stays upright.
+    &::before {
       content: "";
       position: absolute;
       inset: 0;
       z-index: -2;
-    }
-
-    &::before {
       background-color: var(--accent);
     }
 
@@ -1471,8 +1473,7 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
       margin-inline-start: 0;
       padding-inline-start: clamp(var(--space-7), 6vw, var(--space-9));
 
-      &::before,
-      &::after {
+      &::before {
         inset-inline-end: calc(var(--space-9) * -1);
         border-radius: var(--radius-lg);
         transform: $lean;

@@ -18,7 +18,7 @@ defineProps<{
   block-size: 1.75rem;
   padding-inline: var(--space-3);
   border-radius: var(--radius-pill);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
+  border: 1px solid var(--border-strong);
   font-size: var(--text-small);
   font-weight: 600;
   line-height: 1.7;

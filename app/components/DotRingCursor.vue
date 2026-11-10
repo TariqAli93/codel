@@ -40,6 +40,8 @@ function onPointerMove(event: PointerEvent) {
     present.value = true
   }
   overInteractive = Boolean(document.elementFromPoint(x, y)?.closest(interactive))
+  // Wake the loop if it was resting.
+  if (!frame) frame = requestAnimationFrame(tick)
 }
 
 function onPointerLeave() {
@@ -57,7 +59,13 @@ function tick() {
   if (dot.value) {
     dot.value.style.transform = `translate(${x - dotSize / 2}px, ${y - dotSize / 2}px)`
   }
-  frame = requestAnimationFrame(tick)
+  // Once the ring has caught up with a still pointer the loop rests: no frames are requested until
+  // the pointer moves again (frame is 0 while it rests).
+  const settled =
+    Math.abs(x - ringX) < 0.1 &&
+    Math.abs(y - ringY) < 0.1 &&
+    Math.abs((overInteractive ? hoverScale : 1) - scale) < 0.001
+  frame = settled ? 0 : requestAnimationFrame(tick)
 }
 
 function start() {
@@ -68,6 +76,7 @@ function start() {
 
 function stop() {
   cancelAnimationFrame(frame)
+  frame = 0
   window.removeEventListener('pointermove', onPointerMove)
   document.documentElement.removeEventListener('pointerleave', onPointerLeave)
   overInteractive = false

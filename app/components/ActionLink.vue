@@ -127,11 +127,12 @@ $upright: skewX(var(--slant-angle));
       background-color: var(--primary-active);
     }
 
-    // On its own page (the header button on /contact) it goes quiet: there is nowhere to go.
+    // On its own page (the header button on /contact) it goes quiet: there is nowhere to go. A real
+    // border, like the outline look: forced-colours mode would remove a shadow ring.
     &[aria-current='page'] {
+      border: 1.5px solid var(--border-strong);
       background-color: transparent;
       color: var(--text);
-      box-shadow: inset 0 0 0 1.5px var(--border-strong);
     }
   }
 
