@@ -274,9 +274,9 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       color-mix(in srgb, var(--text) 4%, transparent)
     ),
     color-mix(in srgb, var(--bg) 50%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--text) 25%, transparent),
-    var(--shadow-md);
+  // box-shadow:
+  //   inset 0 1px 0 color-mix(in srgb, var(--text) 25%, transparent),
+  //   var(--shadow-md);
   // Safari before 18 reads only the prefixed property; the default targets would strip it.
   /* autoprefixer: ignore next */
   -webkit-backdrop-filter: $glass-filter;
