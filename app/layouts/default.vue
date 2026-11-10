@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type Lenis from "lenis";
+import { VueLenis } from "lenis/vue";
 import { company } from "~/data/company";
 
 interface NavLink {
@@ -63,6 +65,34 @@ const path = computed(() => route.path.replace(/\/+$/, "") || "/");
 
 // /solutions/<slug> keeps "حلولنا" marked: the link's section is current, not only its exact page.
 const inSection = (to: string) => to !== "/" && path.value.startsWith(`${to}/`);
+
+// Smooth wheel scrolling on every page (Lenis). Like the cursor it is mounted after hydration and
+// only for a hovering, fine pointer without reduced motion: touch screens, reduced motion and visits
+// without JavaScript keep the browser's own scrolling. Pass it options only as a constant:
+// <VueLenis> rebuilds Lenis whenever it gets a new options object.
+const smoothQuery =
+  "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
+const smoothScroll = ref(false);
+const smooth = ref<{ lenis?: Lenis } | null>(null);
+let smoothMedia: MediaQueryList | undefined;
+
+function syncSmoothScroll() {
+  smoothScroll.value = Boolean(smoothMedia?.matches);
+}
+
+// While a wheel glide runs Lenis ignores native scrolling and would pull the page back to it. A key,
+// a focus move, a press and a new page each end the glide first, so their own scroll stands.
+// stop() then start() is Lenis's public way to drop a glide (its reset() is private).
+function endGlide() {
+  const lenis = smooth.value?.lenis;
+  if (!lenis?.isSmooth) return;
+  lenis.stop();
+  lenis.start();
+}
+
+// The router's scroll to the top or to the saved position (back and forward) waits for this hook.
+const nuxtApp = useNuxtApp();
+let stopGlideHook: (() => void) | undefined;
 
 // Small-screen menu. Same breakpoint as $nav-wide in the styles below.
 const wideQuery = "(min-width: 60em)";
@@ -129,10 +159,22 @@ let wideMedia: MediaQueryList | undefined;
 onMounted(() => {
   wideMedia = window.matchMedia(wideQuery);
   wideMedia.addEventListener("change", onWideChange);
+  smoothMedia = window.matchMedia(smoothQuery);
+  smoothMedia.addEventListener("change", syncSmoothScroll);
+  syncSmoothScroll();
+  document.addEventListener("keydown", endGlide, true);
+  document.addEventListener("focusin", endGlide, true);
+  document.addEventListener("pointerdown", endGlide, true);
+  stopGlideHook = nuxtApp.hook("page:loading:end", endGlide);
 });
 
 onBeforeUnmount(() => {
   wideMedia?.removeEventListener("change", onWideChange);
+  smoothMedia?.removeEventListener("change", syncSmoothScroll);
+  document.removeEventListener("keydown", endGlide, true);
+  document.removeEventListener("focusin", endGlide, true);
+  document.removeEventListener("pointerdown", endGlide, true);
+  stopGlideHook?.();
   stopListening();
 });
 </script>
@@ -168,11 +210,13 @@ onBeforeUnmount(() => {
             </span>
           </button>
 
+          <!-- While open the menu scrolls on its own, so Lenis leaves its wheel alone. -->
           <ul
             id="site-menu"
             role="list"
             class="layout__menu"
             :class="{ 'layout__menu--open': menuOpen }"
+            :data-lenis-prevent="menuOpen ? '' : undefined"
           >
             <li
               v-for="link in headerLinks"
@@ -248,6 +292,7 @@ onBeforeUnmount(() => {
     </footer>
 
     <DotRingCursor />
+    <VueLenis v-if="smoothScroll" ref="smooth" root />
   </div>
 </template>
 
