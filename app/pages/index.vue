@@ -144,7 +144,7 @@ async function startMotion() {
           if (!chip) return;
           gsap.to(chip, {
             y: () =>
-              stacked() ? 0 : (layer.offsetHeight * shift) / 100 - chipLead,
+              inPhoneTier() ? 0 : (layer.offsetHeight * shift) / 100 - chipLead,
             ease: "none",
             scrollTrigger: scrub(),
           });
@@ -279,7 +279,7 @@ async function startMotion() {
       <!-- The stage: the lime slab and real screens of the products on it (decorative here,
            described in the products below). Each layer is placed and moved by scroll, the window
            inside it arrives and lifts. -->
-      <div class="home__showcase">
+      <div class="home__showcase home__band">
         <div
           v-if="heroMain && heroMainShot"
           class="home__layer home__layer--main"
