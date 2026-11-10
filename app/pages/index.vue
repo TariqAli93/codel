@@ -1460,10 +1460,6 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
       background-color: var(--accent);
     }
 
-    &::after {
-      box-shadow: var(--glow-accent);
-    }
-
     @media (width >= $band-lean) {
       margin-inline-start: 0;
       padding-inline-start: clamp(var(--space-7), 6vw, var(--space-9));
