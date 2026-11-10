@@ -504,7 +504,6 @@ $edge: max(
   calc((100cqi - var(--container-max)) / 2 + var(--page-gutter))
 );
 
-$medium: 48em;
 $wide: 64em;
 // From here the contact band starts on the content edge with the brand lean.
 $band-lean: 80em;
@@ -951,6 +950,12 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
     margin-block-start: calc(-1 * var(--word-room));
     padding-block: var(--stage-top) var(--stage-end);
 
+    // The stage is a band too (its fill and inline bleed). The band's own block padding must not
+    // replace the slab's reach: the chips and the second screen are placed from the same lengths.
+    &.home__band {
+      padding-block: var(--stage-top) var(--stage-end);
+    }
+
     @container home (width >= #{$hero-cover}) {
       margin-block-start: 0;
     }
@@ -1187,6 +1192,7 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
     position: relative;
     overflow: hidden;
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-7);
     padding: var(--panel-pad);
     border-radius: var(--radius-xl);
@@ -1258,19 +1264,20 @@ $glyph-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' 
     color: var(--text-muted);
   }
 
-  // Four of the product's features, each after a point in the product's colour.
+  // Four of the product's features, each after a point in the product's colour. Two columns only
+  // where the list itself has room for them: beside the screens the text column is narrow on any
+  // window.
   &__features {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
     gap: var(--space-2) var(--space-5);
+    align-self: stretch;
+    max-inline-size: 40rem;
     margin-block-start: var(--space-5);
     padding: 0;
     list-style: none;
     font-size: var(--text-small);
     font-weight: 500;
-
-    @media (width >= $medium) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 
     li {
       display: flex;
