@@ -94,14 +94,21 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
     <HomeStory :shots="shots">
       <!-- 01 Codel: the offer, and the window that the story keeps. -->
       <StoryChapter name="intro" labelledby="home-title">
-        <p class="home__kicker home__kicker--intro" data-reveal>
-          <span class="home__index" dir="ltr" aria-hidden="true">01</span>
-          شركة برمجيات عراقية في {{ company.addressParts.city }}
-        </p>
-        <!-- Kept on one line (and out of the formatter's reach): the spaces keep the lines apart
-             when read aloud. Each line is a mask its words leave through. -->
-        <!-- prettier-ignore -->
-        <h1 id="home-title" class="home__title"><span class="home__title-line" data-mask><span class="home__title-words" data-mask-inner>من شغلك،</span></span> <span class="home__title-line" data-mask><span class="home__title-words" data-mask-inner>إلى برنامج</span></span> <span class="home__title-line home__title-line--mark" data-mask><span class="home__title-words" data-mask-inner>يشتغل.</span></span></h1>
+        <h1 id="home-title" class="home__title">
+          <span class="home__title-line" data-mask
+            ><span class="home__title-words" data-mask-inner
+              >من شغلك،</span
+            ></span
+          >
+          <span class="home__title-line" data-mask
+            ><span class="home__title-words" data-mask-inner
+              >إلى برنامج</span
+            ></span
+          >
+          <span class="home__title-line home__title-line--mark" data-mask
+            ><span class="home__title-words" data-mask-inner>يشتغل.</span></span
+          >
+        </h1>
         <p class="home__lede home__lede--intro" data-reveal>
           اشترِ برنامجاً جاهزاً بسعر معلن وابدأ العمل اليوم،
           <span class="home__keep">أو اطلب</span> موقعاً أو تطبيقاً أو نظاماً
