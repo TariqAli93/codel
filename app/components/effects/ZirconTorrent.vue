@@ -25,7 +25,7 @@ export interface ZirconTorrentProps {
 </script>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 import {
   DEFAULTS,
   UNIFORMS,
@@ -54,7 +54,11 @@ const props = withDefaults(defineProps<ZirconTorrentProps>(), {
 
 const root = ref<HTMLDivElement | null>(null);
 const canvas = ref<HTMLCanvasElement | null>(null);
-const config = computed(() => resolve(props));
+const swatchEl = ref<HTMLSpanElement | null>(null);
+// Turns a colour such as `var(--accent)` into what it computes to here, so WebGL gets the theme's
+// values. Set after mount: the server has no computed styles, and nothing is drawn before then.
+const readColor = shallowRef<((css: string) => string) | undefined>();
+const config = computed(() => resolve(props, readColor.value));
 let wakeCurrent: (() => void) | null = null;
 let cleanupCurrent: (() => void) | null = null;
 const stopWatch = watch(config, () => wakeCurrent?.());
@@ -63,6 +67,16 @@ onMounted(() => {
   const element = root.value;
   const surface = canvas.value;
   if (!element || !surface) return;
+
+  const swatch = swatchEl.value;
+  if (swatch) {
+    readColor.value = (css) => {
+      swatch.style.color = "";
+      swatch.style.color = css;
+      // An invalid colour leaves the property empty; pass it on so the fallback colour applies.
+      return swatch.style.color ? getComputedStyle(swatch).color : css;
+    };
+  }
 
   const pointerTarget: HTMLElement = props.trackParent
     ? (element.parentElement ?? element)
@@ -678,12 +692,11 @@ onUnmounted(() => {
     aria-hidden="true"
   >
     <canvas ref="canvas" class="zircon-torrent__canvas" />
+    <span ref="swatchEl" hidden />
   </div>
 </template>
 
 <style lang="scss">
-@import "@/assets/scss/main.scss";
-
 .zircon-torrent {
   position: relative;
   width: 100%;
@@ -695,16 +708,6 @@ onUnmounted(() => {
   touch-action: pan-y;
 }
 
-// .zircon-torrent::before {
-//   content: "";
-//   position: absolute;
-//   inset: 0;
-//   background-color: var(--lime-500);
-//   opacity: 0.4;
-//   pointer-events: none;
-//   z-index: 100;
-//   filter: blur(0.5px);
-// }
 .zircon-torrent--passive {
   pointer-events: none;
 }

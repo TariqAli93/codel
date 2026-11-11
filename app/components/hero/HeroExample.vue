@@ -8,9 +8,6 @@ import ZirconTorrent from '../effects/ZirconTorrent.vue'
     <ZirconTorrent
       class="hero__effect"
       :track-parent="true"
-      background="#000000"
-      base-color="#509AD1"
-      accent-color="#D6F1F8"
       :scale="230"
       :zoom="64"
       :speed="58"

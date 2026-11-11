@@ -94,25 +94,22 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
   <div class="home">
     <HomeStory :shots="shots">
       <!-- 01 Codel: the offer, and the window that the story keeps. -->
+      <ZirconTorrent
+        class="hero__effect"
+        :track-parent="true"
+        :scale="230"
+        :zoom="64"
+        :speed="58"
+        :hover="20"
+        :hover-speed="50"
+        :glow="90"
+        :floor="78"
+        :placement="{ x: -18, y: 0, angle: 0, tilt: 0 }"
+        :direction="{ flow: 'down', ripple: 'toward', streaks: 'toward' }"
+        :advanced="{ horizon: 75, sparkles: 8, specks: 4, grain: 12 }"
+      />
+      <div class="hero__shade" aria-hidden="true" />
       <StoryChapter name="intro" labelledby="home-title">
-        <ZirconTorrent
-          class="hero__effect"
-          :track-parent="true"
-          background="#000000"
-          base-color="#509AD1"
-          accent-color="#D6F1F8"
-          :scale="230"
-          :zoom="64"
-          :speed="58"
-          :hover="20"
-          :hover-speed="50"
-          :glow="90"
-          :floor="78"
-          :placement="{ x: -18, y: 0, angle: 0, tilt: 0 }"
-          :direction="{ flow: 'down', ripple: 'toward', streaks: 'toward' }"
-          :advanced="{ horizon: 75, sparkles: 8, specks: 4, grain: 12 }"
-        />
-        <div class="hero__shade" aria-hidden="true" />
         <h1 id="home-title" class="home__title">
           <span class="home__title-line" data-mask
             ><span class="home__title-words" data-mask-inner
@@ -429,11 +426,33 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     inset: 0;
     background: linear-gradient(
       270deg,
-      rgba(0, 0, 0, 0.96) 0%,
-      rgba(0, 0, 0, 0.85) 31%,
-      rgba(0, 0, 0, 0.22) 65%,
-      rgba(0, 0, 0, 0.08) 100%
+      color-mix(in srgb, var(--bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 85%, transparent) 31%,
+      color-mix(in srgb, var(--bg) 22%, transparent) 65%,
+      color-mix(in srgb, var(--bg) 8%, transparent) 100%
     );
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        360deg,
+        color-mix(in srgb, var(--bg) 96%, transparent) 0%,
+        color-mix(in srgb, var(--bg) 85%, transparent) 31%,
+        color-mix(in srgb, var(--bg) 22%, transparent) 65%,
+        color-mix(in srgb, var(--bg) 8%, transparent) 100%
+      );
+      z-index: -1;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      filter: blur(1.5rem);
+      z-index: 1;
+    }
   }
   &__head {
     display: grid;

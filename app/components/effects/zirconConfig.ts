@@ -21,18 +21,18 @@ export const DEFAULT_ADVANCED = {
     sway: 15,
     breathe: 10,
     bloomWidth: 300,
-    bloomColor: '#7FB8FF',
-    horizonColor: '#CFE4FF',
-    floorTop: '#040B1C',
-    floorDeep: '#000206',
-    causticColor: '#5497D4',
+    bloomColor: 'var(--accent)',
+    horizonColor: 'var(--text)',
+    floorTop: 'var(--accent-subtle)',
+    floorDeep: 'var(--bg)',
+    causticColor: 'var(--accent)',
     causticScale: 80,
     ripple: 100,
     streakCount: 12,
     streakOpacity: 70,
     reflection: 100,
     sparkles: 12,
-    sparkleColor: '#9FE4FF',
+    sparkleColor: 'var(--accent)',
     specks: 10,
     lift: 100,
     lean: 0,
@@ -41,10 +41,12 @@ export const DEFAULT_ADVANCED = {
 }
 export type Advanced = typeof DEFAULT_ADVANCED
 
+// Every colour is one of the site's tokens (app/assets/scss/main.scss); the component reads what each
+// computes to where it sits, so the effect follows the theme around it.
 export const DEFAULTS = {
-    background: '#000000',
-    baseColor: '#509AD1',
-    accentColor: '#D6F1F8',
+    background: 'var(--bg)',
+    baseColor: 'var(--accent)',
+    accentColor: 'var(--text)',
     strands: 400,
     glow: 100,
     floor: 100,
@@ -109,6 +111,12 @@ function parseColorRaw(raw: string): RGB | null {
         else return null
         return out.every(Number.isFinite) ? out : null
     }
+    // What a browser computes a color-mix() token to.
+    const srgb = /^color\(\s*srgb\s+([^)]*)\)$/i.exec(s)
+    if (srgb) {
+        const c = srgb[1].split(/[\s/]+/).filter(Boolean).slice(0, 3).map(Number)
+        return c.length === 3 && c.every(Number.isFinite) ? (c.map(v => Math.min(1, Math.max(0, v))) as RGB) : null
+    }
     const m = /^(rgba?|hsla?)\(([^)]*)\)$/i.exec(s)
     if (!m) return null
     const parts = m[2].split(/[\s,/]+/).filter(Boolean)
@@ -143,11 +151,13 @@ function chromaOf(c: RGB, k = 1, gain = 1): RGB {
 }
 const mixRGB = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
 
-export function resolve(p: ZirconTorrentProps): Config {
+/** `read` turns a CSS colour (`var(--accent)`) into one parseColor understands, such as `rgb()`. */
+export function resolve(p: ZirconTorrentProps, read: (css: string) => string = css => css): Config {
+    const parse = (input: unknown, fallback: RGB) => parseColor(typeof input === 'string' ? read(input) : input, fallback)
     const legacy = (p.advanced as { hover?: number } | undefined)?.hover
     const a = { ...DEFAULT_ADVANCED, ...(p.advanced ?? {}) }
-    const base = parseColor(p.baseColor ?? DEFAULTS.baseColor, [0.31, 0.6, 0.82])
-    const accent = parseColor(p.accentColor ?? DEFAULTS.accentColor, [0.84, 0.95, 0.97])
+    const base = parse(p.baseColor ?? DEFAULTS.baseColor, [0.31, 0.6, 0.82])
+    const accent = parse(p.accentColor ?? DEFAULTS.accentColor, [0.84, 0.95, 0.97])
     const contrast = num(a.strandContrast, 75, 0, 100) / 100
     const dashLen = num(a.dashLength, 30, 2, 95) / 100
     const dashBoost = num(a.dashBoost, 90, 0, 400) / 100
@@ -165,20 +175,20 @@ export function resolve(p: ZirconTorrentProps): Config {
         hover: num(p.hover ?? legacy, DEFAULTS.hover, 0, 100) / 50,
         hoverSpeed: num(p.hoverSpeed, DEFAULTS.hoverSpeed, 0, 300) / 100,
         vecs: [
-            ['uBg', parseColor(p.background ?? DEFAULTS.background, [0, 0.004, 0.02])],
+            ['uBg', parse(p.background ?? DEFAULTS.background, [0, 0.004, 0.02])],
             ['uKBlue', chromaOf(base, 1.15)],
             ['uKPale', chromaOf(mixRGB(base, accent, 0.5))],
             ['uKHalo', chromaOf(base, 3.5)],
             ['uKCore', mixRGB([1, 1, 1], chromaOf(accent), 0.25)],
-            ['uKBloom', chromaOf(parseColor(a.bloomColor, [0.5, 0.72, 1]))],
-            ['uKHorizon', chromaOf(parseColor(a.horizonColor, [0.81, 0.89, 1]), 1, 1.5)],
-            ['uKCaustic', chromaOf(parseColor(a.causticColor, [0.33, 0.59, 0.83]))],
-            ['uKCausticDeep', chromaOf(parseColor(a.causticColor, [0.33, 0.59, 0.83]), 1.5)],
+            ['uKBloom', chromaOf(parse(a.bloomColor, [0.5, 0.72, 1]))],
+            ['uKHorizon', chromaOf(parse(a.horizonColor, [0.81, 0.89, 1]), 1, 1.5)],
+            ['uKCaustic', chromaOf(parse(a.causticColor, [0.33, 0.59, 0.83]))],
+            ['uKCausticDeep', chromaOf(parse(a.causticColor, [0.33, 0.59, 0.83]), 1.5)],
             ['uKStreak', chromaOf(mixRGB(base, accent, 0.2), 1, 0.9)],
-            ['uKSpark', chromaOf(parseColor(a.sparkleColor, [0.62, 0.89, 1]))],
+            ['uKSpark', chromaOf(parse(a.sparkleColor, [0.62, 0.89, 1]))],
             ['uKSpeck', chromaOf(mixRGB(base, accent, 0.5), 1, 0.6)],
-            ['uEFloorTop', energyOf(parseColor(a.floorTop, [0.04, 0.1, 0.23]))],
-            ['uEFloorDeep', energyOf(parseColor(a.floorDeep, [0.01, 0.02, 0.06]))],
+            ['uEFloorTop', energyOf(parse(a.floorTop, [0.04, 0.1, 0.23]))],
+            ['uEFloorDeep', energyOf(parse(a.floorDeep, [0.01, 0.02, 0.06]))],
         ],
         floats: [
             ['uScale', beam],
