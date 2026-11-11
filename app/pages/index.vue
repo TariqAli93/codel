@@ -130,37 +130,46 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
         </div>
       </StoryChapter>
 
-      <!-- 02 Nuqta Plus: what it is, at its point of sale. -->
+      <!-- 02 Nuqta Plus: what it is, at its point of sale. Who it is on the reading side; what it
+           costs and how to ask on the other. -->
       <StoryChapter v-if="nuqta" name="nuqta" labelledby="nuqta-title">
-        <p class="home__kicker" data-reveal>
-          <span class="home__index" dir="ltr" aria-hidden="true">02</span>
-          برنامج جاهز
-        </p>
-        <!-- prettier-ignore -->
-        <h2 id="nuqta-title" class="home__name"><SplitWords :text="nuqta.nameAr" /> <span class="home__latin" dir="ltr" data-reveal>{{ nuqta.nameEn }}</span></h2>
-        <p class="home__statement" data-reveal>{{ nuqta.tagline }}</p>
-        <p class="home__desc" data-reveal>{{ nuqta.description }}</p>
-        <ul role="list" class="home__features" data-reveal>
-          <li v-for="feature in nuqta.features.slice(0, 4)" :key="feature">
-            {{ feature }}
-          </li>
-        </ul>
-        <div class="home__buy" data-reveal>
-          <ProductPrice :amount="nuqta.priceIqd" />
-          <LeanTag :label="`يعمل على ${nuqta.platform}`" />
-        </div>
-        <div class="home__actions" data-reveal>
-          <WhatsAppCall
-            :subject="nuqta.nameAr"
-            label="اسأل عنه على واتساب"
-            :hidden-suffix="nuqta.nameAr"
-            :glow="false"
-          />
-          <ActionLink
-            look="text"
-            :to="`/solutions/${nuqta.slug}`"
-            :label="`تفاصيل ${nuqta.nameAr}`"
-          />
+        <div class="home__head">
+          <div class="home__head-main">
+            <p class="home__kicker" data-reveal>
+              <span class="home__index" dir="ltr" aria-hidden="true">02</span>
+              برنامج جاهز
+            </p>
+            <!-- prettier-ignore -->
+            <h2 id="nuqta-title" class="home__name"><SplitWords :text="nuqta.nameAr" /> <span class="home__latin" dir="ltr" data-reveal>{{ nuqta.nameEn }}</span></h2>
+            <p class="home__statement" data-reveal>{{ nuqta.tagline }}</p>
+            <p class="home__desc" data-reveal data-page-only>
+              {{ nuqta.description }}
+            </p>
+            <ul role="list" class="home__features" data-reveal data-page-only>
+              <li v-for="feature in nuqta.features.slice(0, 4)" :key="feature">
+                {{ feature }}
+              </li>
+            </ul>
+          </div>
+          <div class="home__head-side">
+            <div class="home__buy" data-reveal>
+              <ProductPrice :amount="nuqta.priceIqd" />
+              <LeanTag :label="`يعمل على ${nuqta.platform}`" />
+            </div>
+            <div class="home__actions" data-reveal>
+              <WhatsAppCall
+                :subject="nuqta.nameAr"
+                label="اسأل عنه على واتساب"
+                :hidden-suffix="nuqta.nameAr"
+                :glow="false"
+              />
+              <ActionLink
+                look="text"
+                :to="`/solutions/${nuqta.slug}`"
+                :label="`تفاصيل ${nuqta.nameAr}`"
+              />
+            </div>
+          </div>
         </div>
 
         <template v-if="stock" #media>
@@ -176,17 +185,23 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
 
       <!-- 03 The same program, from daily operations to the day's figures. -->
       <StoryChapter v-if="nuqta" name="insights" labelledby="insights-title">
-        <p class="home__kicker" data-reveal>
-          <span class="home__index" dir="ltr" aria-hidden="true">03</span>
-          {{ nuqta.nameAr }}
-        </p>
-        <h2 id="insights-title" class="home__headline">
-          <SplitWords :text="insightsHeadline" />
-        </h2>
-        <p class="home__lede" data-reveal>
-          مبيعات اليوم وأرباحه وفواتيره على الشاشة الرئيسية، والتقارير المالية
-          وتقارير المبيعات حين تحتاجها.
-        </p>
+        <div class="home__head">
+          <div class="home__head-main">
+            <p class="home__kicker" data-reveal>
+              <span class="home__index" dir="ltr" aria-hidden="true">03</span>
+              {{ nuqta.nameAr }}
+            </p>
+            <h2 id="insights-title" class="home__headline">
+              <SplitWords :text="insightsHeadline" />
+            </h2>
+          </div>
+          <div class="home__head-side home__head-side--text">
+            <p class="home__lede" data-reveal>
+              مبيعات اليوم وأرباحه وفواتيره على الشاشة الرئيسية، والتقارير
+              المالية وتقارير المبيعات حين تحتاجها.
+            </p>
+          </div>
+        </div>
 
         <template v-if="shots.insights" #media>
           <div class="home__media">
@@ -212,35 +227,43 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
         ground="sand"
         labelledby="dalaly-title"
       >
-        <p class="home__kicker" data-reveal>
-          <span class="home__index" dir="ltr" aria-hidden="true">04</span>
-          برنامج جاهز
-        </p>
-        <!-- prettier-ignore -->
-        <h2 id="dalaly-title" class="home__name"><SplitWords :text="dalaly.nameAr" /> <span class="home__latin" dir="ltr" data-reveal>{{ dalaly.nameEn }}</span></h2>
-        <p class="home__statement" data-reveal>{{ dalaly.tagline }}</p>
-        <p class="home__desc" data-reveal>{{ dalaly.description }}</p>
-        <ul role="list" class="home__features" data-reveal>
-          <li v-for="feature in dalaly.features.slice(0, 4)" :key="feature">
-            {{ feature }}
-          </li>
-        </ul>
-        <div class="home__buy" data-reveal>
-          <ProductPrice :amount="dalaly.priceIqd" />
-          <LeanTag :label="`يعمل على ${dalaly.platform}`" />
-        </div>
-        <div class="home__actions" data-reveal>
-          <WhatsAppCall
-            :subject="dalaly.nameAr"
-            label="اسأل عنه على واتساب"
-            :hidden-suffix="dalaly.nameAr"
-            :glow="false"
-          />
-          <ActionLink
-            look="text"
-            :to="`/solutions/${dalaly.slug}`"
-            :label="`تفاصيل ${dalaly.nameAr}`"
-          />
+        <div class="home__head">
+          <div class="home__head-main">
+            <p class="home__kicker" data-reveal>
+              <span class="home__index" dir="ltr" aria-hidden="true">04</span>
+              برنامج جاهز
+            </p>
+            <!-- prettier-ignore -->
+            <h2 id="dalaly-title" class="home__name"><SplitWords :text="dalaly.nameAr" /> <span class="home__latin" dir="ltr" data-reveal>{{ dalaly.nameEn }}</span></h2>
+            <p class="home__statement" data-reveal>{{ dalaly.tagline }}</p>
+            <p class="home__desc" data-reveal data-page-only>
+              {{ dalaly.description }}
+            </p>
+            <ul role="list" class="home__features" data-reveal data-page-only>
+              <li v-for="feature in dalaly.features.slice(0, 4)" :key="feature">
+                {{ feature }}
+              </li>
+            </ul>
+          </div>
+          <div class="home__head-side">
+            <div class="home__buy" data-reveal>
+              <ProductPrice :amount="dalaly.priceIqd" />
+              <LeanTag :label="`يعمل على ${dalaly.platform}`" />
+            </div>
+            <div class="home__actions" data-reveal>
+              <WhatsAppCall
+                :subject="dalaly.nameAr"
+                label="اسأل عنه على واتساب"
+                :hidden-suffix="dalaly.nameAr"
+                :glow="false"
+              />
+              <ActionLink
+                look="text"
+                :to="`/solutions/${dalaly.slug}`"
+                :label="`تفاصيل ${dalaly.nameAr}`"
+              />
+            </div>
+          </div>
         </div>
 
         <template v-if="shots.listing" #media>
@@ -260,7 +283,9 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
         </template>
       </StoryChapter>
 
-      <!-- 05 Codel again: software made to measure, and how to reach us. -->
+      <!-- 05 Codel again: software made to measure, and how to reach us. The heading where every
+           chapter's heading sits, the services where the window was, the ways to reach us under
+           them. -->
       <StoryChapter
         id="contact"
         name="custom"
@@ -268,27 +293,51 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
         labelledby="custom-title"
       >
         <div class="home__closing">
-          <div class="home__call">
-            <p class="home__kicker" data-reveal>
-              <span class="home__index" dir="ltr" aria-hidden="true">05</span>
-              {{ services.at(-1)?.title }}
-            </p>
-            <h2 id="custom-title" class="home__headline">
-              <SplitWords :text="customHeadline" />
-            </h2>
-            <p class="home__lede" data-reveal>
-              أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني. الدوام
-              {{ company.hours.days }}، {{ company.hours.time }}.
-            </p>
-            <OpenStatus class="home__status" data-reveal />
-            <div class="home__reach" data-reveal>
-              <WhatsAppCall
-                look="ink"
-                :subject="services.at(-1)?.title"
-                :detail="company.phones.main.display"
-              />
+          <div class="home__head">
+            <div class="home__head-main">
+              <p class="home__kicker" data-reveal>
+                <span class="home__index" dir="ltr" aria-hidden="true">05</span>
+                {{ services.at(-1)?.title }}
+              </p>
+              <h2 id="custom-title" class="home__headline">
+                <SplitWords :text="customHeadline" />
+              </h2>
             </div>
-            <ul role="list" class="home__channels" data-reveal>
+            <div class="home__head-side home__head-side--text">
+              <p class="home__lede" data-reveal>
+                أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني. الدوام
+                {{ company.hours.days }}، {{ company.hours.time }}.
+              </p>
+              <OpenStatus class="home__status" data-reveal />
+            </div>
+          </div>
+
+          <div class="home__services">
+            <div class="home__services-head" data-reveal>
+              <h3 class="home__label">خدماتنا</h3>
+              <ActionLink look="text" to="/services" label="تفاصيل الخدمات" />
+            </div>
+            <ul role="list" class="home__service-names" data-reveal>
+              <li
+                v-for="service in services"
+                :key="service.title"
+                class="home__service"
+                data-mask
+              >
+                <span class="home__service-name" data-mask-inner>{{
+                  service.title
+                }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="home__reach" data-reveal>
+            <WhatsAppCall
+              look="ink"
+              :subject="services.at(-1)?.title"
+              :detail="company.phones.main.display"
+            />
+            <ul role="list" class="home__channels">
               <li>
                 <!-- Kept on one line (and out of the formatter's reach): the space keeps the words
                      and the number apart. -->
@@ -308,29 +357,6 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
               </li>
             </ul>
           </div>
-
-          <div class="home__services">
-            <h3 class="home__label" data-reveal>خدماتنا</h3>
-            <ul role="list" class="home__service-names" data-reveal>
-              <li
-                v-for="service in services"
-                :key="service.title"
-                class="home__service"
-                data-mask
-              >
-                <span class="home__service-name" data-mask-inner>{{
-                  service.title
-                }}</span>
-              </li>
-            </ul>
-            <ActionLink
-              class="home__more"
-              look="text"
-              to="/services"
-              label="تفاصيل الخدمات"
-              data-reveal
-            />
-          </div>
         </div>
       </StoryChapter>
     </HomeStory>
@@ -340,9 +366,12 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
 <style scoped lang="scss">
 // The window size that holds the cinematic cover. Same as $cover in HomeStory.vue.
 $cover: "(min-width: 64em) and (min-height: 36em)";
-// A cover window short enough (laptops) that the chapters' text closes up.
+// A cover window short enough (laptops) that the headings close up. Same as $cover-short in
+// HomeStory.vue.
 $cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
-// Story width from which the closing's call and services sit side by side.
+// Story widths: from $tablet the opening is centred over its screen; from $side a chapter's headings
+// split into two columns over its screens.
+$tablet: 40rem;
 $side: 64rem;
 // The headline's line box, and where the lime starts inside its last line: under the tails of the
 // line above and over this line's ل.
@@ -359,16 +388,51 @@ $lean: skewX(calc(var(--slant-angle) * -1));
   overflow-x: clip;
 
   // ---------------------------------------------------------------------------
-  // Shared by every chapter
+  // A chapter's headings: three tiers. The kicker (where you are in the story), the heading (the
+  // product's name or the chapter's line, the largest thing on the page after the opening's), then
+  // one supporting line. From $side they split into two equal columns that end on one line: who it is
+  // on the reading side, what it costs and how to ask on the other.
   // ---------------------------------------------------------------------------
 
-  // The chapter's number, a short leaning bar, then what the chapter is about. The number and the
-  // bar are a reader's place in the story; the words stay upright.
+  &__head {
+    display: grid;
+    gap: var(--space-5) var(--copy-gap);
+
+    @container story (width >= #{$side}) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: end;
+    }
+  }
+
+  &__head-side {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-4);
+
+    // Across from the heading, against the column's far edge.
+    @container story (width >= #{$side}) {
+      justify-items: end;
+    }
+
+    // Running text reads from one edge; only the purchase is pushed to the far edge.
+    &--text {
+      @container story (width >= #{$side}) {
+        justify-items: stretch;
+
+        .home__lede {
+          max-inline-size: none;
+        }
+      }
+    }
+  }
+
+  // The chapter's number and a short leaning bar (a reader's place in the story), then what the
+  // chapter is about. The words stay upright.
   &__kicker {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    margin-block-end: var(--space-4);
+    margin-block-end: var(--space-3);
     font-size: var(--text-ui);
     font-weight: 600;
     line-height: 1.7;
@@ -393,25 +457,43 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     }
   }
 
-  // A product's name, the chapter's headline: oversized, its words risen into view one by one.
+  // The product's name, or the chapter's line: oversized, its words risen into view one by one.
   &__name,
   &__headline {
-    margin: 0 0 var(--space-3);
+    margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-page);
     font-weight: 800;
     line-height: 1.2;
-
-    @media #{$cover} {
-      font-size: min(var(--text-page), 9svh);
-    }
   }
 
+  // On the stage both sizes also follow the window's height, so the headings fit their band.
   &__name {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0 var(--space-3);
+
+    .story--cinematic & {
+      font-size: min(var(--text-page), 8.4svh);
+    }
+  }
+
+  // A sentence, so a size under the names'; it may take two lines (the stage's columns are wider
+  // than the page's, so there it is set larger), never three in its half of the band: the wider
+  // draft headline needs about 7.3em for two lines ("لم تجد برنامجك؟" over "نبرمجه لك."), and 8em
+  // leaves room. A third line would push the kicker up under the header.
+  &__headline {
+    font-size: var(--text-title);
+    text-wrap: balance;
+
+    .story--cinematic & {
+      font-size: min(
+        var(--text-page),
+        6.6svh,
+        (var(--win-w) - var(--copy-gap)) / 2 / 8
+      );
+    }
   }
 
   &__latin {
@@ -421,16 +503,32 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     color: var(--text-muted);
   }
 
+  // What the product is, right under its name. On the stage it is set larger, so the name's
+  // second tier holds its own beside the price, but never past one line in its half of the band
+  // (the longer tagline runs about 12.5em; a 13.5em line leaves room): a second line would push the
+  // kicker up under the header. On a short cover the band has no room for it.
   &__statement {
+    margin-block-start: var(--space-2);
     font-family: var(--font-display);
     font-size: var(--text-card);
     font-weight: 600;
     line-height: 1.6;
+
+    .story--cinematic & {
+      font-size: min(
+        var(--text-flow),
+        (var(--win-w) - var(--copy-gap)) / 2 / 13.5
+      );
+
+      @media #{$cover-short} {
+        font-size: var(--text-lead);
+      }
+    }
   }
 
   &__desc {
-    max-inline-size: 30rem;
-    margin-block-start: var(--space-2);
+    max-inline-size: 34rem;
+    margin-block-start: var(--space-3);
     color: var(--text-muted);
     line-height: 1.75;
   }
@@ -443,11 +541,14 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     text-wrap: pretty;
   }
 
-  // Four of the product's features, each after a point in the product's colour; two columns only
-  // where the list has room for them (never beside the stage's window).
+  // Four of the product's features, each after a point in the product's colour; two columns where
+  // the list has room for them, never more (a column is over a third of the list), so never 3 + 1.
   &__features {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(max(14rem, 34%), 100%), 1fr)
+    );
     gap: var(--space-1) var(--space-5);
     margin-block-start: var(--space-4);
     padding: 0;
@@ -476,12 +577,12 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     }
   }
 
+  // The price, then the call: the purchase, together.
   &__buy {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3) var(--space-4);
-    margin-block-start: var(--space-5);
   }
 
   &__actions {
@@ -489,43 +590,32 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3) var(--space-5);
-    margin-block-start: var(--space-5);
   }
 
-  // Laptops: the cover is short, so the text closes up rather than run under the window's edge.
+  // Laptops: the cover is short, so the headings close up rather than run under the window's edge.
   @media #{$cover-short} {
     &__kicker {
       margin-block-end: var(--space-2);
     }
 
     &__statement {
+      margin-block-start: var(--space-1);
       font-size: var(--text-lead);
     }
 
-    &__desc {
-      font-size: var(--text-ui);
-      line-height: 1.7;
-    }
-
-    &__features {
-      margin-block-start: var(--space-3);
-    }
-
-    &__buy,
-    &__actions {
-      margin-block-start: var(--space-4);
+    &__head-side {
+      gap: var(--space-3);
     }
   }
 
   // ---------------------------------------------------------------------------
-  // 01 The opening
+  // 01 The opening: centred over its screen from $tablet
   // ---------------------------------------------------------------------------
 
-  // Three lines, each kept whole and fitted to the text column; the last one sits on lime.
-  // --title-measure is the column, --title-fit the longest line ("من شغلك،", 4.566em at weight
-  // 700) over the 83% of the column it may take.
+  // Three lines, each kept whole and fitted to the column; the last one sits on lime. In the cover
+  // the first two share a row: "من شغلك، إلى برنامج" (8.93em at weight 700) over 80% of the column.
   &__title {
-    --title-measure: min(100cqi - 2 * var(--edge), 30rem);
+    --title-measure: min(var(--content-w), 30rem);
     --title-fit: 5.5;
     --title-size: min(
       var(--text-hero),
@@ -537,16 +627,25 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     font-size: var(--title-size);
     font-weight: 700;
     line-height: $title-leading;
-    text-align: start;
     text-wrap: nowrap;
 
+    // The shared row is centred like the line under it.
+    // On a short cover it is capped lower, so the actions keep their distance from the plinth.
     @media #{$cover} {
-      --title-measure: var(--copy-w-intro);
+      --title-measure: var(--content-w);
+      --title-fit: 11.2;
+      --title-cap: 10svh;
       --title-size: min(
         var(--text-hero),
         var(--title-measure) / var(--title-fit),
-        10.5svh
+        var(--title-cap)
       );
+
+      text-align: center;
+    }
+
+    @media #{$cover-short} {
+      --title-cap: 9svh;
     }
   }
 
@@ -558,6 +657,16 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     inline-size: fit-content;
     white-space: nowrap;
     clip-path: inset(-0.1em -0.45em -0.32em -0.45em);
+
+    @container story (width >= #{$tablet}) {
+      margin-inline: auto;
+    }
+
+    @media #{$cover} {
+      &:not(.home__title-line--mark) {
+        display: inline-block;
+      }
+    }
   }
 
   &__title-words {
@@ -585,6 +694,18 @@ $lean: skewX(calc(var(--slant-angle) * -1));
   &__lede--intro {
     max-inline-size: 27em;
     margin-block-start: var(--space-5);
+
+    // Centred like the headline over it, so both lines sit symmetrically.
+    @container story (width >= #{$tablet}) {
+      max-inline-size: 34rem;
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    // A short cover: closer to the headline, so the actions keep their distance from the plinth.
+    @media #{$cover-short} {
+      margin-block-start: var(--space-4);
+    }
   }
 
   // "أو" stays with its verb, never alone at the end of a line.
@@ -593,7 +714,7 @@ $lean: skewX(calc(var(--slant-angle) * -1));
   }
 
   // Phones: both actions across the column, their leaning corners kept inside it. From a wider column
-  // both on one row.
+  // both on one row (centred from $tablet).
   &__hero-actions {
     display: flex;
     flex-direction: column;
@@ -615,6 +736,20 @@ $lean: skewX(calc(var(--slant-angle) * -1));
       > a {
         margin-inline: 0;
       }
+    }
+
+    @container story (width >= #{$tablet}) {
+      justify-content: center;
+    }
+
+    @media #{$cover-short} {
+      margin-block-start: var(--space-5);
+    }
+  }
+
+  &__kicker--intro {
+    @container story (width >= #{$tablet}) {
+      justify-content: center;
     }
   }
 
@@ -641,16 +776,16 @@ $lean: skewX(calc(var(--slant-angle) * -1));
   }
 
   // ---------------------------------------------------------------------------
-  // The chapters' own screens, shown when the story flows as a page
+  // The chapters' own screens, shown when the story flows as a page: centred under the headings
   // ---------------------------------------------------------------------------
 
-  // The main screen, and a second over its lower corner on the reading side, set off from it by a
-  // ring of the chapter's ground.
+  // The main screen, and a second over its lower corner on the reading side, standing a little out
+  // past its edge, set off from it by a ring of the chapter's ground.
   &__media {
     --media-ground: var(--bg);
 
     position: relative;
-    padding-block-end: 14%;
+    padding-block-end: 12%;
 
     .chapter--sand & {
       --media-ground: var(--dalaly-ground);
@@ -666,47 +801,66 @@ $lean: skewX(calc(var(--slant-angle) * -1));
 
     position: absolute;
     inset-block-end: 0;
-    inset-inline-start: -3%;
-    inline-size: 48%;
+    inset-inline-start: -4%;
+    inline-size: 42%;
   }
 
   // ---------------------------------------------------------------------------
-  // 05 The closing call, on lime
+  // 05 The closing call, on lime: the heading where every chapter's heading sits, the services where
+  // the window was, the ways to reach us under them
   // ---------------------------------------------------------------------------
 
-  // The call on the reading side; the services beside it, set large, the way the opening's
-  // headline is set.
   &__closing {
     display: grid;
-    gap: var(--space-8);
+    row-gap: var(--space-8);
 
-    @container story (width >= #{$side}) {
-      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
-      align-items: center;
-      column-gap: var(--space-9);
+    @media #{$cover} {
+      row-gap: var(--head-gap);
+    }
+
+    // A short cover: closed up, so the ways to reach us stay clear of the window's bottom edge.
+    @media #{$cover-short} {
+      row-gap: var(--space-3);
+    }
+
+    // On the stage it fills the frame under the header: its heading in the headings' band, on the
+    // same line as every chapter's, the services centred in the room under it, the ways to reach us
+    // at its foot. On a short window the middle track shrinks to the services.
+    .story--cinematic & {
+      grid-template-rows: var(--head-h) 1fr auto;
+      min-block-size: calc(100svh - var(--room-top));
+
+      > .home__head {
+        align-self: end;
+      }
+
+      > .home__services {
+        align-self: center;
+      }
+
+      > .home__reach {
+        padding-block-end: var(--cover-pad);
+      }
     }
   }
 
   &__status {
-    margin-block-start: var(--space-2);
+    margin-block-start: calc(-1 * var(--space-2));
   }
 
-  &__reach {
-    margin-block-start: var(--space-5);
-  }
-
-  &__channels {
+  // The label and the link to the services page on one line over the names.
+  &__services-head {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
     gap: 0 var(--space-5);
-    margin-block-start: var(--space-3);
-    padding: 0;
-    list-style: none;
+    padding-block-end: var(--space-2);
+    border-block-end: 1px solid var(--border);
   }
 
   &__label {
-    margin-block-end: var(--space-3);
+    margin: 0;
     font-family: var(--font-sans);
     font-size: var(--text-ui);
     font-weight: 600;
@@ -714,20 +868,26 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     color: var(--text-muted);
   }
 
+  // The five names set large in wrapping rows, each name under a rule, each a mask its words rise
+  // into. Every row's names grow to fill it, so no row leaves an empty cell and every rule runs the
+  // whole row (three over two on a wide column).
   &__service-names {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-6);
     padding: 0;
     list-style: none;
   }
 
-  // Each name is a mask its words rise into.
   &__service {
-    padding-block: var(--space-3);
-    border-block-start: 1px solid var(--border);
+    flex: 1 1 min(17rem, 100%);
+    padding-block: var(--space-4);
+    border-block-end: 1px solid var(--border);
     clip-path: inset(0 -0.3em);
     font-family: var(--font-display);
     font-size: var(--text-flow);
     font-weight: 700;
-    line-height: 1.45;
+    line-height: 1.4;
 
     @media #{$cover-short} {
       padding-block: var(--space-2);
@@ -739,8 +899,25 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     display: block;
   }
 
-  &__more {
-    margin-block-start: var(--space-3);
+  // The call and the other ways in, on one line where there is room.
+  &__reach {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-6);
+
+    @media #{$cover-short} {
+      row-gap: var(--space-2);
+    }
+  }
+
+  &__channels {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--space-5);
+    padding: 0;
+    list-style: none;
   }
 }
 

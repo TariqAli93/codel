@@ -246,6 +246,10 @@ function playCinematic(story: HTMLElement, gsap: Gsap, ScrollTrigger: ScrollTrig
     }
   }
 
+  // The text the stage shows (data-page-only text is shown only as a page; on the stage only screen
+  // readers get it).
+  const staged = '[data-reveal]:not([data-page-only])'
+
   // A chapter's text leaves upward: its headline's words (or lines) slip out through the top of their
   // masks, everything else lifts and fades, in reading order. The words fade as they go, so the dots
   // under a letter (they hang lowest, and leave last) never linger alone at the mask's edge.
@@ -265,7 +269,7 @@ function playCinematic(story: HTMLElement, gsap: Gsap, ScrollTrigger: ScrollTrig
       span * 0.3
     )
     play(
-      all('[data-reveal]', chapter),
+      all(staged, chapter),
       { opacity: 1, y: 0 },
       { opacity: 0, y: -24, duration: span * 0.6, ease: 'power1.in', immediateRender: false },
       at,
@@ -285,7 +289,7 @@ function playCinematic(story: HTMLElement, gsap: Gsap, ScrollTrigger: ScrollTrig
       span * 0.3
     )
     play(
-      all('[data-reveal]', chapter),
+      all(staged, chapter),
       { opacity: 0, y: 28 },
       { opacity: 1, y: 0, duration: span * 0.6, ease: 'power2.out' },
       at + span * 0.12,
@@ -301,18 +305,25 @@ function playCinematic(story: HTMLElement, gsap: Gsap, ScrollTrigger: ScrollTrig
     return `polygon(${top}% 0%, 100% 0%, 100% 100%, ${top - lean}% 100%)`
   }
 
-  // The opening's tilt, read from StoryStage's stylesheet (on every refresh) so the timeline starts
-  // from exactly the pose the page shows.
-  // Every part of the transform is stated, so nothing GSAP reads from the stylesheet's matrix (the
-  // tilt's shift as pixels, a hair of rotation) is ever added on top of it.
+  // The opening's pose, read from StoryStage's stylesheet (on every refresh) so the timeline starts
+  // from exactly the pose the page shows: tilted back and set down, so only its top shows under the
+  // offer. Every part of the transform is stated, so nothing GSAP reads from the stylesheet's matrix
+  // is ever added on top of it.
+  const viewport = one('.story__viewport')
   const tilt = (name: string) => () => cssNumber(cameraNuqta, name)
-  const flat = { x: 0, y: 0, z: 0, rotation: 0, skewX: 0, skewY: 0 }
+  const flat = { x: 0, y: 0, z: 0, xPercent: 0, yPercent: 0, rotation: 0, rotationY: 0, skewX: 0, skewY: 0 }
+  // Down from its place to where only --peek of the window's height shows (StoryStage's --tilt-drop).
+  // The window's place is its world's top padding (--win-top), read unrounded.
+  const drop = () => {
+    const world = cameraNuqta?.parentElement
+    if (!cameraNuqta || !world || !viewport) return 0
+    const top = parseFloat(getComputedStyle(world).paddingTop) || 0
+    return viewport.clientHeight * (1 - cssNumber(cameraNuqta, '--peek') / 100) - top
+  }
   const tilted: gsap.TweenVars = {
     ...flat,
     transformPerspective: tilt('--tilt-depth'),
-    xPercent: tilt('--tilt-shift-x'),
-    yPercent: tilt('--tilt-shift-y'),
-    rotationY: tilt('--tilt-y'),
+    y: drop,
     rotationX: tilt('--tilt-x'),
     scale: tilt('--tilt-scale')
   }
@@ -334,8 +345,8 @@ function playCinematic(story: HTMLElement, gsap: Gsap, ScrollTrigger: ScrollTrig
   if (operationsImage) gsap.set(operationsImage, { transformOrigin: focus.operations.origin })
   if (insightsImage) gsap.set(insightsImage, { transformOrigin: focus.insights.origin })
 
-  // 01 → 02. The lime slab steps aside along its lean while the window turns to face you and comes
-  // forward: Codel hands the stage to Nuqta Plus's point of sale. The camera then leans in on the
+  // 01 → 02. The lime slab steps aside along its lean while the window rises and turns to face you:
+  // Codel hands the stage to Nuqta Plus's point of sale. The camera then leans in on the
   // product cards and the cart, the work of the day.
   {
     const { prepare, transform, resolve } = handOver('intro', 'nuqta')
@@ -346,9 +357,6 @@ function playCinematic(story: HTMLElement, gsap: Gsap, ScrollTrigger: ScrollTrig
       {
         ...flat,
         transformPerspective: tilt('--tilt-depth'),
-        xPercent: 0,
-        yPercent: 0,
-        rotationY: 0,
         rotationX: 0,
         scale: 1,
         duration: transform.span,
@@ -691,37 +699,49 @@ function playPage(story: HTMLElement, gsap: Gsap, ScrollTrigger: ScrollTriggerAp
 // The window size that holds the cover. Same as coverQuery in the script, and $cover in
 // StoryStage.vue and StoryChapter.vue.
 $cover: "(min-width: 64em) and (min-height: 36em)";
+// A cover window short enough (laptops) that the opening's screen shows less of itself. Same as
+// $cover-short in index.vue.
+$cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
 
 // The story's layout lengths, shared by the stage and the chapters (both read them).
-// --edge runs from the window edge to the content column, the same column as the header bar's
-// (100cqi is the story's own width: the window without its scrollbar).
+// --edge runs from the window edge to the content column, the same column as the header bar's, and
+// --content-w is that column (100cqi is the story's own width: the window without its scrollbar).
 .story {
   --story-length: 7;
   --edge: max(
     var(--page-gutter),
     calc((100cqi - var(--container-max)) / 2 + var(--page-gutter))
   );
+  --content-w: calc(100cqi - 2 * var(--edge));
   --copy-gap: clamp(var(--space-7), 5cqi, var(--space-9));
 
   container: story / inline-size;
 
-  // The cover: the story slides up behind the header and its first screen fills the window. The text
-  // takes a column on the reading side (--copy-w, the opening's wider --copy-w-intro) and the window
-  // the rest, centred in the room under the header and running off the end edge (--win-w: as wide
-  // as the room allows, never taller than the window can show).
+  // The cover: the story slides up behind the header and its first screen fills the window. Every
+  // chapter keeps one frame: its heading in a band of fixed height under the header (--head-h, the
+  // heading sits on the band's bottom line), then the window, centred, starting at the same line
+  // in every chapter (--win-top). The window is as wide as the room under that line allows, never
+  // narrower than 56rem nor wider than the column; on a short window it runs off the bottom edge.
+  // In the opening it shows only its top (--peek, in window heights), tilted back under the offer.
   @media #{$cover} {
     --header-room: calc(var(--header-height) + var(--space-3));
-    --cover-pad: clamp(var(--space-5), 4svh, var(--space-7));
+    --cover-pad: clamp(var(--space-4), 3svh, var(--space-6));
     --room-top: calc(var(--header-room) + var(--cover-pad));
-    --copy-w: clamp(23rem, 31cqi, 29rem);
-    --copy-w-intro: clamp(26rem, 40cqi, 36rem);
-    --win-room: calc(100cqi - var(--edge) - var(--copy-w) - var(--copy-gap));
+    --head-h: clamp(9rem, 22svh, 13rem);
+    --head-gap: clamp(var(--space-5), 3.5svh, var(--space-7));
+    --win-top: calc(var(--room-top) + var(--head-h) + var(--head-gap));
     --win-w: min(
-      1.25 * var(--win-room),
-      (100svh - var(--room-top) - var(--cover-pad) - var(--space-5)) * 16 / 9
+      var(--content-w),
+      max(56rem, (100svh - var(--win-top) - var(--cover-pad)) * 16 / 9)
     );
+    --peek: 19;
 
     margin-block-start: calc(-1 * var(--header-room));
+  }
+
+  // A short cover: less of the opening's screen, so the offer keeps its room above the plinth.
+  @media #{$cover-short} {
+    --peek: 15;
   }
 }
 
@@ -754,11 +774,24 @@ $cover: "(min-width: 64em) and (min-height: 36em)";
 .story--cinematic {
   block-size: calc(var(--story-length) * 100svh);
 
+  // Detail the stage leaves to the page and the product pages (a product's description and
+  // features): still read by screen readers, not shown.
+  :deep([data-page-only]) {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  // Clipped, not hidden: `clip` makes no scroll container, so focusing a link near the bottom edge
+  // can never scroll the stage out of place.
   .story__viewport {
     position: sticky;
     inset-block-start: 0;
     block-size: 100svh;
-    overflow: hidden;
+    overflow: clip;
   }
 
   .story__stage {

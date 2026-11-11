@@ -142,8 +142,9 @@ $tablet: 40rem;
   --stage-ground: var(--bg);
 }
 
-// The window, from the content edge on the reading side out past the end edge. On phones a crop of
-// the point of sale's menu, search and first cards; from $tablet the whole screen.
+// On phones the window runs from the content edge on the reading side out past the end edge, a crop
+// of the point of sale's menu, search and first cards. From $tablet the whole screen, centred in the
+// column (on a wide but short window, never taller than it can show).
 .stage__camera {
   position: relative;
   isolation: isolate;
@@ -151,9 +152,9 @@ $tablet: 40rem;
   inline-size: calc(1.15 * (100cqi - var(--edge)));
   margin-inline-start: var(--edge);
 
-  // Whole and inside the column; on a wide but short window (no cover) never taller than it can show.
   @container story (width >= #{$tablet}) {
-    inline-size: min(100cqi - 2 * var(--edge), 56rem);
+    inline-size: min(var(--content-w), 56rem);
+    margin-inline: auto;
   }
 }
 
@@ -170,15 +171,20 @@ $tablet: 40rem;
   }
 }
 
-// Flat lime with the brand lean, behind the screen from a third of the way along it out past the
-// end edge. The fill is its own layer, so the entrance can wipe the fill while the scroll clips the
-// slab.
+// Flat lime with the brand lean behind the screen: on phones from a third of the way along it out
+// past the end edge; from $tablet a band centred behind it. The fill is its own layer, so the entrance
+// can wipe the fill while the scroll clips the slab.
 .stage__slab {
   position: absolute;
   z-index: -1;
   inset-block: calc(-1 * var(--space-6)) calc(-1 * var(--space-7));
   inset-inline: 38% calc(-1 * var(--space-10));
   transform: $lean;
+
+  @container story (width >= #{$tablet}) {
+    inset-block: 30% calc(-1 * var(--space-7));
+    inset-inline: 18%;
+  }
 
   &::before {
     content: "";
@@ -192,12 +198,17 @@ $tablet: 40rem;
 // The cover (page and cinematic stage alike): the stage fills the window behind the text
 // ---------------------------------------------------------------------------
 
-// The window sits beside the text column, centred in the room under the header and running off the
-// end edge (--win-w, HomeStory). In the opening it is tilted away and set back on the slab; the
-// story straightens it. The tilt is written as plain numbers so HomeStory reads them and starts
-// from exactly this pose.
+// The window is centred under the headings' band, its top on the same line in every chapter
+// (--win-top, HomeStory), as wide as the room allows (--win-w); on a short window it runs off the
+// bottom edge. In the opening it is set down so only its top shows under the offer (--peek), tilted
+// back and a little smaller, on a lime band; the story raises and straightens it. The pose is
+// written as plain numbers so HomeStory reads them and starts from exactly this pose.
 @media #{$cover} {
+  // The stage is exactly the window's height and clips what it holds, so the opening's lowered
+  // window never spills onto the next chapter on the page. Clipped, not hidden: `clip` makes no
+  // scroll container, so nothing can ever scroll it out of place.
   .stage {
+    overflow: clip;
     padding: 0;
   }
 
@@ -207,45 +218,44 @@ $tablet: 40rem;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
-    align-items: center;
-    justify-items: start;
-    //padding-block: var(--room-top) var(--cover-pad);
+    align-items: start;
+    justify-items: center;
+    padding-block-start: var(--win-top);
   }
 
-  // Every camera turns and scales about the window's far (end) edge, so the two worlds' windows stay
-  // on top of each other through any move. The site is right to left only: that edge is the left one.
+  // Every camera turns and scales about the window's centre, so the two worlds' windows stay on top
+  // of each other through any move.
   .stage__camera {
     grid-area: 1 / 1;
     inline-size: var(--win-w);
-    margin-inline-start: calc(var(--edge) + var(--copy-w) + var(--copy-gap));
-    transform-origin: left center;
+    margin: 0;
+    transform-origin: 50% 50%;
   }
 
   .stage__camera--tilt {
-    --tilt-depth: 1800;
-    --tilt-y: 14;
-    --tilt-x: 5;
-    --tilt-scale: 0.86;
-    --tilt-shift-x: 0;
-    --tilt-shift-y: 3;
+    --tilt-depth: 1600;
+    --tilt-x: 24;
+    --tilt-scale: 0.92;
+    // Down from its place until only --peek (in window heights) of it shows above the bottom edge.
+    --tilt-drop: calc((100 - var(--peek)) * 1svh - var(--win-top));
 
     transform: perspective(calc(var(--tilt-depth) * 1px))
+      translate(0, var(--tilt-drop)) rotateX(calc(var(--tilt-x) * 1deg))
       translate(calc(var(--tilt-shift-x) * 1%), calc(var(--tilt-shift-y) * 1%))
       rotateY(calc(var(--tilt-y) * 1deg)) rotateX(calc(var(--tilt-x) * 1deg))
       scale(var(--tilt-scale));
   }
 
+  // A leaning plinth the opening's window rises from: a little wider than the window, so its leaning
+  // sides show on both sides of it, from just above its top down to the bottom edge.
   .stage__slab {
     position: relative;
     z-index: auto;
     inset: auto;
     grid-area: 1 / 1;
     align-self: stretch;
-    inline-size: 100cqi;
-    margin-block: calc(-1 * var(--space-6)) calc(-1 * var(--cover-pad));
-    margin-inline-start: calc(
-      var(--edge) + var(--copy-w) + var(--copy-gap) + 0.3 * var(--win-w)
-    );
+    inline-size: calc(1.04 * var(--win-w));
+    margin-block-start: calc((98.5 - var(--peek)) * 1svh - var(--win-top));
   }
 }
 
@@ -254,7 +264,7 @@ $tablet: 40rem;
 // ---------------------------------------------------------------------------
 
 .story--cinematic .stage {
-  overflow: hidden;
+  overflow: clip;
 
   // Everything held back on the page comes in (these outrank `.stage .stage__later`).
   .stage__later {
@@ -298,16 +308,16 @@ $tablet: 40rem;
     );
   }
 
-  // A second screen over the main one's lower corner on the reading side, set off from it by a
-  // ring of the world's ground.
+  // A second screen over the main one's lower corner on the reading side, standing a little out
+  // past its edge, set off from it by a ring of the world's ground.
   .stage__support {
     --window-radius: var(--radius-md);
     --window-ring: 0 0 0 var(--space-2) var(--stage-ground);
 
     position: absolute;
-    inset-block-start: 52%;
-    inset-inline-start: -5%;
-    inline-size: 44%;
+    inset-block-start: 46%;
+    inset-inline-start: -6%;
+    inline-size: 40%;
   }
 
   // The same box as the windows (they are 16:9), so the symbol sits at the window's centre.
