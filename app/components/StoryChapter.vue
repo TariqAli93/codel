@@ -39,20 +39,13 @@ withDefaults(
 // The window size that holds the cinematic cover. Same as $cover in HomeStory.vue and StoryStage.vue
 // and coverQuery in HomeStory's script.
 $cover: "(min-width: 64em) and (min-height: 36em)";
-// From here a chapter's text and screens sit side by side (on the story's own width).
-$side: 64rem;
 
+// As a page, every chapter is one column: its text (laid out by the page), then its screens centred
+// under it, no wider than the stage's window.
 .chapter {
   position: relative;
   padding-block-start: var(--section-gap);
   padding-inline: var(--edge);
-
-  @container story (width >= #{$side}) {
-    display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    align-items: center;
-    column-gap: var(--copy-gap);
-  }
 
   // Dalaly's own paper ground and dark ink, from the window edge to the window edge.
   &--sand {
@@ -78,64 +71,76 @@ $side: 64rem;
     padding-block: clamp(var(--space-8), 8vw, var(--space-10));
     background-color: var(--accent);
     color: var(--on-accent);
+  }
 
-    @container story (width >= #{$side}) {
-      display: block;
-    }
+  // Dalaly's sand meets the closing's lime directly, with no strip of charcoal between them.
+  &--sand + &--lime {
+    margin-block-start: 0;
   }
 
   // The opening's screen is the stage itself (HomeStory places them together).
   &--intro {
     padding-block-start: var(--space-4);
+  }
 
-    @container story (width >= #{$side}) {
-      display: block;
-    }
+  // The text and the screens share one centred column, so their edges line up.
+  &__copy,
+  &__media {
+    max-inline-size: 56rem;
+    margin-inline: auto;
   }
 
   &__media {
     margin-block-start: var(--space-7);
+  }
 
-    @container story (width >= #{$side}) {
-      margin-block-start: 0;
-    }
+  &--intro &__copy {
+    max-inline-size: none;
   }
 }
 
-// The cover: the opening fills the window, its text centred in the room under the header, on the
-// reading side. The same in the flowing page and on the cinematic stage, so the stage can take over
-// from the page without a single pixel moving.
+// The cover: the opening fills the window, its text centred in the room between the header and the
+// top of its screen (which shows its top --peek, StoryStage). The same in the flowing page and on
+// the cinematic stage, so the stage can take over from the page without a single pixel moving.
 @media #{$cover} {
   .chapter--intro {
     display: grid;
     align-content: center;
+    justify-items: center;
     min-block-size: 100svh;
-    padding-block: var(--room-top) var(--cover-pad);
+    padding-block: var(--room-top) calc(var(--peek) * 1svh + var(--head-gap));
 
     .chapter__copy {
-      inline-size: var(--copy-w-intro);
+      inline-size: min(100%, 60rem);
     }
   }
 }
 
 // The cinematic stage: every chapter takes the same frame over the stage, one after another in
-// time. Only the chapter on show takes pointer input (data-active, set by the timeline); the rest
-// stay in the reading and tab order, and focus brings their chapter on show.
+// time. Its headings sit in the band under the header (--head-h) as wide as the window and on the
+// band's bottom line, right over the window; a heading ever taller than the band grows upward, into
+// the room under the header, never over the window. The closing call fills the frame. Only the
+// chapter on show takes pointer input (data-active, set by the timeline); the rest stay in the
+// reading and tab order, and focus brings their chapter on show.
 .story--cinematic .chapter {
   grid-area: 1 / 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  align-content: center;
+  grid-template-rows: var(--head-h);
+  align-content: start;
   block-size: 100svh;
   min-block-size: 0;
   margin: 0;
-  padding-block: var(--room-top) var(--cover-pad);
+  padding-block: var(--room-top) 0;
   padding-inline: var(--edge);
   background-color: transparent;
   pointer-events: none;
 
   .chapter__copy {
-    inline-size: var(--copy-w);
+    align-self: end;
+    inline-size: min(100%, var(--win-w));
+    max-inline-size: none;
+    margin-inline: auto;
   }
 
   .chapter__media {
@@ -143,12 +148,23 @@ $side: 64rem;
   }
 }
 
-.story--cinematic .chapter--intro .chapter__copy {
-  inline-size: var(--copy-w-intro);
+.story--cinematic .chapter--intro {
+  grid-template-rows: none;
+  align-content: center;
+  padding-block-end: calc(var(--peek) * 1svh + var(--head-gap));
+
+  .chapter__copy {
+    align-self: auto;
+    inline-size: min(100%, 60rem);
+  }
 }
 
-.story--cinematic .chapter--custom .chapter__copy {
-  inline-size: auto;
+.story--cinematic .chapter--custom {
+  grid-template-rows: none;
+
+  .chapter__copy {
+    align-self: start;
+  }
 }
 
 .story--cinematic .chapter[data-active] .chapter__copy {
