@@ -914,7 +914,7 @@ $cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
   // can never scroll the stage out of place.
   .story__viewport {
     position: sticky;
-    // inset-block-start: var(--header-room);
+    inset-block-start: 0;
     block-size: 100svh;
     overflow: clip;
   }
