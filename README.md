@@ -1,7 +1,7 @@
 # Codel - كودل
 
 Starter website project for **Codel (كودل)**, an Iraqi software company.
-Brand layer is in (colors, fonts, logo, favicon) and the main pages carry real Arabic content: services, the two ready-made products with prices, working hours, contact details and the company story. Careers, blog, privacy and terms are still placeholders. No components yet.
+Brand layer is in (colors, fonts, logo, favicon) and the main pages carry real Arabic content: services, the two ready-made products with prices, working hours, contact details and the company story. Careers, blog, privacy and terms are still placeholders.
 
 **Stack:** Nuxt 4.6.4 (pinned) · TypeScript (strict) · SCSS · no UI libraries or CSS frameworks.
 
@@ -64,8 +64,8 @@ Notes:
 ## Brand assets
 
 - Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on. The page gutter, the motion tokens (durations, easing, stagger), the type scale, the point sizes, the stroke and the lime glow are site-level additions in the same file.
-- Imagery: the products' real screens. The hero layers a Nuqta Plus screen and a Dalaly screen that run off the page edge (phones get one focused crop); each product has a showcase with two real screenshots (`public/images/solutions/<slug>/`, framed by `app/components/ProductWindow.vue`) in the product's own colours. Buttons, tags and decorative bars lean (the brand slant); lime marks what you act on and what is live now.
-- Motion: the hero's entrance is plain CSS (text first, then the screens). GSAP with ScrollTrigger, loaded on the client, adds the rest: the hero's screens drift apart on scroll, headings and leads fade in with a small rise, each product's main screen is wiped in behind a leaning edge and its second screen fades in, and the years bar draws. All of it is off under `prefers-reduced-motion: reduce`, and anything that takes keyboard focus is shown in its end state.
+- Imagery: the products' real screens (`public/images/solutions/<slug>/`, framed by `app/components/ProductWindow.vue`) in the products' own colours. The home page tells one story in five chapters around one window that stays on screen: Codel, Nuqta Plus at its point of sale, the same program's figures and reports, Dalaly on its sand ground, then custom software and the call on lime. Buttons, tags and decorative bars lean (the brand slant); lime marks what you act on and what is live now.
+- Motion: the home page's opening enters with plain CSS. On a desktop-sized window, GSAP with ScrollTrigger (loaded on the client) turns the story into a cinematic stage: the story's viewport sticks to the window and one scrubbed timeline hands the window and the text from chapter to chapter (the slab steps aside, screens are swept in along the brand's lean, the camera moves in on what each chapter is about). On phones, tablets and short windows the chapters flow as a page and reveal themselves once. All of it is off under `prefers-reduced-motion: reduce` (the story is then a plain page), and anything that takes keyboard focus is brought into view in its end state. The code lives in `app/components/HomeStory.vue` (layout and motion), `StoryStage.vue`, `StoryChapter.vue` and `SplitWords.vue`.
 - Fonts are self-hosted in `public/fonts/`: Rubik (display and headings) and Readex Pro (body and UI), as subset variable woff2 files for Arabic and Latin. Both are licensed under the SIL Open Font License; the license texts are beside the files.
 - Logo files are in `public/brand/` (full logo and symbol, each in white, ink and lime). The favicon is `public/favicon.svg`: the symbol, ink on light browser themes and lime on dark ones.
 - `public/brand/og.png` (1200×630) is the share image: the white logo on the dark `--bg`, rendered from `codel-full-white.svg`.
@@ -77,6 +77,7 @@ app/
   app.vue                  # NuxtLayout + NuxtPage
   error.vue                # branded 404 / error page (uses the default layout)
   layouts/default.vue      # the only layout (skip link, sticky header with a small-screen menu, main, footer, site-wide share tags)
+  components/              # reusable components; the home page's story is HomeStory, StoryStage, StoryChapter and SplitWords
   pages/                   # one file per route
   data/                    # company.ts and solutions.ts: the facts the pages show
   assets/scss/main.scss    # font faces, design tokens, reset and base styles
@@ -179,7 +180,7 @@ images: [
 
 - **اسم النطاق (الدومين)**: مطلوب للخطوة 7 أعلاه.
 - **طريقة تسعير البرنامجين**: هل السعر دفعة واحدة، أم لكل جهاز، أم اشتراك؟ وماذا يحصل العميل مقابل السعر؟ الموقع الآن يعرض المبلغ فقط.
-- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وفي الصفحة الرئيسية: العنوان الرئيسي والسطر الصغير فوقه والجملة تحته، والجملتان تحت عنواني "حلولنا الجاهزة" و"خدماتنا"، ونصوص أزرار التواصل، ووصف كل برنامج ومميزاته الأربع الظاهرة في الصفحة الرئيسية، ورسالة واتساب الجاهزة التي تفتحها أزرار "اسأل عنه على واتساب" و"استفسر عن هذه الخدمة" و"حدّثنا عن فكرتك"، وعبارتا حالة الدوام ("في الدوام الآن" و"خارج ساعات الدوام الآن")، وفي صفحة الحلول الجملة تحت العنوان ("برامج جاهزة للاستخدام، بأسعار معلنة.") وخاتمتها ("تحتاج حلاً غير موجود هنا؟" و"نبرمجه لك حسب طلبك.")، وخاتمة صفحتي الخدمات ومن نحن ("لديك مشروع أو فكرة؟" و"أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني.")، وفي صفحة الأسئلة الشائعة الجملة تحت العنوان ("إجابات عن خدماتنا وبرامجنا وأسعارها ودوامنا.") وخاتمتها ("لم تجد إجابتك؟" و"اسألنا مباشرة على واتساب.").
+- **مراجعة النصوص المكتوبة كمسودة**: الجملة تحت كل خدمة، ووصف كل برنامج وقائمة مميزاته، وقصة الشركة في صفحة "من نحن"، وفي الصفحة الرئيسية: العنوان الرئيسي ("من شغلك، إلى برنامج يشتغل.") والسطر الصغير فوقه والجملة تحته، والعناوين الصغيرة فوق كل فصل (مثل "برنامج جاهز")، وعنوان الفصل الثالث ("من نقطة البيع، إلى أرقام يومك.") والجملة تحته، وعنوان الخاتمة ("لم تجد برنامجك؟ نبرمجه لك.")، ونصوص أزرار التواصل، ووصف كل برنامج ومميزاته الأربع الظاهرة في الصفحة الرئيسية، ورسالة واتساب الجاهزة التي تفتحها أزرار "اسأل عنه على واتساب" و"استفسر عن هذه الخدمة" وزر "راسلنا على واتساب" في خاتمة الصفحة الرئيسية، وعبارتا حالة الدوام ("في الدوام الآن" و"خارج ساعات الدوام الآن")، وفي صفحة الحلول الجملة تحت العنوان ("برامج جاهزة للاستخدام، بأسعار معلنة.") وخاتمتها ("تحتاج حلاً غير موجود هنا؟" و"نبرمجه لك حسب طلبك.")، وخاتمة صفحتي الخدمات ومن نحن ("لديك مشروع أو فكرة؟" و"أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني.")، وفي صفحة الأسئلة الشائعة الجملة تحت العنوان ("إجابات عن خدماتنا وبرامجنا وأسعارها ودوامنا.") وخاتمتها ("لم تجد إجابتك؟" و"اسألنا مباشرة على واتساب.").
 - **الفريق والرؤية والوظائف والمقالات**: لا يوجد نص لها بعد.
 - **سياسة الخصوصية والشروط والأحكام**: يكتبها صاحب الشركة أو يوافق عليها (ومحامٍ إذا صار الموقع يجمع بيانات). الصفحتان الآن مؤقتتان ومخفيتان عن محركات البحث.
 - **صور البرنامجين وأي فيديو**: لم تُرفع أي صورة أو فيديو بعد. طريقة الإضافة في الخطوة 4.
