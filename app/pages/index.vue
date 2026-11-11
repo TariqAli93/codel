@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { company, services } from "~/data/company";
-import {
-  solutions,
-  type Solution,
-  type SolutionImage,
-} from "~/data/solutions";
+import { solutions, type Solution, type SolutionImage } from "~/data/solutions";
 import type { StageShots } from "~/components/StoryStage.vue";
 
 // The story's stage runs to the window edges, so this page draws its own full-width sections instead
@@ -827,7 +823,7 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     // same line as every chapter's, the services centred in the room under it, the ways to reach us
     // at its foot. On a short window the middle track shrinks to the services.
     .story--cinematic & {
-      grid-template-rows: var(--head-h) 1fr auto;
+      // grid-template-rows: var(--head-h) 1fr auto;
       min-block-size: calc(100svh - var(--room-top));
 
       > .home__head {
@@ -873,6 +869,7 @@ $lean: skewX(calc(var(--slant-angle) * -1));
   // whole row (three over two on a wide column).
   &__service-names {
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
     column-gap: var(--space-6);
     padding: 0;
@@ -951,8 +948,7 @@ $lean: skewX(calc(var(--slant-angle) * -1));
 
   // The individual translate property: the links lean with transform.
   .home__hero-actions > * {
-    animation: home-forward var(--duration-slow) var(--ease-out) 280ms
-      backwards;
+    animation: home-forward var(--duration-slow) var(--ease-out) 280ms backwards;
 
     & + * {
       animation-delay: 340ms;
