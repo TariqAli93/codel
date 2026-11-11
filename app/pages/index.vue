@@ -296,7 +296,7 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
         labelledby="custom-title"
       >
         <div class="home__closing">
-          <div class="home__head">
+          <div class="home__head home__head--closing">
             <div class="home__head-main">
               <p class="home__kicker" data-reveal>
                 <span class="home__index" dir="ltr" aria-hidden="true">05</span>
@@ -400,6 +400,10 @@ $lean: skewX(calc(var(--slant-angle) * -1));
   &__head {
     display: grid;
     gap: var(--space-5) var(--copy-gap);
+
+    &--closing {
+      grid-template-columns: 1fr !important;
+    }
 
     @container story (width >= #{$side}) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
