@@ -1,19 +1,19 @@
 <script lang="ts">
-import type { SolutionImage } from '~/data/solutions'
+import type { SolutionImage } from "~/data/solutions";
 
 // The screens the stage plays, by the part each plays in the story. All are real screenshots from
 // app/data/solutions.ts; the page picks them.
 export interface StageShots {
   // Nuqta Plus's point of sale: the opening, then chapter 02.
-  operations?: SolutionImage
+  operations?: SolutionImage;
   // Nuqta Plus's home screen, inside the same menus as the point of sale: chapter 03.
-  insights?: SolutionImage
+  insights?: SolutionImage;
   // Nuqta Plus's sales report, over the home screen's corner in chapter 03.
-  report?: SolutionImage
+  report?: SolutionImage;
   // Dalaly's list of properties for sale: chapter 04.
-  listing?: SolutionImage
+  listing?: SolutionImage;
   // One property in Dalaly, over the list's corner in chapter 04.
-  detail?: SolutionImage
+  detail?: SolutionImage;
 }
 </script>
 
@@ -29,8 +29,8 @@ export interface StageShots {
 //
 // Scenery only (aria-hidden): each chapter's own text says what its screens show.
 defineProps<{
-  shots: StageShots
-}>()
+  shots: StageShots;
+}>();
 </script>
 
 <template>
@@ -209,7 +209,7 @@ $tablet: 40rem;
     grid-template-rows: minmax(0, 1fr);
     align-items: center;
     justify-items: start;
-    padding-block: var(--room-top) var(--cover-pad);
+    //padding-block: var(--room-top) var(--cover-pad);
   }
 
   // Every camera turns and scales about the window's far (end) edge, so the two worlds' windows stay
@@ -230,10 +230,7 @@ $tablet: 40rem;
     --tilt-shift-y: 3;
 
     transform: perspective(calc(var(--tilt-depth) * 1px))
-      translate(
-        calc(var(--tilt-shift-x) * 1%),
-        calc(var(--tilt-shift-y) * 1%)
-      )
+      translate(calc(var(--tilt-shift-x) * 1%), calc(var(--tilt-shift-y) * 1%))
       rotateY(calc(var(--tilt-y) * 1deg)) rotateX(calc(var(--tilt-x) * 1deg))
       scale(var(--tilt-scale));
   }
