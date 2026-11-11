@@ -444,14 +444,19 @@ $lean: skewX(calc(var(--slant-angle) * -1));
         color-mix(in srgb, var(--bg) 8%, transparent) 100%
       );
       z-index: -1;
+      width: 100%;
+      height: 100%;
     }
 
     &::after {
       content: "";
       position: absolute;
-      inset: 0;
-      filter: blur(1.5rem);
-      z-index: 1;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      width: 100%;
+      height: 100%;
     }
   }
   &__head {
