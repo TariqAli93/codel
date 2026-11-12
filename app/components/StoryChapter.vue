@@ -49,6 +49,9 @@ $cover: "(min-width: 64em) and (min-height: 36em)";
 
   // Dalaly's own paper ground and dark ink, from the window edge to the window edge.
   &--sand {
+    // The light theme's lime text is under 4.5:1 on the sand at the kicker's size; the ink is not.
+    --accent-text: var(--dalaly-ink);
+
     margin-block-start: var(--section-gap);
     padding-block-end: var(--section-gap);
     background-color: var(--dalaly-ground);

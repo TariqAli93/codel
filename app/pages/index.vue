@@ -88,6 +88,9 @@ useHead({
 // The parts of the story that are drafts of the owner's offer (see CLAUDE.md, Home page).
 const insightsHeadline = "من نقطة البيع، إلى أرقام يومك.";
 const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
+
+// A service's number in chapter 05, by its place in the list: 01, 02 and on.
+const ordinal = (index: number) => String(index + 1).padStart(2, "0");
 </script>
 
 <template>
@@ -96,6 +99,7 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
       <!-- 01 Codel: the offer, and the window that the story keeps. -->
       <ZirconTorrent
         class="hero__effect"
+        data-stage="glow"
         :track-parent="true"
         :scale="230"
         :zoom="64"
@@ -108,7 +112,7 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
         :direction="{ flow: 'down', ripple: 'toward', streaks: 'toward' }"
         :advanced="{ horizon: 75, sparkles: 8, specks: 4, grain: 12 }"
       />
-      <div class="hero__shade" aria-hidden="true" />
+      <div class="hero__shade" data-stage="glow" aria-hidden="true" />
       <StoryChapter name="intro" labelledby="home-title">
         <h1 id="home-title" class="home__title">
           <span class="home__title-line" data-mask
@@ -303,8 +307,8 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
       </StoryChapter>
 
       <!-- 05 Codel again: software made to measure, and how to reach us. The heading where every
-           chapter's heading sits, the services where the window was, the ways to reach us under
-           them. -->
+           chapter's heading sits; the services where the window was, one at a time on the stage
+           (one entry each as a page); then all of them, and the ways to reach us under them. -->
       <StoryChapter
         id="contact"
         name="custom"
@@ -312,11 +316,11 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
         labelledby="custom-title"
       >
         <div class="home__closing">
-          <div class="home__head home__head--closing">
+          <div class="home__head">
             <div class="home__head-main">
               <p class="home__kicker" data-reveal>
                 <span class="home__index" dir="ltr" aria-hidden="true">05</span>
-                {{ services.at(-1)?.title }}
+                خدماتنا
               </p>
               <h2 id="custom-title" class="home__headline">
                 <SplitWords :text="customHeadline" />
@@ -331,50 +335,113 @@ const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
             </div>
           </div>
 
-          <div class="home__services">
-            <div class="home__services-head" data-reveal>
-              <h3 class="home__label">خدماتنا</h3>
-              <ActionLink look="text" to="/services" label="تفاصيل الخدمات" />
-            </div>
-            <ul role="list" class="home__service-names" data-reveal>
+          <!-- The services, one scene each: its number, its name, what it is, how to ask. On the
+               stage they follow one another in one place, then the overview names them all. -->
+          <div class="home__tour">
+            <ol role="list" class="home__scenes">
               <li
-                v-for="service in services"
+                v-for="(service, index) in services"
                 :key="service.title"
-                class="home__service"
-                data-mask
+                class="home__scene"
+                :data-scene="index + 1"
               >
-                <span class="home__service-name" data-mask-inner>{{
-                  service.title
-                }}</span>
+                <span
+                  class="home__numeral"
+                  dir="ltr"
+                  aria-hidden="true"
+                  data-sweep
+                  >{{ ordinal(index) }}</span
+                >
+                <div class="home__scene-body">
+                  <h3 class="home__scene-title">
+                    <span class="home__scene-mask" data-mask
+                      ><span class="home__scene-words" data-mask-inner>{{
+                        service.title
+                      }}</span></span
+                    >
+                  </h3>
+                  <p class="home__scene-text" data-reveal>{{ service.text }}</p>
+                  <div class="home__scene-actions" data-reveal>
+                    <WhatsAppCall
+                      look="text"
+                      :subject="service.title"
+                      label="استفسر عن هذه الخدمة"
+                      :hidden-suffix="service.title"
+                    />
+                    <ActionLink
+                      v-if="service.related"
+                      look="text"
+                      :to="service.related"
+                      label="حلولنا الجاهزة"
+                    />
+                  </div>
+                </div>
               </li>
-            </ul>
+            </ol>
+
+            <!-- The overview: on the stage every service by name, each a link to its entry on
+                 /services, then the link to that page. As a page the entries above already are the
+                 names, so only the link shows. -->
+            <div class="home__overview" data-scene="overview">
+              <ul role="list" class="home__service-names" data-stage-only>
+                <li
+                  v-for="(service, index) in services"
+                  :key="service.title"
+                  class="home__service"
+                  data-reveal
+                >
+                  <!-- Kept on one line (and out of the formatter's reach): the space keeps the
+                       number and the name apart. -->
+                  <!-- prettier-ignore -->
+                  <ActionLink look="text" :to="`/services#service-${index + 1}`"><span class="home__service-index" dir="ltr">{{ ordinal(index) }}</span> {{ service.title }}</ActionLink>
+                </li>
+              </ul>
+              <ActionLink
+                class="home__overview-link"
+                look="text"
+                to="/services"
+                label="تفاصيل الخدمات"
+                data-reveal
+              />
+            </div>
           </div>
 
-          <div class="home__reach" data-reveal>
-            <WhatsAppCall
-              look="ink"
-              :subject="services.at(-1)?.title"
-              :detail="company.phones.main.display"
-            />
-            <ul role="list" class="home__channels">
-              <li>
-                <!-- Kept on one line (and out of the formatter's reach): the space keeps the words
-                     and the number apart. -->
-                <!-- prettier-ignore -->
-                <ActionLink look="text" :to="company.phones.main.tel">أو اتصل <span dir="ltr">{{ company.phones.main.display }}</span></ActionLink>
-              </li>
-              <li>
-                <ActionLink
-                  look="text"
-                  :to="`mailto:${company.email}`"
-                  :label="company.email"
-                  dir="ltr"
-                />
-              </li>
-              <li>
-                <ActionLink look="text" to="/contact" label="كل طرق التواصل" />
-              </li>
-            </ul>
+          <div class="home__foot">
+            <!-- The tour's progress on the stage: one leaning bar per service, filled as it shows. -->
+            <div class="home__rail" aria-hidden="true" data-rail data-stage-only>
+              <span
+                v-for="service in services"
+                :key="service.title"
+                class="home__rail-bar"
+                ><span class="home__rail-fill" data-rail-fill
+              /></span>
+            </div>
+            <div class="home__reach" data-reveal data-scene="overview">
+              <WhatsAppCall
+                look="ink"
+                :subject="services.at(-1)?.title"
+                :detail="company.phones.main.display"
+              />
+              <ul role="list" class="home__channels">
+                <li>
+                  <!-- Kept on one line (and out of the formatter's reach): the space keeps the words
+                       and the number apart. -->
+                  <!-- prettier-ignore -->
+                  <ActionLink look="text" :to="company.phones.main.tel">أو اتصل <span dir="ltr">{{ company.phones.main.display }}</span></ActionLink>
+                </li>
+                <li>
+                  <ActionLink
+                    look="text"
+                    :to="`mailto:${company.email}`"
+                    :label="company.email"
+                    dir="ltr"
+                  />
+                </li>
+                <li>
+                  <ActionLink look="text" to="/contact" label="كل طرق التواصل" />
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </StoryChapter>
@@ -418,6 +485,9 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     inset: 0;
     width: 100%;
     height: 100%;
+    // Blurred, so no sharp strand of the light crosses a letter.
+    // Dimmed, so it stays behind the text; a filter, because the stage's timeline owns `opacity`.
+    filter: blur(5px) opacity(0.75);
   }
   .hero__shade {
     pointer-events: none;
@@ -448,24 +518,22 @@ $lean: skewX(calc(var(--slant-angle) * -1));
       height: 100%;
     }
 
+    // A pool of the ground behind the opening's text, so the headline and lede keep their contrast.
     &::after {
       content: "";
       position: absolute;
-      background: rgba(0, 0, 0, 0.2);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      width: 100%;
-      height: 100%;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 38% 30% at 50% 46%,
+        color-mix(in srgb, var(--bg) 72%, transparent) 0%,
+        color-mix(in srgb, var(--bg) 55%, transparent) 55%,
+        transparent 100%
+      );
     }
   }
   &__head {
     display: grid;
     gap: var(--space-5) var(--copy-gap);
-
-    &--closing {
-      grid-template-columns: 1fr !important;
-    }
 
     @container story (width >= #{$side}) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -876,39 +944,54 @@ $lean: skewX(calc(var(--slant-angle) * -1));
 
   // ---------------------------------------------------------------------------
   // 05 The closing call, on lime: the heading where every chapter's heading sits, the services where
-  // the window was, the ways to reach us under them
+  // the window was (one at a time on the stage, one entry each as a page), the ways to reach us under
+  // them
   // ---------------------------------------------------------------------------
 
   &__closing {
     display: grid;
     row-gap: var(--space-8);
 
-    @media #{$cover} {
-      row-gap: var(--head-gap);
-    }
-
-    // A short cover: closed up, so the ways to reach us stay clear of the window's bottom edge.
-    @media #{$cover-short} {
-      row-gap: var(--space-3);
-    }
-
-    // On the stage it fills the frame under the header: its heading in the headings' band, on the
-    // same line as every chapter's, the services centred in the room under it, the ways to reach us
-    // at its foot. On a short window the middle track shrinks to the services.
+    // On the stage it fills the frame under the header in three rows: its heading in the headings'
+    // band, on the same line as every chapter's; the tour in the room under it, where the window
+    // was, each scene and the overview centred there; the rail, then the ways to reach us, at its
+    // foot, at least a button high.
     .story--cinematic & {
-      // grid-template-rows: var(--head-h) 1fr auto;
-      min-block-size: calc(100svh - var(--room-top));
+      grid-template-rows:
+        var(--head-h) minmax(0, 1fr)
+        minmax(var(--control-lg), auto);
+      row-gap: var(--head-gap);
+      block-size: calc(100svh - var(--room-top));
+      padding-block-end: var(--cover-pad);
 
       > .home__head {
+        grid-row: 1;
         align-self: end;
       }
 
-      > .home__services {
-        align-self: center;
+      > .home__tour {
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+
+        > .home__scenes,
+        > .home__overview {
+          grid-area: 1 / 1;
+          align-self: center;
+        }
       }
 
-      > .home__reach {
-        padding-block-end: var(--cover-pad);
+      > .home__foot {
+        grid-row: 3;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: center;
+
+        > .home__rail,
+        > .home__reach {
+          grid-area: 1 / 1;
+        }
       }
     }
   }
@@ -917,56 +1000,200 @@ $lean: skewX(calc(var(--slant-angle) * -1));
     margin-block-start: calc(-1 * var(--space-2));
   }
 
-  // The label and the link to the services page on one line over the names.
-  &__services-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0 var(--space-5);
-    padding-block-end: var(--space-2);
-    border-block-end: 1px solid var(--border);
+  // The services as a numbered list, each entry under a rule: its number, then its name, what it is
+  // and how to ask about it. From $tablet the number takes a column of its own.
+  &__scenes {
+    margin-block-start: var(--space-7);
+    padding: 0;
+    list-style: none;
+
+    .story--cinematic & {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      margin: 0;
+    }
   }
 
-  &__label {
+  &__scene {
+    padding-block: var(--space-6);
+    border-block-start: 1px solid var(--border);
+
+    @container story (width >= #{$tablet}) {
+      display: grid;
+      grid-template-columns: 5rem minmax(0, 1fr);
+      column-gap: var(--copy-gap);
+      align-items: start;
+      padding-block: var(--space-7);
+    }
+
+    // On the stage the scenes take turns in one place, the number beside the rest.
+    .story--cinematic & {
+      grid-area: 1 / 1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      column-gap: var(--copy-gap);
+      align-items: center;
+      padding: 0;
+      border: 0;
+    }
+  }
+
+  // The number: large, and quieter than the name (half the ink, half the lime). Only as wide as its
+  // digits, so it sits at the reading start and its wipe crosses the digits only.
+  &__numeral {
+    display: block;
+    inline-size: fit-content;
+    margin-block-end: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-title);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: color-mix(in srgb, var(--on-accent) 50%, var(--accent));
+
+    .story--cinematic & {
+      margin: 0;
+      font-size: min(var(--text-hero), 16svh);
+
+      @media #{$cover-short} {
+        font-size: min(var(--text-hero), 13svh);
+      }
+    }
+  }
+
+  &__scene-title {
     margin: 0;
-    font-family: var(--font-sans);
-    font-size: var(--text-ui);
-    font-weight: 600;
-    line-height: 1.7;
-    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: var(--text-flow);
+    font-weight: 700;
+    line-height: 1.4;
+
+    // On the stage the scene holds the room under the heading on its own, so its name is set at a
+    // section heading's size (capped by the window's height on a short cover).
+    .story--cinematic & {
+      font-size: var(--text-title);
+
+      @media #{$cover-short} {
+        font-size: min(var(--text-title), 5svh);
+      }
+    }
   }
 
-  // The five names set large in wrapping rows, each name under a rule, each a mask its words rise
-  // into. Every row's names grow to fill it, so no row leaves an empty cell and every rule runs the
-  // whole row (three over two on a wide column).
-  &__service-names {
+  // One mask around the whole name, so it rises as one, opened like SplitWords' masks so no mark or
+  // dot is cut.
+  &__scene-mask {
+    display: inline-block;
+    clip-path: inset(-0.12em -0.3em -0.3em -0.3em);
+  }
+
+  &__scene-words {
+    display: inline-block;
+  }
+
+  &__scene-text {
+    max-inline-size: 34rem;
+    margin-block-start: var(--space-3);
+    font-size: var(--text-body);
+    line-height: 1.8;
+    color: var(--text-muted);
+
+    @container story (width >= #{$tablet}) {
+      font-size: var(--text-lead);
+    }
+
+    .story--cinematic & {
+      max-inline-size: 34rem;
+      font-size: var(--text-lead);
+
+      @media #{$cover-short} {
+        font-size: var(--text-body);
+      }
+    }
+  }
+
+  &__scene-actions {
     display: flex;
-    flex-direction: column;
     flex-wrap: wrap;
+    gap: 0 var(--space-5);
+    margin-block-start: var(--space-3);
+  }
+
+  // The stage's overview of names (data-stage-only): the five in two columns, each under a rule, each
+  // a link to its entry on /services. One line per name, so the names compare at a glance; the last
+  // row holds one name.
+  &__service-names {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--space-6);
     padding: 0;
     list-style: none;
   }
 
   &__service {
-    flex: 1 1 min(17rem, 100%);
-    padding-block: var(--space-4);
+    padding-block: var(--space-3);
     border-block-end: 1px solid var(--border);
-    clip-path: inset(0 -0.3em);
     font-family: var(--font-display);
-    font-size: var(--text-flow);
+    font-size: var(--text-card);
     font-weight: 700;
     line-height: 1.4;
 
+    // A short cover: the rows close up to the links' own 44px, so three rows and the link to the
+    // services page fit the room between the heading and the ways to reach us (1024x600 too).
     @media #{$cover-short} {
-      padding-block: var(--space-2);
-      font-size: var(--text-card);
+      padding-block: 0;
+    }
+
+    // The link is set like the name it holds.
+    > a {
+      font-weight: inherit;
     }
   }
 
-  &__service-name {
-    display: block;
+  &__service-index {
+    margin-inline-end: var(--space-2);
+    font-family: var(--font-display);
+    font-size: var(--text-ui);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+
+  // As a page, the link to the services page follows the last entry; on the stage it sits under the
+  // names (on a short cover right under them, see .home__service).
+  &__overview-link {
+    margin-block-start: var(--space-5);
+
+    .story--cinematic & {
+      margin-block-start: var(--space-3);
+
+      @media #{$cover-short} {
+        margin-block-start: 0;
+      }
+    }
+  }
+
+  // The tour's progress (stage only, data-stage-only): one short leaning bar per service, filled from
+  // the reading start as its service shows; the bars already passed stay full.
+  &__rail {
+    display: flex;
+    justify-content: start;
+    gap: var(--space-2);
+  }
+
+  &__rail-bar {
+    position: relative;
+    inline-size: var(--space-6);
+    block-size: var(--space-1);
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background-color: color-mix(in srgb, var(--on-accent) 28%, var(--accent));
+    transform: $lean;
+  }
+
+  &__rail-fill {
+    position: absolute;
+    inset: 0;
+    background-color: var(--on-accent);
   }
 
   // The call and the other ways in, on one line where there is room.

@@ -100,13 +100,15 @@ export function parseColor(input: unknown, fallback: RGB): RGB {
 }
 function parseColorRaw(raw: string): RGB | null {
     let s = raw.trim()
-    const v = /^var\(\s*--[^,]+,\s*(.+)\)$/.exec(s)
-    if (v) s = v[1].trim()
+    const fallback = /^var\(\s*--[^,]+,\s*(.+)\)$/.exec(s)?.[1]
+    if (fallback) s = fallback.trim()
     if (s[0] === '#') {
         const h = s.slice(1)
         const x = (a: string) => parseInt(a, 16) / 255
+        // One hex digit, doubled (#abc is #aabbcc).
+        const twice = (i: number) => h.charAt(i).repeat(2)
         let out: RGB
-        if (h.length === 3 || h.length === 4) out = [x(h[0] + h[0]), x(h[1] + h[1]), x(h[2] + h[2])]
+        if (h.length === 3 || h.length === 4) out = [x(twice(0)), x(twice(1)), x(twice(2))]
         else if (h.length === 6 || h.length === 8) out = [x(h.slice(0, 2)), x(h.slice(2, 4)), x(h.slice(4, 6))]
         else return null
         return out.every(Number.isFinite) ? out : null
@@ -114,20 +116,23 @@ function parseColorRaw(raw: string): RGB | null {
     // What a browser computes a color-mix() token to.
     const srgb = /^color\(\s*srgb\s+([^)]*)\)$/i.exec(s)
     if (srgb) {
-        const c = srgb[1].split(/[\s/]+/).filter(Boolean).slice(0, 3).map(Number)
+        const c = (srgb[1] ?? '').split(/[\s/]+/).filter(Boolean).slice(0, 3).map(Number)
         return c.length === 3 && c.every(Number.isFinite) ? (c.map(v => Math.min(1, Math.max(0, v))) as RGB) : null
     }
     const m = /^(rgba?|hsla?)\(([^)]*)\)$/i.exec(s)
     if (!m) return null
-    const parts = m[2].split(/[\s,/]+/).filter(Boolean)
-    if (parts.length < 3) return null
+    const [, fn = '', args = ''] = m
+    const parts = args.split(/[\s,/]+/).filter(Boolean)
+    // Three channels at least (an alpha after them is ignored).
+    const [c0, c1, c2] = parts
+    if (c0 === undefined || c1 === undefined || c2 === undefined) return null
     const n = (p: string, scale: number) => p.endsWith('%') ? (parseFloat(p) / 100) * scale : parseFloat(p)
     let rgb: RGB
-    if (m[1].toLowerCase().startsWith('rgb')) {
-        rgb = [n(parts[0], 255) / 255, n(parts[1], 255) / 255, n(parts[2], 255) / 255]
+    if (fn.toLowerCase().startsWith('rgb')) {
+        rgb = [n(c0, 255) / 255, n(c1, 255) / 255, n(c2, 255) / 255]
     } else {
-        const h = (((parseFloat(parts[0]) % 360) + 360) % 360) / 360
-        const s = n(parts[1], 1), l = n(parts[2], 1)
+        const h = (((parseFloat(c0) % 360) + 360) % 360) / 360
+        const s = n(c1, 1), l = n(c2, 1)
         const q = l < 0.5 ? l * (1 + s) : l + s - l * s
         const p = 2 * l - q
         const f = (t: number) => {

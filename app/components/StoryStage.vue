@@ -241,8 +241,6 @@ $tablet: 40rem;
 
     transform: perspective(calc(var(--tilt-depth) * 1px))
       translate(0, var(--tilt-drop)) rotateX(calc(var(--tilt-x) * 1deg))
-      translate(calc(var(--tilt-shift-x) * 1%), calc(var(--tilt-shift-y) * 1%))
-      rotateY(calc(var(--tilt-y) * 1deg)) rotateX(calc(var(--tilt-x) * 1deg))
       scale(var(--tilt-scale));
   }
 
