@@ -58,6 +58,8 @@ const swatchEl = ref<HTMLSpanElement | null>(null);
 // Turns a colour such as `var(--accent)` into what it computes to here, so WebGL gets the theme's
 // values. Set after mount: the server has no computed styles, and nothing is drawn before then.
 const readColor = shallowRef<((css: string) => string) | undefined>();
+// Set once the first frame is drawn: the canvas fades in from then on.
+const ready = ref(false);
 const config = computed(() => resolve(props, readColor.value));
 let wakeCurrent: (() => void) | null = null;
 let cleanupCurrent: (() => void) | null = null;
@@ -100,6 +102,16 @@ onMounted(() => {
   const RUSH_S = 0.6;
   const FOLLOW_S = 0.09;
   const PERSPECTIVE = 2.5;
+  // WCAG 2.2.2 (Pause, Stop, Hide): motion that starts on its own stops within five seconds. The
+  // flow runs by itself for FLOW_AUTO seconds after the first frame, and again while a pointer moves
+  // over the tracked element (the visitor's own doing); each time it then eases to a stop over about
+  // FLOW_STOP_S. Pointer moves less than FLOW_MOVE_S apart are one movement.
+  // The ease comes to rest about 1.2 * FLOW_STOP_S after it starts (`ease` snaps under 0.004), so
+  // the whole self-started run, ease included, ends about 4.7 s after the first frame: under five,
+  // with a few frames to spare on a slow device.
+  const FLOW_AUTO = 3.5;
+  const FLOW_STOP_S = 1;
+  const FLOW_MOVE_S = 0.1;
 
   let gl: WebGL2RenderingContext | null = null;
   let program: WebGLProgram | null = null;
@@ -150,27 +162,53 @@ onMounted(() => {
     gl!.uniform4f(loc[name], a, b, c, d);
   };
 
+  // A shader's compile status, logged when it failed. Reading it waits for the compile to end.
+  const compiled = (g: WebGL2RenderingContext, shader: WebGLShader) => {
+    if (g.getShaderParameter(shader, g.COMPILE_STATUS)) return true;
+    if (!g.isContextLost())
+      console.error(
+        "[ZirconTorrent] GLSL compile failed:",
+        g.getShaderInfoLog(shader),
+      );
+    return false;
+  };
+  // With `check` false the status is read only after the link (see finish), so nothing waits here.
   const compileShader = (
     g: WebGL2RenderingContext,
     kind: number,
     src: string,
+    check: boolean,
   ) => {
     const shader = g.createShader(kind);
     if (!shader) return null;
     g.shaderSource(shader, src);
     g.compileShader(shader);
-    if (!g.getShaderParameter(shader, g.COMPILE_STATUS)) {
-      if (!g.isContextLost())
-        console.error(
-          "[ZirconTorrent] GLSL compile failed:",
-          g.getShaderInfoLog(shader),
-        );
+    if (check && !compiled(g, shader)) {
       g.deleteShader(shader);
       return null;
     }
     return shader;
   };
-  const init = () => {
+
+  // Setting up is split in two, so it never holds up the page. `begin` makes the context and asks
+  // for the program; where the browser links in the background (KHR_parallel_shader_compile) it
+  // looks once a frame whether the link is done, and only then `finish` reads the result and
+  // completes the set-up. Elsewhere `finish` follows at once, as a plain link would.
+  interface Pending {
+    g: WebGL2RenderingContext;
+    p: WebGLProgram;
+    vs: WebGLShader;
+    fs: WebGLShader;
+  }
+  let pending: Pending | null = null;
+  let pollFrame = 0;
+  let disposed = false;
+  const begin = () => {
+    if (disposed) return;
+    // Nothing draws until finish has a program (a restored context starts over).
+    gl = null;
+    program = null;
+    vertexBuffer = null;
     const g = surface.getContext("webgl2", {
       alpha: false,
       antialias: false,
@@ -183,38 +221,59 @@ onMounted(() => {
       console.warn(
         "[ZirconTorrent] WebGL2 is unavailable; showing background only.",
       );
-      return false;
+      return;
     }
-    gl = g;
-    const vs = compileShader(g, g.VERTEX_SHADER, VERT);
-    const fs = compileShader(g, g.FRAGMENT_SHADER, FRAG);
+    const parallel = g.getExtension("KHR_parallel_shader_compile");
+    const vs = compileShader(g, g.VERTEX_SHADER, VERT, !parallel);
+    const fs = compileShader(g, g.FRAGMENT_SHADER, FRAG, !parallel);
     if (!vs || !fs) {
       if (vs) g.deleteShader(vs);
       if (fs) g.deleteShader(fs);
-      gl = null;
-      return false;
+      return;
     }
     const p = g.createProgram();
     if (!p) {
       g.deleteShader(vs);
       g.deleteShader(fs);
-      gl = null;
-      return false;
+      return;
     }
     g.attachShader(p, vs);
     g.attachShader(p, fs);
     g.linkProgram(p);
-    g.deleteShader(vs);
-    g.deleteShader(fs);
-    if (!g.getProgramParameter(p, g.LINK_STATUS)) {
+    pending = { g, p, vs, fs };
+    if (!parallel) {
+      finish();
+      return;
+    }
+    const poll = () => {
+      pollFrame = 0;
+      if (disposed || lost || !pending) return;
+      if (g.getProgramParameter(p, parallel.COMPLETION_STATUS_KHR)) finish();
+      else pollFrame = requestAnimationFrame(poll);
+    };
+    pollFrame = requestAnimationFrame(poll);
+  };
+  const finish = () => {
+    const job = pending;
+    pending = null;
+    if (disposed || !job) return;
+    const { g, p, vs, fs } = job;
+    const linked = !!g.getProgramParameter(p, g.LINK_STATUS);
+    if (!linked) {
+      // Why, if a shader did not compile (read only now on the background path), then the link.
+      compiled(g, vs);
+      compiled(g, fs);
       if (!g.isContextLost())
         console.error(
           "[ZirconTorrent] Shader link failed:",
           g.getProgramInfoLog(p),
         );
+    }
+    g.deleteShader(vs);
+    g.deleteShader(fs);
+    if (!linked) {
       g.deleteProgram(p);
-      gl = null;
-      return false;
+      return;
     }
     program = p;
     g.useProgram(p);
@@ -222,8 +281,7 @@ onMounted(() => {
     if (!vertexBuffer) {
       g.deleteProgram(p);
       program = null;
-      gl = null;
-      return false;
+      return;
     }
     g.bindBuffer(g.ARRAY_BUFFER, vertexBuffer);
     g.bufferData(
@@ -243,7 +301,9 @@ onMounted(() => {
         name === "uSurge" ? "uSurge[0]" : name,
       );
     cache.fill(NaN);
-    return true;
+    gl = g;
+    dirty = true;
+    wake();
   };
 
   let W = 0,
@@ -261,14 +321,15 @@ onMounted(() => {
   };
   const requestSize = () => {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    let k = dpr * Math.min(2, Math.max(1, shown)) * LADDER[level];
+    let k = dpr * Math.min(2, Math.max(1, shown)) * (LADDER[level] ?? 1);
     const pixels = W * H * k * k;
     if (pixels > PIXEL_BUDGET) k *= Math.sqrt(PIXEL_BUDGET / pixels);
     wantW = Math.max(1, Math.round(W * k));
     wantH = Math.max(1, Math.round(H * k));
   };
   const resizeObserver = new ResizeObserver((entries) => {
-    const rect = entries[0].contentRect;
+    const rect = entries[0]?.contentRect;
+    if (!rect) return;
     W = rect.width;
     H = rect.height;
     measureShown();
@@ -280,7 +341,9 @@ onMounted(() => {
 
   let visible = true;
   const intersectionObserver = new IntersectionObserver((entries) => {
-    visible = entries[entries.length - 1].isIntersecting;
+    const latest = entries[entries.length - 1];
+    if (!latest) return;
+    visible = latest.isIntersecting;
     if (visible) wake();
   });
   intersectionObserver.observe(element);
@@ -316,6 +379,8 @@ onMounted(() => {
       over = true;
       snapNext = hov < 0.02;
     }
+    // The visitor's own movement sets the flow going again (see FLOW_AUTO).
+    flowUntil = Math.max(flowUntil, performance.now() + FLOW_MOVE_S * 1000);
     wake();
   };
   const onLeave = () => {
@@ -364,6 +429,11 @@ onMounted(() => {
     lost = false,
     dirty = true,
     clock = 0;
+  // How much of its speed the flow has (0 still, 1 flowing), and until when (in the frames' own
+  // time) it is asked to flow: set at the first frame, then pushed on by the pointer's moves.
+  let gain = 1,
+    flowUntil = -1,
+    started = false;
   let lastTick = -1,
     lastDraw = -1;
   const gaps = new Float64Array(15);
@@ -383,11 +453,12 @@ onMounted(() => {
     climbBanUntil = 0,
     climbBan = 30000;
 
+  // Every caller has samples first; an empty buffer would give 0.
   const median = (src: Float64Array, n: number) => {
     const m = Math.min(n, src.length);
-    for (let i = 0; i < m; i++) sortBuf[i] = src[i];
+    sortBuf.set(src.subarray(0, m));
     const sorted = sortBuf.subarray(0, m).sort();
-    return sorted[m >> 1];
+    return sorted[m >> 1] ?? 0;
   };
   const wake = () => {
     if (
@@ -564,11 +635,21 @@ onMounted(() => {
     }
     lastTick = now;
     const c = config.value;
-    const flowing = c.speed > 0 && !reduced;
-    const springing = mu !== tu || mv !== tv || hov !== (over ? 1 : 0);
+    // The first frame starts the flow's own few seconds (FLOW_AUTO).
+    if (!started) {
+      started = true;
+      flowUntil = Math.max(flowUntil, now + FLOW_AUTO * 1000);
+    }
+    const flowTo = c.speed > 0 && !reduced && now < flowUntil ? 1 : 0;
+    // Under reduced motion the pointer moves nothing either: only still frames are drawn.
+    const hoverTo = over && !reduced ? 1 : 0;
+    if (reduced) gain = 0;
+    const flowing = gain > 0 || flowTo > 0;
+    const springing = mu !== tu || mv !== tv || hov !== hoverTo;
     const surging =
-      taps.length > 0 || sx !== steerT || svx !== 0 || rush !== (over ? 1 : 0);
-    if (!dirty && !flowing && !springing && !surging && !moved && !scrolled) {
+      taps.length > 0 || sx !== steerT || svx !== 0 || rush !== hoverTo;
+    const tracking = (moved || scrolled) && !reduced;
+    if (!dirty && !flowing && !springing && !surging && !tracking) {
       running = false;
       lastDraw = -1;
       return;
@@ -600,12 +681,19 @@ onMounted(() => {
       }
       moved = scrolled = false;
     }
+    // Reduced motion: no hover light, steering, swing, rush or surges, and nothing left to settle.
+    if (reduced) {
+      mu = tu;
+      mv = tv;
+      vu = vv = hov = sx = svx = rush = 0;
+      taps.length = 0;
+    }
     spring(dt);
-    hov = ease(hov, over ? 1 : 0, dt, FOLLOW_S * 2);
+    hov = ease(hov, hoverTo, dt, FOLLOW_S * 2);
     const S = Math.min(H, W / REF_ASPECT);
     const offset = S > 0 ? ((num(c.placement.x, 0, -50, 50) / 100) * W) / S : 0;
     steerT =
-      over && S > 0
+      hoverTo > 0 && S > 0
         ? Math.max(
             -0.9,
             Math.min(0.9, (((mu - 0.5) * W) / S - offset) / c.zoom),
@@ -622,15 +710,22 @@ onMounted(() => {
       sx = steerT;
       svx = 0;
     }
-    rush = ease(rush, over ? 1 : 0, dt, RUSH_S);
-    if (flowing)
-      clock = (clock + dt * (c.speed / 50) * (1 + c.hoverSpeed * rush)) % 3600;
+    rush = ease(rush, hoverTo, dt, RUSH_S);
+    gain = ease(gain, flowTo, dt, FLOW_STOP_S);
+    if (gain > 0)
+      clock =
+        (clock + dt * (c.speed / 50) * (1 + c.hoverSpeed * rush) * gain) %
+        3600;
     for (let i = taps.length - 1; i >= 0; i--) {
-      taps[i].age += dt;
-      if (taps[i].age > SURGE_LIFE) taps.splice(i, 1);
+      const tap = taps[i];
+      if (!tap) continue;
+      tap.age += dt;
+      if (tap.age > SURGE_LIFE) taps.splice(i, 1);
     }
     dirty = false;
     draw();
+    // The first frame is on the canvas: it may fade in now.
+    if (!ready.value) ready.value = true;
   };
 
   const onLost = (e: Event) => {
@@ -639,20 +734,55 @@ onMounted(() => {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
     running = false;
+    // A link still running belonged to the lost context.
+    if (pollFrame) cancelAnimationFrame(pollFrame);
+    pollFrame = 0;
+    pending = null;
+    // The cleared canvas hides until a restored context draws again.
+    ready.value = false;
   };
+  // A restored context is set up the same way, the page long since loaded.
   const onRestored = () => {
     lost = false;
-    if (init()) {
-      dirty = true;
-      wake();
-    }
+    begin();
   };
   surface.addEventListener("webglcontextlost", onLost);
   surface.addEventListener("webglcontextrestored", onRestored);
-  if (init()) wake();
 
-  // Everything, including GPU resources, is released when Vue unmounts.
+  // The light waits for the page: it is set up once the page has loaded and the browser is idle, so
+  // making the context and linking the shader never hold up hydration or the largest paint. Until
+  // its first frame the component shows its ground.
+  let idle = 0;
+  let timer = 0;
+  const start = () => {
+    idle = 0;
+    timer = 0;
+    begin();
+  };
+  const schedule = () => {
+    if (disposed) return;
+    if (typeof window.requestIdleCallback === "function")
+      idle = window.requestIdleCallback(start, { timeout: 2000 });
+    else timer = window.setTimeout(start, 200);
+  };
+  if (document.readyState === "complete") schedule();
+  else window.addEventListener("load", schedule, { once: true });
+
+  // Everything, including GPU resources, is released when Vue unmounts, and nothing still waiting
+  // to start or to finish linking goes on.
   cleanupCurrent = () => {
+    disposed = true;
+    window.removeEventListener("load", schedule);
+    if (idle) window.cancelIdleCallback(idle);
+    if (timer) window.clearTimeout(timer);
+    if (pollFrame) cancelAnimationFrame(pollFrame);
+    pollFrame = 0;
+    if (pending && !pending.g.isContextLost()) {
+      pending.g.deleteShader(pending.vs);
+      pending.g.deleteShader(pending.fs);
+      pending.g.deleteProgram(pending.p);
+    }
+    pending = null;
     if (raf) cancelAnimationFrame(raf);
     running = false;
     wakeCurrent = null;
@@ -687,8 +817,10 @@ onUnmounted(() => {
   <div
     ref="root"
     class="zircon-torrent"
-    :class="{ 'zircon-torrent--passive': trackParent }"
-    :style="{ backgroundColor: background }"
+    :class="{
+      'zircon-torrent--passive': trackParent,
+      'zircon-torrent--ready': ready,
+    }"
     aria-hidden="true"
   >
     <canvas ref="canvas" class="zircon-torrent__canvas" />
@@ -696,7 +828,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
 .zircon-torrent {
   position: relative;
   width: 100%;
@@ -706,6 +838,9 @@ onUnmounted(() => {
   aspect-ratio: 3 / 2;
   overflow: hidden;
   touch-action: pan-y;
+  // The ground until the first frame (or without WebGL); the canvas paints the `background` prop
+  // over it.
+  background-color: var(--bg);
 }
 
 .zircon-torrent--passive {
@@ -717,5 +852,13 @@ onUnmounted(() => {
   display: block;
   width: 100%;
   height: 100%;
+  // Transparent until its first frame is drawn (the ground shows through), then faded in. On the
+  // canvas, not the root: the story's timeline owns the root's opacity.
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+
+.zircon-torrent--ready .zircon-torrent__canvas {
+  opacity: 1;
 }
 </style>

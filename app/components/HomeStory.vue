@@ -60,19 +60,38 @@ const beats: {
   scrub: number;
   chapters: Record<ChapterName, Beat>;
 } = {
-  // The scroll the stage holds for. Keep --story-length (below) at length + 1.
-  length: 6,
+  // The scroll the stage holds for. Keep --story-length (below) at length + 1. It assumes the five
+  // services in company.ts: chapter 05's tour (below) ends here.
+  length: 9.35,
   // Seconds the stage takes to catch up with the scroll: smooth, never sluggish.
   scrub: 0.5,
   // Each hand-over runs from one chapter's rest plus hold to the next one's rest: one window
   // height each. The opening starts handing over at once, as a page's first screen would scroll.
+  // Chapter 05's own text stays for the whole tour of its services.
   chapters: {
     intro: { rest: 0, hold: 0 },
     nuqta: { rest: 1, hold: 0.5 },
     insights: { rest: 2.5, hold: 0.5 },
     dalaly: { rest: 4, hold: 0.5 },
-    custom: { rest: 5.5, hold: 0.5 },
+    custom: { rest: 5.5, hold: 3.85 },
   },
+};
+
+// Chapter 05's tour: its services one at a time (data-scene, in reading order), then the overview
+// of them all with the call. Service k (from 0) rests at first + k * step and holds for
+// step - handOver; the overview rests a step after the last one and holds for overviewHold. Each
+// scene's hand-over is handOver long. With five services: 5.75, 6.35, 6.95, 7.55, 8.15, then the
+// overview at 8.75 until 9.35.
+const tour: {
+  first: number;
+  step: number;
+  handOver: number;
+  overviewHold: number;
+} = {
+  first: 5.75,
+  step: 0.6,
+  handOver: 0.25,
+  overviewHold: 0.6,
 };
 
 // The three phases of every hand-over, as shares of it. Preparation clears what is leaving (the
@@ -91,11 +110,39 @@ const phases = {
 const focus = {
   operations: { origin: "100% 62%", scale: 1.14 },
   insights: { origin: "100% 10%", scale: 1.16 },
+  // Dalaly's list of offers, from the top of the menu side: the active "عروض البيع" item and the
+  // first rows of offers (what its tagline is about).
+  listing: { origin: "100% 18%", scale: 1.1 },
 };
 
 // How far a headline's word or line travels through its mask (a share of its own height): far
 // enough that no dot or tail of a letter is left showing at the mask's edge.
 const maskTravel = 150;
+
+// What moves with a part of the story: the elements `selector` finds in `scope`, the scope too if
+// it matches. A chapter leaves out its scenes (chapter 05's services and its call, which come and
+// go on their own beats), and nothing ever takes what is in the rail, which only shows progress.
+function own(selector: string, scope: HTMLElement): HTMLElement[] {
+  const inScene = scope.closest("[data-scene]") !== null;
+  return [
+    ...(scope.matches(selector) ? [scope] : []),
+    ...Array.from(scope.querySelectorAll<HTMLElement>(selector)),
+  ].filter(
+    (element) =>
+      !element.closest("[data-rail]") &&
+      (inScene || !element.closest("[data-scene]")),
+  );
+}
+
+// A leaning edge crossing a box from its reading start (the right edge; the site is right to left
+// only) to its end, as a clip-path: share 0 shows none of the box, 1 all of it. `slant` is the
+// brand lean in radians; the box is measured each time, so call it on every refresh.
+function leaningEdge(box: HTMLElement, slant: number, share: number) {
+  const lean =
+    (Math.tan(slant) * box.offsetHeight * 100) / Math.max(box.offsetWidth, 1);
+  const top = (100 + lean) * (1 - share);
+  return `polygon(${top}% 0%, 100% 0%, 100% 100%, ${top - lean}% 100%)`;
+}
 
 // ---------------------------------------------------------------------------
 // Set-up and clean-up
@@ -199,6 +246,42 @@ function playCinematic(
   const mark = part("mark");
   const operationsImage = operations?.querySelector("img") ?? null;
   const insightsImage = insights?.querySelector("img") ?? null;
+  const listingImage = listing?.querySelector("img") ?? null;
+  const rail = one("[data-rail]");
+  const fills = all("[data-rail-fill]");
+
+  // Chapter 05's scenes in reading order, each with its beat (see tour). The overview has two
+  // parts: the names, and the ways to reach us under them.
+  interface Scene extends Beat {
+    name: string;
+    parts: HTMLElement[];
+  }
+  const groups = new Map<string, HTMLElement[]>();
+  for (const element of all("[data-scene]")) {
+    const name = element.dataset.scene ?? "";
+    groups.set(name, [...(groups.get(name) ?? []), element]);
+  }
+  const serviceCount = [...groups.keys()].filter(
+    (name) => name !== "overview",
+  ).length;
+  let serviceIndex = 0;
+  const scenes: Scene[] = [...groups].map(([name, parts]) =>
+    name === "overview"
+      ? {
+          name,
+          parts,
+          rest: tour.first + serviceCount * tour.step,
+          hold: tour.overviewHold,
+        }
+      : {
+          name,
+          parts,
+          rest: tour.first + serviceIndex++ * tour.step,
+          hold: tour.step - tour.handOver,
+        },
+  );
+  const services = scenes.filter((scene) => scene.name !== "overview");
+  const overview = scenes.find((scene) => scene.name === "overview");
 
   // The brand lean, read from the stylesheet so every wipe leans with the buttons and the slab.
   const slant =
@@ -211,9 +294,10 @@ function playCinematic(
       ? parseFloat(getComputedStyle(element).getPropertyValue(name)) || 0
       : 0;
 
-  // The chapter on show (see setActive, after the timeline). Declared first: the trigger can report
-  // progress as soon as it exists.
+  // The chapter on show, and in chapter 05 the scene on show (see setActive, after the timeline).
+  // Declared first: the trigger can report progress as soon as it exists.
   let active: HTMLElement | null = null;
+  let activeScene: Scene | undefined;
 
   const tl = gsap.timeline({
     defaults: { ease: "none" },
@@ -249,14 +333,14 @@ function playCinematic(
     );
   };
 
-  // A hand-over's three phases on the timeline.
+  // A hand-over's three phases on the timeline: between two chapters, or (`between`) any two
+  // moments, such as two of chapter 05's scenes.
   interface Span {
     at: number;
     span: number;
   }
-  const handOver = (from: ChapterName, to: ChapterName) => {
-    const start = beats.chapters[from].rest + beats.chapters[from].hold;
-    const length = beats.chapters[to].rest - start;
+  const between = (start: number, end: number) => {
+    const length = end - start;
     const phase = ([a, b]: readonly [number, number]): Span => ({
       at: start + a * length,
       span: (b - a) * length,
@@ -267,18 +351,24 @@ function playCinematic(
       resolve: phase(phases.resolve),
     };
   };
+  const handOver = (from: ChapterName, to: ChapterName) =>
+    between(
+      beats.chapters[from].rest + beats.chapters[from].hold,
+      beats.chapters[to].rest,
+    );
 
   // The text the stage shows (data-page-only text is shown only as a page; on the stage only screen
   // readers get it).
   const staged = "[data-reveal]:not([data-page-only])";
 
-  // A chapter's text leaves upward: its headline's words (or lines) slip out through the top of their
-  // masks, everything else lifts and fades, in reading order. The words fade as they go, so the dots
-  // under a letter (they hang lowest, and leave last) never linger alone at the mask's edge.
-  const leave = (chapter: HTMLElement | null, { at, span }: Span) => {
-    if (!chapter) return;
+  // A chapter's (or a scene's) text leaves upward: its headline's words (or lines) slip out through
+  // the top of their masks, everything else (a scene's number too) lifts and fades, in reading order.
+  // The words fade as they go, so the dots under a letter (they hang lowest, and leave last) never
+  // linger alone at the mask's edge.
+  const leave = (scope: HTMLElement | null | undefined, { at, span }: Span) => {
+    if (!scope) return;
     play(
-      all("[data-mask-inner]", chapter),
+      own("[data-mask-inner]", scope),
       { yPercent: 0, opacity: 1 },
       {
         yPercent: -maskTravel,
@@ -291,7 +381,7 @@ function playCinematic(
       span * 0.3,
     );
     play(
-      all(staged, chapter),
+      own(`${staged}, [data-sweep]`, scope),
       { opacity: 1, y: 0 },
       {
         opacity: 0,
@@ -305,19 +395,20 @@ function playCinematic(
     );
   };
 
-  // A chapter's text arrives the same way from below: the headline rises into its masks word by
-  // word, then the rest follows. Set to its starting state now (immediateRender), so it waits hidden.
-  const arrive = (chapter: HTMLElement | null, { at, span }: Span) => {
-    if (!chapter) return;
+  // A chapter's (or a scene's) text arrives the same way from below: the headline rises into its
+  // masks word by word, then the rest follows. Set to its starting state now (immediateRender), so it
+  // waits hidden.
+  const arrive = (scope: HTMLElement | null | undefined, { at, span }: Span) => {
+    if (!scope) return;
     play(
-      all("[data-mask-inner]", chapter),
+      own("[data-mask-inner]", scope),
       { yPercent: maskTravel, opacity: 1 },
       { yPercent: 0, opacity: 1, duration: span * 0.7, ease: "power3.out" },
       at,
       span * 0.3,
     );
     play(
-      all(staged, chapter),
+      own(staged, scope),
       { opacity: 0, y: 28 },
       { opacity: 1, y: 0, duration: span * 0.6, ease: "power2.out" },
       at + span * 0.12,
@@ -325,14 +416,9 @@ function playCinematic(
     );
   };
 
-  // A leaning edge crossing a box from its reading start (the right edge; the site is right to left
-  // only) to its end: share 0 shows none of the box, 1 all of it. Measured on every refresh.
-  const sweep = (box: HTMLElement, share: number) => {
-    const lean =
-      (Math.tan(slant) * box.offsetHeight * 100) / Math.max(box.offsetWidth, 1);
-    const top = (100 + lean) * (1 - share);
-    return `polygon(${top}% 0%, 100% 0%, 100% 100%, ${top - lean}% 100%)`;
-  };
+  // The leaning edge (leaningEdge), at this stage's lean. Measured on every refresh.
+  const sweep = (box: HTMLElement, share: number) =>
+    leaningEdge(box, slant, share);
 
   // The opening's pose, read from StoryStage's stylesheet (on every refresh) so the timeline starts
   // from exactly the pose the page shows: tilted back and set down, so only its top shows under the
@@ -389,6 +475,8 @@ function playCinematic(
     gsap.set(operationsImage, { transformOrigin: focus.operations.origin });
   if (insightsImage)
     gsap.set(insightsImage, { transformOrigin: focus.insights.origin });
+  if (listingImage)
+    gsap.set(listingImage, { transformOrigin: focus.listing.origin });
 
   // 01 → 02. The lime slab steps aside along its lean while the window rises and turns to face you:
   // Codel hands the stage to Nuqta Plus's point of sale. The camera then leans in on the
@@ -425,6 +513,20 @@ function playCinematic(
       { opacity: 1, duration: transform.span * 0.6 },
       transform.at + transform.span * 0.4,
     );
+    // One light at a time: the opening's glow (the page's light and its shade) fades out as Nuqta
+    // Plus's own light comes up, then leaves the layout, so its canvas stops drawing (its observers
+    // see no box and the render loop sleeps; scrolling back reverts the set and wakes it).
+    const glow = all('[data-stage="glow"]');
+    if (glow.length) {
+      const gone = transform.at + transform.span * 0.5;
+      play(
+        glow,
+        { opacity: 1 },
+        { opacity: 0, duration: gone - prepare.at, ease: "power1.inOut" },
+        prepare.at,
+      );
+      tl.set(glow, { display: "none" }, gone);
+    }
     play(
       operationsImage,
       { scale: 1 },
@@ -494,7 +596,8 @@ function playCinematic(
 
   // 03 → 04. Another business: the report drops away and the camera eases back, then Dalaly's
   // sand world is swept across the whole stage along the brand's lean, its window in exactly the
-  // same place, so the one window changes program as the edge passes over it.
+  // same place, so the one window changes program as the edge passes over it. The camera then leans
+  // in on its list of offers, as it did on the point of sale.
   {
     const { prepare, transform, resolve } = handOver("insights", "dalaly");
     const cameras = some(cameraNuqta, cameraDalaly);
@@ -546,6 +649,16 @@ function playCinematic(
       );
     }
     play(
+      listingImage,
+      { scale: 1 },
+      {
+        scale: focus.listing.scale,
+        duration: resolve.span,
+        ease: "power1.inOut",
+      },
+      resolve.at,
+    );
+    play(
       light,
       { opacity: 1 },
       { opacity: 0, duration: transform.span / 2, immediateRender: false },
@@ -591,6 +704,18 @@ function playCinematic(
         yPercent: 26,
         duration: prepare.span * 0.6,
         ease: "power2.in",
+        immediateRender: false,
+      },
+      prepare.at,
+    );
+    // Back to the whole screen before the lime sweeps over the window.
+    play(
+      listingImage,
+      { scale: focus.listing.scale },
+      {
+        scale: 1,
+        duration: transform.at - prepare.at,
+        ease: "power1.inOut",
         immediateRender: false,
       },
       prepare.at,
@@ -652,36 +777,141 @@ function playCinematic(
       transform.at + fill + transform.span * 0.25,
     );
     arrive(chapters.custom, resolve);
+    // The tour's rail comes in with the heading, its bars empty (each fills with its service).
+    play(
+      rail,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: resolve.span * 0.6, ease: "power2.out" },
+      resolve.at + resolve.span * 0.12,
+    );
+  }
+
+  // 05, the tour. One service at a time where the window was: its number swept in along the lean,
+  // then its name risen through its mask, then what it is and how to ask, while its bar on the rail
+  // fills; the one before it leaves as the chapters' texts do. After the last one the rail gives way
+  // to the ways to reach us, and every service is named at once.
+  {
+    // A bar fills from the reading start (the right edge). Each waits empty: its fill below sets its
+    // starting state when the timeline is built (immediateRender).
+    const empty = "inset(0% 0% 0% 100%)";
+    services.forEach((scene, index) => {
+      const before = services[index - 1];
+      const start = before
+        ? before.rest + before.hold
+        : scene.rest - tour.handOver;
+      const { prepare, resolve } = between(start, scene.rest);
+      before?.parts.forEach((element) => leave(element, prepare));
+      for (const element of scene.parts) {
+        const numeral = element.querySelector<HTMLElement>("[data-sweep]");
+        if (numeral) {
+          play(
+            numeral,
+            { clipPath: () => sweep(numeral, 0) },
+            {
+              clipPath: () => sweep(numeral, 1),
+              duration: resolve.span * 0.6,
+              ease: "power2.inOut",
+            },
+            resolve.at,
+          );
+        }
+        arrive(element, {
+          at: resolve.at + resolve.span * 0.15,
+          span: resolve.span * 0.85,
+        });
+      }
+      play(
+        fills[index],
+        { clipPath: empty },
+        {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: scene.rest - start,
+          ease: "power1.inOut",
+        },
+        start,
+      );
+    });
+
+    const last = services.at(-1);
+    if (overview && last) {
+      const { prepare, resolve } = between(last.rest + last.hold, overview.rest);
+      last.parts.forEach((element) => leave(element, prepare));
+      play(
+        rail,
+        { opacity: 1, y: 0 },
+        {
+          opacity: 0,
+          y: -16,
+          duration: prepare.span,
+          ease: "power1.in",
+          immediateRender: false,
+        },
+        prepare.at,
+      );
+      // The names first, in reading order; the ways to reach us (its later part) a little after.
+      overview.parts.forEach((element, index) =>
+        arrive(
+          element,
+          index === 0
+            ? resolve
+            : {
+                at: resolve.at + resolve.span * 0.2,
+                span: resolve.span * 0.8,
+              },
+        ),
+      );
+    }
   }
 
   // The timeline spans the whole scroll, whatever its last tween is.
   tl.set({}, {}, beats.length);
 
+  // How far a moment of the scroll is from a beat: 0 while it is on show.
+  function distance({ rest, hold }: Beat, time: number) {
+    return time < rest ? rest - time : Math.max(0, time - rest - hold);
+  }
+
   // Only the chapter on show takes pointer input: the stacked texts would otherwise catch each
-  // other's clicks. It changes halfway through each hand-over.
+  // other's clicks. In chapter 05 so does only the scene on show (every part of it), by the same
+  // rule. Both change halfway through each hand-over.
   function setActive(time: number) {
     let next: ChapterName = "intro";
     let nearest = Infinity;
     for (const name of chapterNames) {
-      const { rest, hold } = beats.chapters[name];
-      const distance =
-        time < rest ? rest - time : Math.max(0, time - rest - hold);
-      if (distance < nearest) {
-        nearest = distance;
+      const away = distance(beats.chapters[name], time);
+      if (away < nearest) {
+        nearest = away;
         next = name;
       }
     }
     const element = chapters[next];
-    if (element === active) return;
-    active?.removeAttribute("data-active");
-    element?.setAttribute("data-active", "");
-    active = element;
+    if (element !== active) {
+      active?.removeAttribute("data-active");
+      element?.setAttribute("data-active", "");
+      active = element;
+    }
+
+    let scene: Scene | undefined;
+    if (next === "custom") {
+      nearest = Infinity;
+      for (const item of scenes) {
+        const away = distance(item, time);
+        if (away < nearest) {
+          nearest = away;
+          scene = item;
+        }
+      }
+    }
+    if (scene === activeScene) return;
+    activeScene?.parts.forEach((part) => part.removeAttribute("data-active"));
+    scene?.parts.forEach((part) => part.setAttribute("data-active", ""));
+    activeScene = scene;
   }
   setActive((tl.scrollTrigger?.progress ?? 0) * beats.length);
 
-  // Keyboard focus can land in a chapter that is not on show (the texts share one frame). The
-  // window then scrolls straight to that chapter's rest and the stage catches up at once, so
-  // nothing is ever focused half-faded or behind another chapter.
+  // Keyboard focus can land in a chapter (or one of chapter 05's scenes) that is not on show (the
+  // texts share one frame). The window then scrolls straight to that scene's or chapter's rest and
+  // the stage catches up at once, so nothing is ever focused half-faded or behind another chapter.
   const onFocus = (event: FocusEvent) => {
     const target = event.target;
     const trigger = tl.scrollTrigger;
@@ -691,9 +921,14 @@ function playCinematic(
       !target.matches(":focus-visible")
     )
       return;
+    const part = target.closest<HTMLElement>("[data-scene]");
+    const scene = part
+      ? scenes.find((item) => item.parts.includes(part))
+      : undefined;
     const name = target.closest<HTMLElement>("[data-chapter]")?.dataset.chapter;
-    if (!isChapterName(name)) return;
-    const { rest, hold } = beats.chapters[name];
+    const beat = scene ?? (isChapterName(name) ? beats.chapters[name] : null);
+    if (!beat) return;
+    const { rest, hold } = beat;
     const time = trigger.progress * beats.length;
     if (time < rest - 0.01 || time > rest + hold + 0.01) {
       const top =
@@ -708,6 +943,9 @@ function playCinematic(
   return () => {
     story.removeEventListener("focusin", onFocus);
     active?.removeAttribute("data-active");
+    activeScene?.parts.forEach((element) =>
+      element.removeAttribute("data-active"),
+    );
     story.classList.remove("story--cinematic");
   };
 }
@@ -725,19 +963,23 @@ function playPage(
     gsap.utils.toArray<HTMLElement>(selector, scope);
   const ease = "power2.out";
 
-  // The brand lean, for the screens' wipe.
+  // The brand lean, for the screens' and the numbers' wipe: the leaning edge (leaningEdge) across
+  // the box, from none of it (`closed`) to all of it (`open`).
   const slant =
     ((parseFloat(getComputedStyle(story).getPropertyValue("--slant-angle")) ||
       10) *
       Math.PI) /
     180;
+  const closed = (box: HTMLElement) => leaningEdge(box, slant, 0);
+  const open = (box: HTMLElement) => leaningEdge(box, slant, 1);
 
   for (const chapter of all("[data-chapter]")) {
     // The opening has its own CSS entrance.
     if (chapter.dataset.chapter === "intro") continue;
 
-    const masks = all("[data-mask-inner]", chapter);
-    const items = all("[data-reveal]", chapter);
+    // Chapter 05's scenes are not the chapter's own: each shows itself (below).
+    const masks = own("[data-mask-inner]", chapter);
+    const items = own("[data-reveal]", chapter);
     const text = gsap.timeline({
       scrollTrigger: { trigger: chapter, start: "top 78%", once: true },
     });
@@ -765,22 +1007,14 @@ function playPage(
     const main = chapter.querySelector<HTMLElement>('[data-media="main"]');
     const second = chapter.querySelector<HTMLElement>('[data-media="second"]');
     if (!main) continue;
-    const lean = () =>
-      (Math.tan(slant) * main.offsetHeight * 100) /
-      Math.max(main.offsetWidth, 1);
     const screens = gsap.timeline({
       scrollTrigger: { trigger: main, start: "top 85%", once: true },
     });
     screens.fromTo(
       main,
+      { clipPath: () => closed(main), y: 32 },
       {
-        clipPath: () =>
-          `polygon(${100 + lean()}% 0%, ${100 + lean()}% 0%, ${100 + lean()}% 100%, 100% 100%)`,
-        y: 32,
-      },
-      {
-        clipPath: () =>
-          `polygon(0% 0%, ${100 + lean()}% 0%, ${100 + lean()}% 100%, ${-lean()}% 100%)`,
+        clipPath: () => open(main),
         y: 0,
         duration: 0.8,
         ease: "expo.inOut",
@@ -792,6 +1026,49 @@ function playPage(
         second,
         { opacity: 0, yPercent: 12, duration: 0.48, ease },
         "-=0.2",
+      );
+  }
+
+  // Chapter 05's services (then the overview's link to the services page, and the ways to reach us)
+  // are entries of their own, each shown once as it scrolls in: its number wiped in along the lean,
+  // then its name risen through its mask, then what it is and how to ask. What only the stage shows
+  // (data-stage-only: the overview's names) is left out.
+  for (const scene of all("[data-scene]:not([data-stage-only])")) {
+    const numeral = scene.querySelector<HTMLElement>("[data-sweep]");
+    const masks = own("[data-mask-inner]", scene);
+    const items = own("[data-reveal]", scene).filter(
+      (element) => !element.closest("[data-stage-only]"),
+    );
+    const entry = gsap.timeline({
+      scrollTrigger: { trigger: scene, start: "top 85%", once: true },
+    });
+    let at = 0;
+    if (numeral) {
+      entry.fromTo(
+        numeral,
+        { clipPath: () => closed(numeral) },
+        {
+          clipPath: () => open(numeral),
+          duration: 0.6,
+          ease: "expo.inOut",
+          clearProps: "clipPath",
+        },
+        at,
+      );
+      at += 0.2;
+    }
+    if (masks.length) {
+      entry.from(
+        masks,
+        { yPercent: maskTravel, duration: 0.48, ease: "power3.out" },
+        at,
+      );
+    }
+    if (items.length)
+      entry.from(
+        items,
+        { opacity: 0, y: 16, duration: 0.48, stagger: 0.06, ease },
+        at + 0.1,
       );
   }
 
@@ -832,7 +1109,8 @@ $cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
 // --edge runs from the window edge to the content column, the same column as the header bar's, and
 // --content-w is that column (100cqi is the story's own width: the window without its scrollbar).
 .story {
-  --story-length: 7;
+  // The timeline's length (beats.length in the script) + 1.
+  --story-length: 10.35;
   --edge: max(
     var(--page-gutter),
     calc((100cqi - var(--container-max)) / 2 + var(--page-gutter))
@@ -893,6 +1171,13 @@ $cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
       grid-row: 1;
     }
   }
+
+  // The mirror of data-page-only: what only the stage needs, a recap the page does without (its
+  // entries already are the overview) and the tour's rail. Without JavaScript the story is never
+  // cinematic, so these stay hidden.
+  :deep([data-stage-only]) {
+    display: none;
+  }
 }
 
 // The cinematic stage: as tall as the story's scroll, its viewport held to the window throughout.
@@ -908,6 +1193,12 @@ $cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+
+  // Chapter 05's scenes share one cell: only the one on show takes pointer input (data-active, set
+  // by the timeline).
+  :deep([data-scene]:not([data-active])) {
+    pointer-events: none;
   }
 
   // Clipped, not hidden: `clip` makes no scroll container, so focusing a link near the bottom edge
