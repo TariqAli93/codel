@@ -299,6 +299,20 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 // Below this width the links fold behind the menu button. Same value as wideQuery in the script.
 $nav-wide: 60em;
+// The bar's inner padding: the page gutter, less how far the bar sits inside the content column's
+// edge (0 on wide windows, up to space-3 as the header's inset takes over), so logo and links stay on
+// the page content's gutter. Percentages resolve against the header's content box (the window width
+// minus 2 x space-3). The space-4 minimum keeps logo and links off the glass edge on phones.
+$bar-pad: max(
+  var(--space-4),
+  calc(
+    var(--page-gutter) -
+      clamp(0px, (var(--container-max) - 100%) / 2, var(--space-3))
+  )
+);
+// The menu panel's padding. It exists only below $nav-wide, where the bar is always inset the full
+// space-3, and its percentages would be the bar's width, not the header's.
+$panel-pad: max(var(--space-4), calc(var(--page-gutter) - var(--space-3)));
 // The brand lean, and the counter-slant that turns a label back upright.
 $lean: skewX(calc(var(--slant-angle) * -1));
 $upright: skewX(var(--slant-angle));
@@ -372,6 +386,7 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     z-index: 20;
     background-color: transparent;
     padding-block-start: var(--space-3);
+    padding-inline: var(--space-3);
 
     .js & {
       position: sticky;
@@ -403,9 +418,9 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     }
   }
 
-  // Same width and gutters as the page content, so logo and links line up with it. The glass is on a
-  // pseudo-element: a backdrop-filter on the bar itself would leave the menu panel inside it with
-  // nothing to blur.
+  // The content column's width, kept space-3 clear of the window's sides by the header's padding;
+  // $bar-pad keeps logo and links on the page content's gutter. The glass is on a pseudo-element: a
+  // backdrop-filter on the bar itself would leave the menu panel inside it with nothing to blur.
   &__bar {
     position: relative;
     z-index: 0;
@@ -417,7 +432,7 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     max-inline-size: var(--container-max);
     min-block-size: var(--header-height);
     margin-inline: auto;
-    padding-inline: var(--page-gutter);
+    padding-inline: $bar-pad;
 
     &::before {
       content: "";
@@ -506,6 +521,11 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
   // Small screens, with JavaScript: the links fold into a panel under the header.
   // Without JavaScript (no .js class) they stay a wrapping list and the button stays hidden.
   @media (width < $nav-wide) {
+    // Logo and menu button stay on one row down to 320px.
+    .js &__bar {
+      column-gap: var(--space-4);
+    }
+
     // Styled as the outline button; icon and label inside are turned back upright.
     .js &__menu-button {
       display: inline-flex;
@@ -590,7 +610,7 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       max-block-size: calc(100dvh - var(--header-height) - var(--space-5));
       overflow-y: auto;
       overscroll-behavior: contain;
-      padding: var(--space-3) var(--page-gutter) var(--space-6);
+      padding: var(--space-3) $panel-pad var(--space-6);
       @include glass;
       visibility: hidden;
       opacity: 0;

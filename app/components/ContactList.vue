@@ -53,7 +53,7 @@ const { main, secondary } = company.phones
   &__row {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: baseline;
     gap: 0 var(--space-5);
     padding-block: var(--space-4);
     border-block-end: 1px solid var(--border);
@@ -99,7 +99,6 @@ const { main, secondary } = company.phones
     border-block: 0;
 
     dd {
-      min-block-size: 0;
       font-weight: 400;
     }
 

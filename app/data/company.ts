@@ -34,7 +34,7 @@ export const company = {
   address: 'العراق، بغداد، الدورة، حي دجلة',
   // The same address split into parts for search engines (JSON-LD on the home page). Change both together.
   addressParts: { countryCode: 'IQ', city: 'بغداد', district: 'الدورة، حي دجلة' },
-  hours: { days: 'الأحد إلى الخميس', time: 'من 10 صباحاً إلى 10 مساءً' },
+  hours: { days: 'الأحد إلى الخميس', time: 'من 10 صباحاً إلى 10 مساءً' }, // The spaces in time around the numbers are no-break spaces (U+00A0), so each time stays whole on one line.
   // The same hours for search engines (JSON-LD), as English day names and a 24-hour clock. Change both together.
   openingHours: { days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'], opens: '10:00', closes: '22:00' }
 }
