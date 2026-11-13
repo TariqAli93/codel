@@ -20,7 +20,8 @@ export interface StageShots {
 <script setup lang="ts">
 // The story's stage: one window that stays on screen from the first chapter to the last, the planes
 // that change the world around it (Codel's lime slab, Dalaly's sand, Codel's lime again) and the
-// screens it shows. HomeStory moves all of it; this file only lays it out.
+// screens it shows. The story's motion (app/composables/home/) moves all of it; this file only lays
+// it out.
 //
 // As a page (phones, tablets, short windows, reduced motion, and until the motion has loaded) the
 // stage is the opening's picture: the lime slab and the point of sale, nothing else (the parts
@@ -112,13 +113,8 @@ defineProps<{
 </template>
 
 <style scoped lang="scss">
-// The brand lean.
-$lean: skewX(calc(var(--slant-angle) * -1));
-// The window size that holds the cinematic cover. Same as $cover in HomeStory.vue and
-// StoryChapter.vue and coverQuery in HomeStory's script.
-$cover: "(min-width: 64em) and (min-height: 36em)";
-// Story width from which the opening's screen shows whole (below it, a crop of its menu and cards).
-$tablet: 40rem;
+// $lean, $cover and $tablet (from which the opening's screen shows whole).
+@use "~/assets/scss/story" as *;
 
 // ---------------------------------------------------------------------------
 // As a page: under the opening's text, the lime slab and one screen running off the end edge
@@ -202,7 +198,8 @@ $tablet: 40rem;
 // (--win-top, HomeStory), as wide as the room allows (--win-w); on a short window it runs off the
 // bottom edge. In the opening it is set down so only its top shows under the offer (--peek), tilted
 // back and a little smaller, on a lime band; the story raises and straightens it. The pose is
-// written as plain numbers so HomeStory reads them and starts from exactly this pose.
+// written as plain numbers so the stage's motion (tilt and drop in storyCinematic) reads them and
+// starts from exactly this pose.
 @media #{$cover} {
   // The stage is exactly the window's height and clips what it holds, so the opening's lowered
   // window never spills onto the next chapter on the page. Clipped, not hidden: `clip` makes no

@@ -1,0 +1,27 @@
+// The home page's story: the values its components share (HomeStory, StoryStage, StoryChapter and
+// the chapters in components/home/). Variables and mixins only, so it outputs no CSS:
+// `@use "~/assets/scss/story" as *;` in a component's style.
+
+// The window size that holds the cinematic cover. Same as coverQuery in
+// app/composables/home/storyConfig.ts.
+$cover: "(min-width: 64em) and (min-height: 36em)";
+// A cover window short enough (laptops) that the headings close up and the opening's screen shows
+// less of itself.
+$cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
+// Story widths: from $tablet the opening is centred over its screen and that screen shows whole
+// (below it, a crop of its menu and cards); from $side a chapter's headings split into two columns
+// over its screens.
+$tablet: 40rem;
+$side: 64rem;
+// The brand lean.
+$lean: skewX(calc(var(--slant-angle) * -1));
+
+// A chapter's supporting line: the opening's lede (HomeIntro) and the one across from a chapter's
+// headline (HomeChapterHead).
+@mixin lede {
+  max-inline-size: 30rem;
+  font-size: var(--text-lead);
+  line-height: 1.8;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}

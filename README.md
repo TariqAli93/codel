@@ -65,7 +65,7 @@ Notes:
 
 - Design tokens (colors, spacing, radius, shadow, slant) live in `app/assets/scss/main.scss` as CSS custom properties. They mirror the Codel design system: dark theme active, light theme declared but not switched on. The page gutter, the motion tokens (durations, easing, stagger), the type scale, the point sizes, the stroke and the lime glow are site-level additions in the same file.
 - Imagery: the products' real screens (`public/images/solutions/<slug>/`, framed by `app/components/ProductWindow.vue`) in the products' own colours. The home page tells one story in five chapters around one centred window that stays on screen, each chapter's headings on the same line above it: Codel, Nuqta Plus at its point of sale, the same program's figures and reports, Dalaly on its sand ground, then custom software and the call on lime. Buttons, tags and decorative bars lean (the brand slant); lime marks what you act on and what is live now.
-- Motion: the home page's opening enters with plain CSS. On a desktop-sized window, GSAP with ScrollTrigger (loaded on the client) turns the story into a cinematic stage: the story's viewport sticks to the window and one scrubbed timeline hands the window and the text from chapter to chapter (the slab steps aside, screens are swept in along the brand's lean, the camera moves in on what each chapter is about). On phones, tablets and short windows the chapters flow as a page and reveal themselves once. All of it is off under `prefers-reduced-motion: reduce` (the story is then a plain page), and anything that takes keyboard focus is brought into view in its end state. The code lives in `app/components/HomeStory.vue` (layout and motion), `StoryStage.vue`, `StoryChapter.vue` and `SplitWords.vue`.
+- Motion: the home page's opening enters with plain CSS. On a desktop-sized window, GSAP with ScrollTrigger (loaded on the client) turns the story into a cinematic stage: the story's viewport sticks to the window and one scrubbed timeline hands the window and the text from chapter to chapter (the slab steps aside, screens are swept in along the brand's lean, the camera moves in on what each chapter is about). On phones, tablets and short windows the chapters flow as a page and reveal themselves once. All of it is off under `prefers-reduced-motion: reduce` (the story is then a plain page), and anything that takes keyboard focus is brought into view in its end state. The code lives in `app/components/HomeStory.vue` (layout), `StoryStage.vue`, `StoryChapter.vue` and `SplitWords.vue`, the chapters in `app/components/home/`, and the motion in `app/composables/home/` (`useStoryMotion.ts` and the modules it uses).
 - Fonts are self-hosted in `public/fonts/`: Rubik (display and headings) and Readex Pro (body and UI), as subset variable woff2 files for Arabic and Latin. Both are licensed under the SIL Open Font License; the license texts are beside the files.
 - Logo files are in `public/brand/` (full logo and symbol, each in white, ink and lime). The favicon is `public/favicon.svg`: the symbol, ink on light browser themes and lime on dark ones.
 - `public/brand/og.png` (1200×630) is the share image: the white logo on the dark `--bg`, rendered from `codel-full-white.svg`.
@@ -78,9 +78,12 @@ app/
   error.vue                # branded 404 / error page (uses the default layout)
   layouts/default.vue      # the only layout (skip link, sticky header with a small-screen menu, main, footer, site-wide share tags)
   components/              # reusable components; the home page's story is HomeStory, StoryStage, StoryChapter and SplitWords
+  components/home/         # the home page's chapters (HomeIntro, HomeChapterHead, HomeChapterMedia, HomeServices, HomeServiceScene)
+  composables/home/        # the home story's motion (useStoryMotion and the modules it uses)
   pages/                   # one file per route
   data/                    # company.ts and solutions.ts: the facts the pages show
   assets/scss/main.scss    # font faces, design tokens, reset and base styles
+  assets/scss/_story.scss  # the home story's shared SCSS variables and mixins (no CSS output)
 public/
   brand/                   # logo SVGs + og.png (share image)
   fonts/                   # Rubik and Readex Pro (woff2) + OFL licenses

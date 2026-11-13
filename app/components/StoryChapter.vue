@@ -6,7 +6,7 @@
 // shows one at a time; the stage then stands in for their screens.
 withDefaults(
   defineProps<{
-    // Read by HomeStory's timeline (data-chapter).
+    // Read by the story's motion in app/composables/home/ (data-chapter).
     name: 'intro' | 'nuqta' | 'insights' | 'dalaly' | 'custom'
     // The id of the chapter's heading.
     labelledby: string
@@ -36,9 +36,8 @@ withDefaults(
 </template>
 
 <style scoped lang="scss">
-// The window size that holds the cinematic cover. Same as $cover in HomeStory.vue and StoryStage.vue
-// and coverQuery in HomeStory's script.
-$cover: "(min-width: 64em) and (min-height: 36em)";
+// $cover, the window size that holds the cinematic cover.
+@use "~/assets/scss/story" as *;
 
 // As a page, every chapter is one column: its text (laid out by the page), then its screens centred
 // under it, no wider than the stage's window.
