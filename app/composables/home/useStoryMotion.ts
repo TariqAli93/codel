@@ -1,5 +1,5 @@
 import { onBeforeUnmount, onMounted, type Ref } from "vue";
-import { playCinematic } from "./storyCinematic";
+import { cinematicFits, playCinematic } from "./storyCinematic";
 import { coverQuery, motionQuery } from "./storyConfig";
 import { playPage } from "./storyPage";
 
@@ -47,10 +47,41 @@ export function useStoryMotion(root: Ref<HTMLElement | null>) {
       { cinematic: `${motionQuery} and ${coverQuery}`, motion: motionQuery },
       (context) => {
         const conditions = context.conditions ?? {};
-        if (conditions.cinematic)
-          return playCinematic(story, gsap, ScrollTrigger);
-        if (conditions.motion) return playPage(story, gsap, ScrollTrigger);
-        return undefined;
+        if (!conditions.motion) return undefined;
+
+        let mode: boolean | undefined;
+        let current: ReturnType<typeof gsap.context> | undefined;
+        let resizeFrame = 0;
+        const chooseMode = () => {
+          resizeFrame = 0;
+          const cinematic = !!conditions.cinematic && cinematicFits(story);
+          if (cinematic === mode) return;
+          current?.revert();
+          mode = cinematic;
+          // This mode has its own context because resize may replace it while the media query
+          // still matches. Its explicit cleanup below avoids retaining old mode contexts.
+          context.ignore(() => {
+            current = gsap.context(
+              () =>
+                cinematic
+                  ? playCinematic(story, gsap, ScrollTrigger)
+                  : playPage(story, gsap, ScrollTrigger),
+              story,
+            );
+          });
+          ScrollTrigger.refresh();
+        };
+        const onResize = () => {
+          if (!resizeFrame) resizeFrame = requestAnimationFrame(chooseMode);
+        };
+        chooseMode();
+        if (conditions.cinematic) window.addEventListener("resize", onResize);
+
+        return () => {
+          window.removeEventListener("resize", onResize);
+          if (resizeFrame) cancelAnimationFrame(resizeFrame);
+          current?.revert();
+        };
       },
     );
 

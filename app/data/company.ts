@@ -2,6 +2,8 @@
 // Only facts given by the owner belong here; never invent anything.
 
 export interface Service {
+  // Permanent identifiers, also used by public /services hashes. Keep them when reordering.
+  id: string
   title: string
   text: string
   // A page with ready-made products for this service, when there is one.
@@ -40,23 +42,28 @@ export const company = {
 // The description under each service is a short draft written from the service name alone.
 export const services: Service[] = [
   {
+    id: 'service-1',
     title: 'برمجة وتصميم المواقع',
     text: 'نصمّم موقع عملك ونبرمجه، من الواجهة التي يراها الزائر إلى النظام الذي يعمل خلفها.'
   },
   {
+    id: 'service-2',
     title: 'برمجة وتصميم تطبيقات الهواتف',
     text: 'نصمّم تطبيقات للهواتف الذكية ونبرمجها لتصل إلى عملائك على هواتفهم.'
   },
   {
+    id: 'service-3',
     title: 'برامج الحسابات والمخازن والكاشيرات',
     text: 'برامج لتنظيم الحسابات وحركة المخازن وعمل الكاشير في محلّك أو شركتك.',
     related: '/solutions'
   },
   {
+    id: 'service-4',
     title: 'إدارة السيرفرات',
     text: 'نتولى إعداد السيرفرات وإدارتها ومتابعتها لتبقى مواقعك وأنظمتك تعمل.'
   },
   {
+    id: 'service-5',
     title: 'خدمات برمجية حسب الطلب',
     text: 'لديك فكرة أو احتياج غير موجود في البرامج الجاهزة؟ نبرمج لك الحل الذي يناسب عملك.'
   }

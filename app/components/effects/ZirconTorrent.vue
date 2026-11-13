@@ -25,7 +25,7 @@ export interface ZirconTorrentProps {
 </script>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import {
   DEFAULTS,
   UNIFORMS,
@@ -68,7 +68,7 @@ const stopWatch = watch(config, () => wakeCurrent?.());
 onMounted(() => {
   const element = root.value;
   const surface = canvas.value;
-  if (!element || !surface) return;
+  if (!element || !surface || cleanupCurrent) return;
 
   const swatch = swatchEl.value;
   if (swatch) {
@@ -113,6 +113,9 @@ onMounted(() => {
   const FLOW_STOP_S = 1;
   const FLOW_MOVE_S = 0.1;
 
+  // Keep ownership separate from the drawable context: setup can fail before a program is ready,
+  // but the canvas's context must still be released when this component leaves the page.
+  let ownedContext: WebGL2RenderingContext | null = null;
   let gl: WebGL2RenderingContext | null = null;
   let program: WebGLProgram | null = null;
   let vertexBuffer: WebGLBuffer | null = null;
@@ -204,11 +207,7 @@ onMounted(() => {
   let pollFrame = 0;
   let disposed = false;
   const begin = () => {
-    if (disposed) return;
-    // Nothing draws until finish has a program (a restored context starts over).
-    gl = null;
-    program = null;
-    vertexBuffer = null;
+    if (disposed || lost || ownedContext || pending) return;
     const g = surface.getContext("webgl2", {
       alpha: false,
       antialias: false,
@@ -223,6 +222,8 @@ onMounted(() => {
       );
       return;
     }
+    ownedContext = g;
+    if (g.isContextLost()) return;
     const parallel = g.getExtension("KHR_parallel_shader_compile");
     const vs = compileShader(g, g.VERTEX_SHADER, VERT, !parallel);
     const fs = compileShader(g, g.FRAGMENT_SHADER, FRAG, !parallel);
@@ -256,7 +257,7 @@ onMounted(() => {
   const finish = () => {
     const job = pending;
     pending = null;
-    if (disposed || !job) return;
+    if (disposed || lost || !job) return;
     const { g, p, vs, fs } = job;
     const linked = !!g.getProgramParameter(p, g.LINK_STATUS);
     if (!linked) {
@@ -269,6 +270,8 @@ onMounted(() => {
           g.getProgramInfoLog(p),
         );
     }
+    g.detachShader(p, vs);
+    g.detachShader(p, fs);
     g.deleteShader(vs);
     g.deleteShader(fs);
     if (!linked) {
@@ -328,6 +331,7 @@ onMounted(() => {
     wantH = Math.max(1, Math.round(H * k));
   };
   const resizeObserver = new ResizeObserver((entries) => {
+    if (disposed) return;
     const rect = entries[0]?.contentRect;
     if (!rect) return;
     W = rect.width;
@@ -341,6 +345,7 @@ onMounted(() => {
 
   let visible = true;
   const intersectionObserver = new IntersectionObserver((entries) => {
+    if (disposed) return;
     const latest = entries[entries.length - 1];
     if (!latest) return;
     visible = latest.isIntersecting;
@@ -462,6 +467,7 @@ onMounted(() => {
   };
   const wake = () => {
     if (
+      disposed ||
       running ||
       lost ||
       !gl ||
@@ -618,7 +624,7 @@ onMounted(() => {
 
   const tick = (now: number) => {
     raf = 0;
-    if (!gl || lost || !visible || document.hidden) {
+    if (disposed || !gl || lost || !visible || document.hidden) {
       running = false;
       return;
     }
@@ -738,12 +744,20 @@ onMounted(() => {
     if (pollFrame) cancelAnimationFrame(pollFrame);
     pollFrame = 0;
     pending = null;
+    // All handles from the lost context are invalid. Restoration starts with fresh resources;
+    // keeping the old handles would also prevent begin's duplicate-initialization guard.
+    gl = null;
+    program = null;
+    vertexBuffer = null;
+    loc = {} as Record<UName, WebGLUniformLocation | null>;
     // The cleared canvas hides until a restored context draws again.
     ready.value = false;
   };
   // A restored context is set up the same way, the page long since loaded.
   const onRestored = () => {
+    if (disposed || !lost) return;
     lost = false;
+    ownedContext = null;
     begin();
   };
   surface.addEventListener("webglcontextlost", onLost);
@@ -760,7 +774,7 @@ onMounted(() => {
     begin();
   };
   const schedule = () => {
-    if (disposed) return;
+    if (disposed || idle || timer || ownedContext || pending) return;
     if (typeof window.requestIdleCallback === "function")
       idle = window.requestIdleCallback(start, { timeout: 2000 });
     else timer = window.setTimeout(start, 200);
@@ -771,10 +785,12 @@ onMounted(() => {
   // Everything, including GPU resources, is released when Vue unmounts, and nothing still waiting
   // to start or to finish linking goes on.
   cleanupCurrent = () => {
+    if (disposed) return;
     disposed = true;
     window.removeEventListener("load", schedule);
     if (idle) window.cancelIdleCallback(idle);
     if (timer) window.clearTimeout(timer);
+    idle = timer = 0;
     if (pollFrame) cancelAnimationFrame(pollFrame);
     pollFrame = 0;
     if (pending && !pending.g.isContextLost()) {
@@ -784,6 +800,7 @@ onMounted(() => {
     }
     pending = null;
     if (raf) cancelAnimationFrame(raf);
+    raf = 0;
     running = false;
     wakeCurrent = null;
     resizeObserver.disconnect();
@@ -798,14 +815,24 @@ onMounted(() => {
     window.removeEventListener("scroll", onScroll, { capture: true });
     surface.removeEventListener("webglcontextlost", onLost);
     surface.removeEventListener("webglcontextrestored", onRestored);
-    if (gl && !gl.isContextLost()) {
-      if (vertexBuffer) gl.deleteBuffer(vertexBuffer);
-      if (program) gl.deleteProgram(program);
+    if (ownedContext && !ownedContext.isContextLost()) {
+      ownedContext.useProgram(null);
+      ownedContext.bindBuffer(ownedContext.ARRAY_BUFFER, null);
+      if (vertexBuffer) ownedContext.deleteBuffer(vertexBuffer);
+      if (program) ownedContext.deleteProgram(program);
+      // This canvas exclusively belongs to the component. Permanent teardown should release its
+      // browser context slot too, including a context whose shader setup never completed.
+      ownedContext.getExtension("WEBGL_lose_context")?.loseContext();
     }
+    ownedContext = gl = null;
+    program = null;
+    vertexBuffer = null;
+    loc = {} as Record<UName, WebGLUniformLocation | null>;
+    readColor.value = undefined;
   };
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   cleanupCurrent?.();
   cleanupCurrent = null;
   stopWatch();

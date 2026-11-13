@@ -4,7 +4,8 @@ import {
   chapterNames,
   focus,
   isChapterName,
-  tour,
+  overviewBeat,
+  serviceBeats,
   type Beat,
   type ChapterName,
 } from "./storyConfig";
@@ -22,6 +23,21 @@ import { timelineTools } from "./storyTimeline";
 
 // The cinematic stage (a desktop-sized window, motion allowed): one scrubbed timeline, on one
 // ScrollTrigger over the whole story, hands the stage and the text from chapter to chapter.
+
+// More services can outgrow the overview's allotted row, especially on a short cover. Probe its
+// natural layout before choosing the stage; transforms from an existing reveal do not affect
+// offsetHeight. The temporary class never survives to a paint when the page needs to stay in flow.
+export function cinematicFits(story: HTMLElement): boolean {
+  const wasCinematic = story.classList.contains("story--cinematic");
+  story.classList.add("story--cinematic");
+  try {
+    const tour = story.querySelector<HTMLElement>("[data-tour]");
+    const overview = tour?.querySelector<HTMLElement>('[data-scene="overview"]');
+    return !tour || !overview || overview.offsetHeight <= tour.clientHeight + 1;
+  } finally {
+    if (!wasCinematic) story.classList.remove("story--cinematic");
+  }
+}
 
 export function playCinematic(
   story: HTMLElement,
@@ -58,7 +74,9 @@ export function playCinematic(
   const insightsImage = insights?.querySelector("img") ?? null;
   const listingImage = listing?.querySelector("img") ?? null;
   const rail = one("[data-rail]");
-  const fills = all("[data-rail-fill]");
+  const fills = new Map(
+    all("[data-rail-fill]").map((element) => [element.dataset.railFill ?? "", element]),
+  );
 
   // Chapter 05's scenes in reading order, each with its beat (see tour). The overview has two
   // parts: the names, and the ways to reach us under them.
@@ -67,25 +85,10 @@ export function playCinematic(
     const name = element.dataset.scene ?? "";
     groups.set(name, [...(groups.get(name) ?? []), element]);
   }
-  const serviceCount = [...groups.keys()].filter(
-    (name) => name !== "overview",
-  ).length;
-  let serviceIndex = 0;
-  const scenes: Scene[] = [...groups].map(([name, parts]) =>
-    name === "overview"
-      ? {
-          name,
-          parts,
-          rest: tour.first + serviceCount * tour.step,
-          hold: tour.overviewHold,
-        }
-      : {
-          name,
-          parts,
-          rest: tour.first + serviceIndex++ * tour.step,
-          hold: tour.step - tour.handOver,
-        },
-  );
+  const scenes: Scene[] = [...serviceBeats, overviewBeat].map((beat) => ({
+    ...beat,
+    parts: groups.get(beat.name) ?? [],
+  }));
   const services = scenes.filter((scene) => scene.name !== "overview");
   const overview = scenes.find((scene) => scene.name === "overview");
 

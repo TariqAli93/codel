@@ -1,5 +1,6 @@
 // The home page's story (HomeStory): its structure and timing, as typed constants. Its motion
 // (useStoryMotion and the story modules beside it) reads them.
+import { services } from "~/data/company";
 
 // ---------------------------------------------------------------------------
 // Story structure
@@ -39,28 +40,6 @@ export interface Beat {
   hold: number;
 }
 
-export const beats = {
-  // The scroll the stage holds for. Keep --story-length (in HomeStory.vue's styles) at length + 1.
-  // It assumes the five services in company.ts: chapter 05's tour (below) ends here.
-  length: 9.35,
-  // Seconds the stage takes to catch up with the scroll: smooth, never sluggish.
-  scrub: 0.5,
-  // Each hand-over runs from one chapter's rest plus hold to the next one's rest: one window
-  // height each. The opening starts handing over at once, as a page's first screen would scroll.
-  // Chapter 05's own text stays for the whole tour of its services.
-  chapters: {
-    intro: { rest: 0, hold: 0 },
-    nuqta: { rest: 1, hold: 0.5 },
-    insights: { rest: 2.5, hold: 0.5 },
-    dalaly: { rest: 4, hold: 0.5 },
-    custom: { rest: 5.5, hold: 3.85 },
-  },
-} as const satisfies {
-  length: number;
-  scrub: number;
-  chapters: Record<ChapterName, Beat>;
-};
-
 // Chapter 05's tour: its services one at a time (data-scene, in reading order), then the overview
 // of them all with the call. Service k (from 0) rests at first + k * step and holds for
 // step - handOver; the overview rests a step after the last one and holds for overviewHold. Each
@@ -76,6 +55,41 @@ export const tour = {
   step: number;
   handOver: number;
   overviewHold: number;
+};
+
+// IDs link the authored content, timeline scenes and rail segments. Only the visible numbering
+// follows position; adding, removing or reordering a service never changes its identity.
+export const serviceBeats = services.map((service, index) => ({
+  name: service.id,
+  rest: tour.first + index * tour.step,
+  hold: tour.step - tour.handOver,
+}));
+export const overviewBeat = {
+  name: "overview",
+  rest: tour.first + services.length * tour.step,
+  hold: tour.overviewHold,
+};
+const length = overviewBeat.rest + overviewBeat.hold;
+const customRest = 5.5;
+
+export const beats = {
+  // The timeline and HomeStory's CSS height share this computed duration.
+  length,
+  // Seconds the stage takes to catch up with the scroll: smooth, never sluggish.
+  scrub: 0.5,
+  // These are authored chapter directions, independent of the repeatable service tour. Each
+  // hand-over keeps its original timing; the closing chapter holds until the actual tour ends.
+  chapters: {
+    intro: { rest: 0, hold: 0 },
+    nuqta: { rest: 1, hold: 0.5 },
+    insights: { rest: 2.5, hold: 0.5 },
+    dalaly: { rest: 4, hold: 0.5 },
+    custom: { rest: customRest, hold: length - customRest },
+  },
+} as const satisfies {
+  length: number;
+  scrub: number;
+  chapters: Record<ChapterName, Beat>;
 };
 
 // The three phases of every hand-over, as shares of it. Preparation clears what is leaving (the

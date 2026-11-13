@@ -7,6 +7,7 @@ import { company, services } from "~/data/company";
 
 // The closing call's line: a draft of the owner's offer (see CLAUDE.md, Home page).
 const customHeadline = "لم تجد برنامجك؟ نبرمجه لك.";
+const customService = services.find((service) => service.id === "service-5");
 
 // A service's number in chapter 05, by its place in the list: 01, 02 and on.
 const ordinal = (index: number) => String(index + 1).padStart(2, "0");
@@ -35,14 +36,14 @@ const ordinal = (index: number) => String(index + 1).padStart(2, "0");
 
       <!-- The services, one scene each: its number, its name, what it is, how to ask. On the
            stage they follow one another in one place, then the overview names them all. -->
-      <div class="home__tour">
-        <ol role="list" class="home__scenes">
+      <div class="home__tour" data-tour>
+        <ol v-if="services.length" role="list" class="home__scenes">
           <HomeServiceScene
             v-for="(service, index) in services"
-            :key="service.title"
+            :key="service.id"
             :service="service"
             :number="ordinal(index)"
-            :data-scene="index + 1"
+            :data-scene="service.id"
           />
         </ol>
 
@@ -50,17 +51,22 @@ const ordinal = (index: number) => String(index + 1).padStart(2, "0");
              /services, then the link to that page. As a page the entries above already are the
              names, so only the link shows. -->
         <div class="home__overview" data-scene="overview">
-          <ul role="list" class="home__service-names" data-stage-only>
+          <ul
+            v-if="services.length"
+            role="list"
+            class="home__service-names"
+            data-stage-only
+          >
             <li
               v-for="(service, index) in services"
-              :key="service.title"
+              :key="service.id"
               class="home__service"
               data-reveal
             >
               <!-- Kept on one line (and out of the formatter's reach): the space keeps the
                    number and the name apart. -->
               <!-- prettier-ignore -->
-              <ActionLink look="text" :to="`/services#service-${index + 1}`"><span class="home__service-index" dir="ltr">{{ ordinal(index) }}</span> {{ service.title }}</ActionLink>
+              <ActionLink look="text" :to="`/services#${service.id}`"><span class="home__service-index" dir="ltr">{{ ordinal(index) }}</span> {{ service.title }}</ActionLink>
             </li>
           </ul>
           <ActionLink
@@ -75,18 +81,24 @@ const ordinal = (index: number) => String(index + 1).padStart(2, "0");
 
       <div class="home__foot">
         <!-- The tour's progress on the stage: one leaning bar per service, filled as it shows. -->
-        <div class="home__rail" aria-hidden="true" data-rail data-stage-only>
+        <div
+          v-if="services.length"
+          class="home__rail"
+          aria-hidden="true"
+          data-rail
+          data-stage-only
+        >
           <span
             v-for="service in services"
-            :key="service.title"
+            :key="service.id"
             class="home__rail-bar"
-            ><span class="home__rail-fill" data-rail-fill
+            ><span class="home__rail-fill" :data-rail-fill="service.id"
           /></span>
         </div>
         <div class="home__reach" data-reveal data-scene="overview">
           <WhatsAppCall
             look="ink"
-            :subject="services.at(-1)?.title"
+            :subject="customService?.title"
             :detail="company.phones.main.display"
           />
           <ul role="list" class="home__channels">
@@ -190,9 +202,8 @@ const ordinal = (index: number) => String(index + 1).padStart(2, "0");
     }
   }
 
-  // The stage's overview of names (data-stage-only): the five in two columns, each under a rule, each
-  // a link to its entry on /services. One line per name, so the names compare at a glance; the last
-  // row holds one name.
+  // The stage's overview of names (data-stage-only): two columns, each name under a rule and linked
+  // to its entry on /services. One line per name, so the names compare at a glance.
   &__service-names {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

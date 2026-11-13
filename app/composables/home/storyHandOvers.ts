@@ -32,7 +32,7 @@ export interface StageParts {
   insightsImage: HTMLElement | null;
   listingImage: HTMLElement | null;
   rail: HTMLElement | null;
-  fills: HTMLElement[];
+  fills: Map<string, HTMLElement>;
 }
 
 // What every hand-over below works with, made once per run by playCinematic (storyCinematic): the
@@ -407,7 +407,7 @@ export function customTour(stage: Stage) {
       });
     }
     play(
-      fills[index],
+      fills.get(scene.name),
       { clipPath: empty },
       {
         clipPath: "inset(0% 0% 0% 0%)",
@@ -419,9 +419,14 @@ export function customTour(stage: Stage) {
   });
 
   const last = services.at(-1);
-  if (overview && last) {
-    const { prepare, resolve } = between(last.rest + last.hold, overview.rest);
-    last.parts.forEach((element) => leave(element, prepare));
+  if (overview) {
+    // With no services the call still arrives after the closing chapter's heading. For a tour,
+    // preserve the authored last-service hand-over exactly.
+    const { prepare, resolve } = between(
+      last ? last.rest + last.hold : overview.rest - tour.handOver,
+      overview.rest,
+    );
+    last?.parts.forEach((element) => leave(element, prepare));
     play(
       rail,
       { opacity: 1, y: 0 },

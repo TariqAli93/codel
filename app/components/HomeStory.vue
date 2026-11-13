@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { StageShots } from "~/components/StoryStage.vue";
+import { beats } from "~/composables/home/storyConfig";
 import { useStoryMotion } from "~/composables/home/useStoryMotion";
 
 // The home page's story: five chapters (StoryChapter, in the default slot) over one stage
@@ -21,6 +22,7 @@ defineProps<{
 }>();
 
 const root = ref<HTMLElement | null>(null);
+const storyLength = beats.length + 1;
 useStoryMotion(root);
 </script>
 
@@ -41,8 +43,8 @@ useStoryMotion(root);
 // --edge runs from the window edge to the content column, the same column as the header bar's, and
 // --content-w is that column (100cqi is the story's own width: the window without its scrollbar).
 .story {
-  // The timeline's length (beats.length in app/composables/home/storyConfig.ts) + 1.
-  --story-length: 10.35;
+  // The actual tour's duration plus the viewport, shared with the timeline configuration.
+  --story-length: v-bind(storyLength);
   --edge: max(
     var(--page-gutter),
     calc((100cqi - var(--container-max)) / 2 + var(--page-gutter))

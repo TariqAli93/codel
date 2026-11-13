@@ -14,8 +14,8 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
     </PageHead>
 
     <ul role="list" class="services__list">
-      <!-- The home page's overview links here by position (#service-1 and on). -->
-      <li v-for="(service, index) in services" :id="`service-${index + 1}`" :key="service.title" class="services__item">
+      <!-- Permanent service IDs preserve these public links when the list is reordered. -->
+      <li v-for="service in services" :id="service.id" :key="service.id" class="services__item">
         <h2 class="services__title">{{ service.title }}</h2>
         <p class="services__text">{{ service.text }}</p>
         <div class="services__actions">
