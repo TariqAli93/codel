@@ -17,6 +17,8 @@ export function playPage(
   const all = (selector: string, scope: Element = story) =>
     gsap.utils.toArray<HTMLElement>(selector, scope);
   const ease = "power2.out";
+  // The main screen's picture leans in from this scale.
+  const leanFrom = 0.94;
 
   // The brand lean, for the screens' and the numbers' wipe: the leaning edge (leaningEdge) across
   // the box, from none of it (`closed`) to all of it (`open`).
@@ -53,13 +55,34 @@ export function playPage(
         0.1,
       );
 
-    // The main screen is wiped in from the reading start behind a leaning edge; the second one
-    // then rises over its corner.
+    // The main screen is wiped in from the reading start behind a leaning edge while its picture
+    // leans in, when the picture runs past its view (a narrow story's reading window); the second
+    // one then rises over its corner.
     const main = chapter.querySelector<HTMLElement>('[data-media="main"]');
     const second = chapter.querySelector<HTMLElement>('[data-media="second"]');
     if (!main) continue;
+    const image = main.querySelector<HTMLElement>(".window__image");
+    const view = main.querySelector<HTMLElement>(".window__view");
+    // Scaled down from its top right corner, a picture that only just fills its view would uncover
+    // the frame: it leans in only if it still covers the view at the smallest scale. The check runs
+    // whenever the start is measured (at setup, and again on every refresh after a resize), so a
+    // rotated phone never uncovers the frame; otherwise the picture goes from 1 to 1, unseen.
+    const covers = (picture: HTMLElement, frame: HTMLElement) => {
+      const imageRect = picture.getBoundingClientRect();
+      const viewRect = frame.getBoundingClientRect();
+      return (
+        imageRect.right - leanFrom * imageRect.width <= viewRect.left + 0.5 &&
+        imageRect.top + leanFrom * imageRect.height >= viewRect.bottom - 0.5
+      );
+    };
+    // invalidateOnRefresh: a resize re-measures the wipe's edges and the lean-in's start.
     const screens = gsap.timeline({
-      scrollTrigger: { trigger: main, start: "top 85%", once: true },
+      scrollTrigger: {
+        trigger: main,
+        start: "top 85%",
+        once: true,
+        invalidateOnRefresh: true,
+      },
     });
     screens.fromTo(
       main,
@@ -72,11 +95,26 @@ export function playPage(
         clearProps: "clipPath",
       },
     );
+    if (image && view)
+      screens.fromTo(
+        image,
+        {
+          scale: () => (covers(image, view) ? leanFrom : 1),
+          transformOrigin: "100% 0",
+        },
+        {
+          scale: 1,
+          duration: 1.28,
+          ease: "power3.out",
+          clearProps: "transform",
+        },
+        0,
+      );
     if (second)
       screens.from(
         second,
         { opacity: 0, yPercent: 12, duration: 0.48, ease },
-        "-=0.2",
+        0.6,
       );
   }
 

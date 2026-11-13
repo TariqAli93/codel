@@ -35,11 +35,15 @@ withDefaults(
 </template>
 
 <style scoped lang="scss">
-// A parent can tune the frame with four custom properties. --window-radius sets the corners.
+// A parent can tune the frame with seven custom properties. --window-radius sets the corners.
 // --window-ring is a shadow drawn before the frame's own (a ring of the page's ground, to set one
 // window off another). --window-ratio and --window-zoom crop the screen to a focused view: the
 // view's shape, and how much wider than the frame the screenshot is drawn. The view keeps the
 // screenshot's top and inline-start edge: in these RTL apps, the menu and the headings.
+// --window-image-size sets the drawn screenshot's width outright (in place of --window-zoom), and
+// --window-shift-block and --window-shift-inline shift the view that far from the screenshot's top
+// and from its inline-start edge; percentages are the view's width. The shifts are margins, never a
+// translate: GSAP folds a CSS translate into its transform.
 .window {
   overflow: hidden;
   margin: 0;
@@ -74,8 +78,10 @@ withDefaults(
 
   &__image {
     display: block;
-    inline-size: calc(100% * var(--window-zoom, 1));
+    inline-size: var(--window-image-size, calc(100% * var(--window-zoom, 1)));
     max-inline-size: none;
+    margin-block-start: calc(-1 * var(--window-shift-block, 0px));
+    margin-inline-start: calc(-1 * var(--window-shift-inline, 0px));
     block-size: auto;
   }
 }

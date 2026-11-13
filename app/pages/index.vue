@@ -106,7 +106,7 @@ const insightsHeadline = "من نقطة البيع، إلى أرقام يومك.
         />
 
         <template v-if="stock" #media>
-          <HomeChapterMedia :main="stock" />
+          <HomeChapterMedia :main="stock" focus="stock" />
         </template>
       </StoryChapter>
 
@@ -125,7 +125,11 @@ const insightsHeadline = "من نقطة البيع، إلى أرقام يومك.
         </HomeChapterHead>
 
         <template v-if="shots.insights" #media>
-          <HomeChapterMedia :main="shots.insights" :second="shots.report" />
+          <HomeChapterMedia
+            :main="shots.insights"
+            :second="shots.report"
+            focus="insights"
+          />
         </template>
       </StoryChapter>
 
@@ -144,7 +148,11 @@ const insightsHeadline = "من نقطة البيع، إلى أرقام يومك.
         />
 
         <template v-if="shots.listing" #media>
-          <HomeChapterMedia :main="shots.listing" :second="shots.detail" />
+          <HomeChapterMedia
+            :main="shots.listing"
+            :second="shots.detail"
+            focus="listing"
+          />
         </template>
       </StoryChapter>
 
