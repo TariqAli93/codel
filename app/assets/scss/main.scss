@@ -30,6 +30,16 @@
   font-display: swap;
 }
 
+// The home hero's face (--font-hero): Arabic letters, tashkeel and Arabic-Indic digits only, so Latin
+// punctuation falls back to Readex Pro. Preloaded from the home page alone.
+@font-face {
+  font-family: "Noto Sans Arabic";
+  src: url("/fonts/NotoSansArabic-Variable.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 // -----------------------------------------------------------------------------
 // 2. Design tokens
 // -----------------------------------------------------------------------------
@@ -137,6 +147,8 @@
   --font-display: "Rubik", "Readex Pro", system-ui, sans-serif;
   --font-sans: "Readex Pro", "Rubik", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  // Site-level, not in tokens.json v1 yet: the home hero's text.
+  --font-hero: "Noto Sans Arabic", "Readex Pro", system-ui, sans-serif;
 }
 
 // Page rhythm and motion: site-level tokens, not in tokens.json v1 yet.

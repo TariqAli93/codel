@@ -36,9 +36,20 @@ const organization = {
   ],
 };
 
+// The opening is set in its own face (--font-hero, main.scss) and its headline is the page's largest
+// paint: ask for the font early, on this page only.
 useHead({
   script: [
     { type: "application/ld+json", innerHTML: JSON.stringify(organization) },
+  ],
+  link: [
+    {
+      rel: "preload",
+      as: "font",
+      type: "font/woff2",
+      href: "/fonts/NotoSansArabic-Variable.woff2",
+      crossorigin: "anonymous",
+    },
   ],
 });
 
@@ -60,7 +71,8 @@ const screen = (
 ): SolutionImage | undefined =>
   solution?.images.find((image) => image.src.endsWith(`/${file}`));
 
-// The cinematic stage's screens (StoryStage), by the part each plays.
+// The cinematic stage's screens (StoryStage), by the part each plays. None of them is the opening's
+// picture: that is its own stack of layers (HomeIntro), and the stage's window waits under it.
 const shots: StageShots = {
   operations: screen(nuqta, "pos.webp"),
   insights: screen(nuqta, "dashboard.webp"),
@@ -69,20 +81,9 @@ const shots: StageShots = {
   detail: screen(dalaly, "property.webp"),
 };
 
-// As a page, each chapter shows its own screens; the opening's picture is the point of sale, so
-// chapter 02 shows the stock screen.
+// As a page, each chapter shows its own screens; chapter 02's is the stock screen (on the stage,
+// the window shows the point of sale).
 const stock = screen(nuqta, "inventory.webp");
-
-// The opening's screen is the page's largest paint: ask for it early, at high priority.
-const heroPreload: SolutionImage[] = shots.operations ? [shots.operations] : [];
-useHead({
-  link: heroPreload.map((shot) => ({
-    rel: "preload" as const,
-    as: "image" as const,
-    href: shot.src,
-    fetchpriority: "high" as const,
-  })),
-});
 
 // Chapter 03's line: a draft of the owner's offer (see CLAUDE.md, Home page), like its sentence in
 // the template.
@@ -92,7 +93,7 @@ const insightsHeadline = "من نقطة البيع، إلى أرقام يومك.
 <template>
   <div class="home">
     <HomeStory :shots="shots">
-      <!-- 01 Codel: the offer, and the window that the story keeps. -->
+      <!-- 01 Codel: the offer, beside the layers it is built in. -->
       <HomeIntro />
 
       <!-- 02 Nuqta Plus: what it is, at its point of sale. Who it is on the reading side; what it

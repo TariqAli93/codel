@@ -4,7 +4,7 @@ import type { SolutionImage } from "~/data/solutions";
 // The screens the stage plays, by the part each plays in the story. All are real screenshots from
 // app/data/solutions.ts; the page picks them.
 export interface StageShots {
-  // Nuqta Plus's point of sale: the opening, then chapter 02.
+  // Nuqta Plus's point of sale: chapter 02 (it rises from under the opening).
   operations?: SolutionImage;
   // Nuqta Plus's home screen, inside the same menus as the point of sale: chapter 03.
   insights?: SolutionImage;
@@ -18,15 +18,14 @@ export interface StageShots {
 </script>
 
 <script setup lang="ts">
-// The story's stage: one window that stays on screen from the first chapter to the last, the planes
-// that change the world around it (Codel's lime slab, Dalaly's sand, Codel's lime again) and the
-// screens it shows. The story's motion (app/composables/home/) moves all of it; this file only lays
-// it out.
+// The story's stage: one window that the story keeps on screen from the second chapter to the last,
+// the planes that change the world around it (Dalaly's sand, Codel's lime) and the screens it
+// shows. The story's motion (app/composables/home/) moves all of it; this file only lays it out.
 //
-// As a page (phones, tablets, short windows, reduced motion, and until the motion has loaded) the
-// stage is the opening's picture: the lime slab and the point of sale, nothing else (the parts
-// marked stage__later are not even loaded). On the cinematic stage it fills the window behind every
-// chapter.
+// It shows on the cinematic stage only, filling the window behind every chapter. As a page (phones,
+// tablets, short windows, reduced motion, and until the motion has loaded) HomeStory leaves it out
+// (display: none, so its lazy screens are not even loaded): the opening's picture is its own stack
+// of layers and every other chapter brings its screens.
 //
 // Scenery only (aria-hidden): each chapter's own text says what its screens show.
 defineProps<{
@@ -36,16 +35,14 @@ defineProps<{
 
 <template>
   <div class="stage" aria-hidden="true">
-    <!-- Codel's charcoal and lime, then Nuqta Plus. -->
+    <!-- Codel's charcoal, then Nuqta Plus. -->
     <div class="stage__world stage__world--nuqta">
-      <div class="stage__slab" data-stage="slab" />
       <div class="stage__camera stage__camera--tilt" data-stage="camera">
         <div class="stage__light stage__later" data-stage="light" />
         <ProductWindow
           v-if="shots.operations"
           v-bind="shots.operations"
           alt=""
-          eager
           class="stage__shot stage__shot--first"
           data-stage="operations"
         />
@@ -113,11 +110,12 @@ defineProps<{
 </template>
 
 <style scoped lang="scss">
-// $lean, $cover and $tablet (from which the opening's screen shows whole).
+// $cover and $tablet.
 @use "~/assets/scss/story" as *;
 
 // ---------------------------------------------------------------------------
-// As a page: under the opening's text, the lime slab and one screen running off the end edge
+// The stage's own flow. HomeStory shows the stage on the cinematic stage only, which the cover's
+// rules below lay out, so of these only what the cover does not override still takes effect.
 // ---------------------------------------------------------------------------
 
 .stage {
@@ -126,8 +124,8 @@ defineProps<{
   padding-block: var(--space-6) var(--space-7);
 }
 
-// Everything after the opening waits for the cinematic stage (HomeStory's .story--cinematic). Written
-// to outrank every layout rule below, so nothing of it ever shows (or loads) on the page.
+// Everything but the first window waits for the cinematic stage (HomeStory's .story--cinematic).
+// Written to outrank every layout rule below.
 .stage .stage__later {
   display: none;
 }
@@ -138,9 +136,8 @@ defineProps<{
   --stage-ground: var(--bg);
 }
 
-// On phones the window runs from the content edge on the reading side out past the end edge, a crop
-// of the point of sale's menu, search and first cards. From $tablet the whole screen, centred in the
-// column (on a wide but short window, never taller than it can show).
+// The window's flow sizes, from when the stage was also the opening's picture as a page (a crop
+// running off the end edge on phones, the whole screen from $tablet): the cover sets its own.
 .stage__camera {
   position: relative;
   isolation: isolate;
@@ -167,43 +164,20 @@ defineProps<{
   }
 }
 
-// Flat lime with the brand lean behind the screen: on phones from a third of the way along it out
-// past the end edge; from $tablet a band centred behind it. The fill is its own layer, so the entrance
-// can wipe the fill while the scroll clips the slab.
-.stage__slab {
-  position: absolute;
-  z-index: -1;
-  inset-block: calc(-1 * var(--space-6)) calc(-1 * var(--space-7));
-  inset-inline: 38% calc(-1 * var(--space-10));
-  transform: $lean;
-
-  @container story (width >= #{$tablet}) {
-    inset-block: 30% calc(-1 * var(--space-7));
-    inset-inline: 18%;
-  }
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: var(--accent);
-  }
-}
-
 // ---------------------------------------------------------------------------
-// The cover (page and cinematic stage alike): the stage fills the window behind the text
+// The cover: the stage fills the window behind the text
 // ---------------------------------------------------------------------------
 
 // The window is centred under the headings' band, its top on the same line in every chapter
 // (--win-top, HomeStory), as wide as the room allows (--win-w); on a short window it runs off the
-// bottom edge. In the opening it is set down so only its top shows under the offer (--peek), tilted
-// back and a little smaller, on a lime band; the story raises and straightens it. The pose is
-// written as plain numbers so the stage's motion (tilt and drop in storyCinematic) reads them and
-// starts from exactly this pose.
+// bottom edge. In the opening it waits out of sight: set down under the window's bottom edge
+// (--peek is negative), tilted back and a little smaller; the story raises and straightens it. The
+// pose is written as plain numbers so the stage's motion (tilt and drop in storyCinematic) reads
+// them and starts from exactly this pose.
 @media #{$cover} {
   // The stage is exactly the window's height and clips what it holds, so the opening's lowered
-  // window never spills onto the next chapter on the page. Clipped, not hidden: `clip` makes no
-  // scroll container, so nothing can ever scroll it out of place.
+  // window stays out of sight. Clipped, not hidden: `clip` makes no scroll container, so nothing
+  // can ever scroll it out of place.
   .stage {
     overflow: clip;
     padding: 0;
@@ -233,24 +207,13 @@ defineProps<{
     --tilt-depth: 1600;
     --tilt-x: 24;
     --tilt-scale: 0.92;
-    // Down from its place until only --peek (in window heights) of it shows above the bottom edge.
+    // Down from its place until --peek (in window heights) of it shows above the bottom edge: with
+    // a negative --peek, until its top is that far under the edge.
     --tilt-drop: calc((100 - var(--peek)) * 1svh - var(--win-top));
 
     transform: perspective(calc(var(--tilt-depth) * 1px))
       translate(0, var(--tilt-drop)) rotateX(calc(var(--tilt-x) * 1deg))
       scale(var(--tilt-scale));
-  }
-
-  // A leaning plinth the opening's window rises from: a little wider than the window, so its leaning
-  // sides show on both sides of it, from just above its top down to the bottom edge.
-  .stage__slab {
-    position: relative;
-    z-index: auto;
-    inset: auto;
-    grid-area: 1 / 1;
-    align-self: stretch;
-    inline-size: calc(1.04 * var(--win-w));
-    margin-block-start: calc((98.5 - var(--peek)) * 1svh - var(--win-top));
   }
 }
 
@@ -324,42 +287,6 @@ defineProps<{
   .stage__mark {
     inline-size: 22%;
     block-size: auto;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// The opening's entrance: plain CSS, so it starts with the first paint and waits for nothing. The
-// slab is wiped in from the reading start, then the screen arrives. Every keyframe runs toward the
-// resting style, which is what shows without motion or JavaScript.
-// ---------------------------------------------------------------------------
-
-@media (prefers-reduced-motion: no-preference) {
-  .stage__slab::before {
-    animation: stage-slab var(--duration-slow) var(--ease-out) 240ms backwards;
-  }
-
-  .stage__shot--first {
-    animation: stage-arrive var(--duration-entrance) var(--ease-out) 380ms
-      backwards;
-  }
-}
-
-// From the inline start (the right edge; the site is right to left only), in the slab's own leaning
-// coordinates, so the wipe's edge leans with it.
-@keyframes stage-slab {
-  from {
-    clip-path: inset(0 0 0 100%);
-  }
-
-  to {
-    clip-path: inset(0);
-  }
-}
-
-@keyframes stage-arrive {
-  from {
-    opacity: 0;
-    translate: 0 1.5rem;
   }
 }
 </style>

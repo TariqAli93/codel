@@ -24,16 +24,33 @@ import { timelineTools } from "./storyTimeline";
 // The cinematic stage (a desktop-sized window, motion allowed): one scrubbed timeline, on one
 // ScrollTrigger over the whole story, hands the stage and the text from chapter to chapter.
 
-// More services can outgrow the overview's allotted row, especially on a short cover. Probe its
-// natural layout before choosing the stage; transforms from an existing reveal do not affect
-// offsetHeight. The temporary class never survives to a paint when the page needs to stay in flow.
+// More services can outgrow the overview's allotted row, especially on a short cover, and the
+// opening's content can outgrow its frame (the stage clips what runs past the window, so it would be
+// cut, where the flowing page simply grows). Probe both natural layouts before choosing the stage;
+// transforms from an existing reveal do not affect offsetHeight. The temporary class never survives
+// to a paint when the page needs to stay in flow.
 export function cinematicFits(story: HTMLElement): boolean {
   const wasCinematic = story.classList.contains("story--cinematic");
   story.classList.add("story--cinematic");
   try {
     const tour = story.querySelector<HTMLElement>("[data-tour]");
     const overview = tour?.querySelector<HTMLElement>('[data-scene="overview"]');
-    return !tour || !overview || overview.offsetHeight <= tour.clientHeight + 1;
+    const tourFits =
+      !tour || !overview || overview.offsetHeight <= tour.clientHeight + 1;
+
+    // The opening's frame: its chapter, less the room it keeps under the header and at its foot.
+    const intro = story.querySelector<HTMLElement>('[data-chapter="intro"]');
+    const content = intro?.querySelector<HTMLElement>(".chapter__copy");
+    let introFits = true;
+    if (intro && content) {
+      const style = getComputedStyle(intro);
+      const frame =
+        intro.clientHeight -
+        (parseFloat(style.paddingTop) || 0) -
+        (parseFloat(style.paddingBottom) || 0);
+      introFits = content.offsetHeight <= frame + 1;
+    }
+    return tourFits && introFits;
   } finally {
     if (!wasCinematic) story.classList.remove("story--cinematic");
   }
@@ -59,7 +76,6 @@ export function playCinematic(
 
   const part = (name: string) => one(`[data-stage="${name}"]`);
   const [cameraNuqta, cameraDalaly] = all('[data-stage="camera"]');
-  const slab = part("slab");
   const light = part("light");
   const operations = part("operations");
   const insights = part("insights");
@@ -92,7 +108,7 @@ export function playCinematic(
   const services = scenes.filter((scene) => scene.name !== "overview");
   const overview = scenes.find((scene) => scene.name === "overview");
 
-  // The brand lean, read from the stylesheet so every wipe leans with the buttons and the slab.
+  // The brand lean, read from the stylesheet so every wipe leans with the buttons and the tags.
   const slant = readSlant(story);
   const cssNumber = (element: Element | null | undefined, name: string) =>
     element
@@ -120,10 +136,11 @@ export function playCinematic(
   // (storyTimeline).
   const moves = timelineTools(tl, slant);
 
-  // The opening's pose, read from StoryStage's stylesheet (on every refresh) so the timeline starts
-  // from exactly the pose the page shows: tilted back and set down, so only its top shows under the
-  // offer. Every part of the transform is stated, so nothing GSAP reads from the stylesheet's matrix
-  // is ever added on top of it.
+  // The window's pose under the opening, read from StoryStage's stylesheet (on every refresh) so the
+  // timeline starts from exactly the pose the stylesheet gives it: tilted back and set down under
+  // the window's bottom edge, out of sight while the opening shows its own stack of layers. Every
+  // part of the transform is stated, so nothing GSAP reads from the stylesheet's matrix is ever
+  // added on top of it.
   const viewport = one(".story__viewport");
   const tilt = (name: string) => () => cssNumber(cameraNuqta, name);
   const flat = {
@@ -137,8 +154,9 @@ export function playCinematic(
     skewX: 0,
     skewY: 0,
   };
-  // Down from its place to where only --peek of the window's height shows (StoryStage's --tilt-drop).
-  // The window's place is its world's top padding (--win-top), read unrounded.
+  // Down from its place to where --peek of the window's height shows above the bottom edge
+  // (StoryStage's --tilt-drop): --peek is negative, so its top sits that far under the edge. The
+  // window's place is its world's top padding (--win-top), read unrounded.
   const drop = () => {
     const world = cameraNuqta?.parentElement;
     if (!cameraNuqta || !world || !viewport) return 0;
@@ -186,7 +204,6 @@ export function playCinematic(
     parts: {
       cameraNuqta,
       cameraDalaly,
-      slab,
       light,
       insights,
       report,
@@ -293,7 +310,19 @@ export function playCinematic(
   };
   story.addEventListener("focusin", onFocus);
 
+  // The first screen rises from under the opening with the visitor's first scroll. Its image is
+  // lazy, so a phone never downloads it (as a page the stage is hidden); on the stage it is asked
+  // for as soon as the document has loaded, without waiting for that scroll, so it is there when
+  // the window comes up. After the load, so it never competes with what the opening itself needs:
+  // no preload, no priority.
+  const loadFirstShot = () => {
+    if (operationsImage) operationsImage.loading = "eager";
+  };
+  if (document.readyState === "complete") loadFirstShot();
+  else window.addEventListener("load", loadFirstShot, { once: true });
+
   return () => {
+    window.removeEventListener("load", loadFirstShot);
     story.removeEventListener("focusin", onFocus);
     active?.removeAttribute("data-active");
     activeScene?.parts.forEach((element) =>

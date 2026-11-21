@@ -9,8 +9,8 @@ import { useStoryMotion } from "~/composables/home/useStoryMotion";
 //
 // Two ways to show it, from one set of elements:
 // - As a page (phones, tablets, short windows, reduced motion, and until GSAP has loaded): the
-//   chapters follow one another, each with its own real screens; the stage is the opening's picture.
-//   Complete without any script.
+//   chapters follow one another, each with its own picture (the opening's is its stack of layers,
+//   the others' their real screens); the stage is not shown. Complete without any script.
 // - As a cinematic stage (a desktop-sized window, motion allowed, GSAP loaded): the story is
 //   --story-length windows tall and its viewport sticks to the window while you scroll through it.
 //   Every chapter's text shares one frame, and one scrubbed timeline hands the stage and the text
@@ -36,7 +36,7 @@ useStoryMotion(root);
 </template>
 
 <style scoped lang="scss">
-// $cover (the same as coverQuery in app/composables/home/storyConfig.ts) and $cover-short.
+// $cover (the same as coverQuery in app/composables/home/storyConfig.ts).
 @use "~/assets/scss/story" as *;
 
 // The story's layout lengths, shared by the stage and the chapters (both read them).
@@ -59,7 +59,9 @@ useStoryMotion(root);
   // heading sits on the band's bottom line), then the window, centred, starting at the same line
   // in every chapter (--win-top). The window is as wide as the room under that line allows, never
   // narrower than 56rem nor wider than the column; on a short window it runs off the bottom edge.
-  // In the opening it shows only its top (--peek, in window heights), tilted back under the offer.
+  // In the opening it waits out of sight, tilted back under the window's bottom edge: --peek is how
+  // much of it shows above that edge, in window heights (a plain number, which storyCinematic reads
+  // too), and negative sets its top that far below the edge.
   @media #{$cover} {
     --header-room: calc(var(--header-height) + var(--space-3));
     --cover-pad: clamp(var(--space-4), 3svh, var(--space-6));
@@ -71,14 +73,9 @@ useStoryMotion(root);
       var(--content-w),
       max(56rem, (100svh - var(--win-top) - var(--cover-pad)) * 16 / 9)
     );
-    --peek: 19;
+    --peek: -6;
 
     margin-block-start: calc(-1 * var(--header-room));
-  }
-
-  // A short cover: less of the opening's screen, so the offer keeps its room above the plinth.
-  @media #{$cover-short} {
-    --peek: 15;
   }
 }
 
@@ -87,23 +84,12 @@ useStoryMotion(root);
   grid-template-columns: minmax(0, 1fr);
 }
 
-// As a page: the opening's text, then its picture (the stage), then the other chapters in order.
-// In the cover the picture sits behind the text instead, filling the window with it.
+// As a page: the chapters in order, and no stage. The opening's picture is its own stack of layers
+// (HomeIntro) and every other chapter brings its screens, so the stage's window has nothing to show
+// until the timeline raises it.
 .story:not(.story--cinematic) {
   .story__stage {
-    grid-row: 2;
-    grid-column: 1;
-  }
-
-  .story__viewport > :deep(.chapter--intro) {
-    grid-row: 1;
-    grid-column: 1;
-  }
-
-  @media #{$cover} {
-    .story__stage {
-      grid-row: 1;
-    }
+    display: none;
   }
 
   // The mirror of data-page-only: what only the stage needs, a recap the page does without (its

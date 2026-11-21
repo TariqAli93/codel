@@ -27,7 +27,7 @@ export function own(selector: string, scope: HTMLElement): HTMLElement[] {
 }
 
 // The brand lean in radians, read from the story's stylesheet (--slant-angle), so every wipe leans
-// with the buttons and the slab; 10deg if it cannot be read.
+// with the buttons and the tags; 10deg if it cannot be read.
 export function readSlant(story: HTMLElement): number {
   return (
     ((parseFloat(getComputedStyle(story).getPropertyValue("--slant-angle")) ||

@@ -19,7 +19,6 @@ export interface Scene extends Beat {
 export interface StageParts {
   cameraNuqta: HTMLElement | undefined;
   cameraDalaly: HTMLElement | undefined;
-  slab: HTMLElement | null;
   light: HTMLElement | null;
   insights: HTMLElement | null;
   report: HTMLElement | null;
@@ -51,15 +50,20 @@ export interface Stage extends TimelineTools {
   windowBox: () => string;
 }
 
-// 01 → 02. The lime slab steps aside along its lean while the window rises and turns to face you:
-// Codel hands the stage to Nuqta Plus's point of sale. The camera then leans in on the
-// product cards and the cart, the work of the day.
+// 01 → 02. The opening's text and its stack of layers leave upward while the window, which waited
+// tilted back under the window's bottom edge, rises into its place and turns to face you: Codel
+// hands the stage to Nuqta Plus's point of sale. The camera then leans in on the product cards and
+// the cart, the work of the day.
 export function introToNuqta(stage: Stage) {
   const { tl, all, chapters, play, handOver, leave, arrive } = stage;
   const { flat, tilted, tilt } = stage;
-  const { cameraNuqta, slab, light, operationsImage } = stage.parts;
+  const { cameraNuqta, light, operationsImage } = stage.parts;
   const { prepare, transform, resolve } = handOver("intro", "nuqta");
   leave(chapters.intro, prepare);
+  // The window starts from out of sight, so it sets off with the preparation (and still arrives
+  // when the transformation ends): it is well into view by the time the opening has cleared, and
+  // the stage is never empty between the two.
+  const rise = prepare.at;
   play(
     cameraNuqta,
     { ...tilted },
@@ -68,20 +72,10 @@ export function introToNuqta(stage: Stage) {
       transformPerspective: tilt("--tilt-depth"),
       rotationX: 0,
       scale: 1,
-      duration: transform.span,
+      duration: transform.at + transform.span - rise,
       ease: "power2.inOut",
     },
-    transform.at,
-  );
-  play(
-    slab,
-    { clipPath: "inset(0% 0% 0% 0%)" },
-    {
-      clipPath: "inset(0% 100% 0% 0%)",
-      duration: transform.span * 0.8,
-      ease: "power2.inOut",
-    },
-    transform.at,
+    rise,
   );
   play(
     light,
@@ -89,9 +83,9 @@ export function introToNuqta(stage: Stage) {
     { opacity: 1, duration: transform.span * 0.6 },
     transform.at + transform.span * 0.4,
   );
-  // One light at a time: the opening's glow (HomeIntro's light and its shade) fades out as Nuqta
-  // Plus's own light comes up, then leaves the layout, so its canvas stops drawing (its observers
-  // see no box and the render loop sleeps; scrolling back reverts the set and wakes it).
+  // One light at a time: the opening's glow (the floor under HomeIntro's stack, with its lime
+  // patch) fades out as Nuqta Plus's own light comes up, then leaves the layout, so nothing of it
+  // is drawn or worked out under the other chapters (scrolling back reverts the set).
   const glow = all('[data-stage="glow"]');
   if (glow.length) {
     const gone = transform.at + transform.span * 0.5;

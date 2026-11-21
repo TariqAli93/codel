@@ -5,12 +5,17 @@
 // The window size that holds the cinematic cover. Same as coverQuery in
 // app/composables/home/storyConfig.ts.
 $cover: "(min-width: 64em) and (min-height: 36em)";
-// A cover window short enough (laptops) that the headings close up and the opening's screen shows
-// less of itself.
+// A cover window short enough (laptops) that the headings and the opening's pillars close up.
 $cover-short: "(min-width: 64em) and (min-height: 36em) and (max-height: 46em)";
-// Story widths: from $tablet the opening is centred over its screen and that screen shows whole
-// (below it, a crop of its menu and cards); from $side a chapter's headings split into two columns
-// over its screens.
+// The lowest covers: the opening keeps only what it needs to fit one window.
+$cover-low: "(min-width: 64em) and (min-height: 36em) and (max-height: 40em)";
+// The cover's media query is in the browser's own ems, so it still matches when only the text is
+// enlarged. The opening's one-window arrangement also needs the story to be this wide in rems (a
+// little under $side, so a cover window with a classic scrollbar keeps it).
+$cover-room: 60rem;
+// Story widths: below $tablet the opening's stack runs off the end edge and a chapter's main screen
+// is a reading window; from $side the opening sets its text beside its stack and a chapter's
+// headings split into two columns over its screens.
 $tablet: 40rem;
 $side: 64rem;
 // The brand lean.

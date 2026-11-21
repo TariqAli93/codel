@@ -80,7 +80,7 @@ withDefaults(
     margin-block-start: 0;
   }
 
-  // The opening's screen is the stage itself (HomeStory places them together).
+  // The opening brings its own picture (HomeIntro's stack of layers) and lays it out itself.
   &--intro {
     padding-block-start: var(--space-4);
   }
@@ -101,19 +101,21 @@ withDefaults(
   }
 }
 
-// The cover: the opening fills the window, its text centred in the room between the header and the
-// top of its screen (which shows its top --peek, StoryStage). The same in the flowing page and on
-// the cinematic stage, so the stage can take over from the page without a single pixel moving.
+// The cover: the opening fills the window, its content (HomeIntro's hero, as wide as the column)
+// centred in the room between the header and the window's bottom edge. The same in the flowing page
+// and on the cinematic stage, so the stage can take over from the page without a single pixel
+// moving.
 @media #{$cover} {
   .chapter--intro {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-content: center;
     justify-items: center;
     min-block-size: 100svh;
-    padding-block: var(--room-top) calc(var(--peek) * 1svh + var(--head-gap));
+    padding-block: var(--room-top) var(--cover-pad);
 
     .chapter__copy {
-      inline-size: min(100%, 60rem);
+      inline-size: 100%;
     }
   }
 }
@@ -153,11 +155,11 @@ withDefaults(
 .story--cinematic .chapter--intro {
   grid-template-rows: none;
   align-content: center;
-  padding-block-end: calc(var(--peek) * 1svh + var(--head-gap));
+  padding-block-end: var(--cover-pad);
 
   .chapter__copy {
     align-self: auto;
-    inline-size: min(100%, 60rem);
+    inline-size: 100%;
   }
 }
 
