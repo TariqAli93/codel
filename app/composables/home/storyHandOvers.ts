@@ -16,7 +16,7 @@ export interface Scene extends Beat {
 // The stage's parts that the hand-overs move (StoryStage's data-stage, the screens' images the
 // camera leans in on, the tour's rail and its bars). A part this page does not have is null or
 // undefined.
-export interface StageParts {
+interface StageParts {
   cameraNuqta: HTMLElement | undefined;
   cameraDalaly: HTMLElement | undefined;
   light: HTMLElement | null;
@@ -245,8 +245,7 @@ export function insightsToDalaly(stage: Stage) {
     { scale: 0.92 },
     {
       scale: 1,
-      duration:
-        resolve.at + resolve.span - (transform.at + transform.span / 2),
+      duration: resolve.at + resolve.span - (transform.at + transform.span / 2),
       ease: "power2.inOut",
       immediateRender: false,
     },

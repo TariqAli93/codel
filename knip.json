@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com",
+  "project": ["**/*.{vue,ts,js,mjs,mts,sass,scss}"],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  }
+}
