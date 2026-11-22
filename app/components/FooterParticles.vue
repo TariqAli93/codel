@@ -12,7 +12,7 @@ const canvas = ref<HTMLCanvasElement | null>(null);
 const active = ref(false);
 
 const motionQuery =
-  "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
+  "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none)";
 
 let media: MediaQueryList | undefined;
 let observer: ResizeObserver | undefined;
@@ -212,7 +212,7 @@ onBeforeUnmount(() => {
     pointer-events: none;
   }
 
-  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
     &__image,
     &__canvas {
       transition: opacity var(--duration-fast) var(--ease-out);
