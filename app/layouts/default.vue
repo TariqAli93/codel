@@ -260,70 +260,90 @@ onBeforeUnmount(() => {
     </main>
 
     <footer class="layout__footer">
-      <div class="layout__footer-inner">
-        <nav class="layout__footer-nav" aria-label="روابط الموقع">
-          <ul role="list" class="layout__footer-links">
-            <li v-for="link in links" :key="link.to">
-              <NuxtLink class="layout__footer-link" :to="link.to">{{
-                link.label
-              }}</NuxtLink>
-            </li>
-          </ul>
-        </nav>
+      <div class="layout__footer-frame">
+        <section class="layout__footer-invite" aria-labelledby="footer-invite-title">
+          <div class="layout__footer-message">
+            <p class="layout__footer-overline">نسمع منك أولاً</p>
+            <h2 id="footer-invite-title" class="layout__footer-title">
+              عندك تحدّي بشغلك؟
+              <span>خلّينا نسمعك.</span>
+            </h2>
+            <p class="layout__footer-lede">
+              احچِ لنا شنو يحتاج شغلك، ونشوف سوا من وين نبدأ.
+            </p>
+          </div>
 
-        <address class="layout__contact">
-          <ContactList compact />
-        </address>
+          <a
+            class="layout__footer-action"
+            :href="company.phones.main.whatsapp"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="layout__footer-action-content">
+              <span>راسلنا على واتساب</span>
+              <span class="layout__footer-action-arrow" aria-hidden="true">↗</span>
+            </span>
+            <span class="layout__footer-sr-only">(يفتح في نافذة جديدة)</span>
+          </a>
+        </section>
 
-        <div
-          class="contact-list__row"
-          style="display: flex; flex-direction: column; gap: var(--space-2)"
-        >
-          <dt
-            class="contact-list__label"
-            style="display: block; width: 100%; flex: 0 0 auto !important"
-          >
-            العنوان
-          </dt>
-          <dd
-            style="
-              display: block !important;
-              width: 100%;
-              flex: 0 0 auto !important;
-            "
-          >
-            {{ company.address }}
-          </dd>
+        <div class="layout__footer-directory">
+          <div class="layout__footer-group">
+            <h3 class="layout__footer-heading">استكشف</h3>
+            <nav aria-label="روابط الموقع">
+              <ul role="list" class="layout__footer-links">
+                <li v-for="link in links" :key="link.to">
+                  <NuxtLink class="layout__footer-link" :to="link.to">
+                    {{ link.label }}
+                  </NuxtLink>
+                </li>
+              </ul>
+            </nav>
+          </div>
 
-          <dt
-            class="contact-list__label"
-            style="
-              display: block !important;
-              width: 100%;
-              flex: 0 0 auto !important;
-            "
-          >
-            ساعات الدوام
-          </dt>
-          <dd
-            style="
-              display: block !important;
-              width: 100%;
-              flex: 0 0 auto !important;
-            "
-          >
-            {{ company.hours.days }}، {{ company.hours.time }}
-          </dd>
+          <div class="layout__footer-group">
+            <h3 class="layout__footer-heading">طرق التواصل</h3>
+            <address class="layout__contact">
+              <ContactList compact />
+            </address>
+          </div>
+
+          <div class="layout__footer-group">
+            <h3 class="layout__footer-heading">موقعنا والدوام</h3>
+            <dl class="layout__footer-facts">
+              <div>
+                <dt>العنوان</dt>
+                <dd>{{ company.address }}</dd>
+              </div>
+              <div>
+                <dt>ساعات العمل</dt>
+                <dd>{{ company.hours.days }}، {{ company.hours.time }}</dd>
+              </div>
+            </dl>
+          </div>
         </div>
-      </div>
 
-      <div class="layout__identity">
-        <img
-          class="layout__footer-logo"
-          src="/brand/codel-full-lime.svg"
-          alt=""
-          loading="lazy"
-        />
+        <div class="layout__footer-brand">
+          <NuxtLink
+            class="layout__footer-brand-link"
+            to="/"
+            aria-label="كودل - العودة للرئيسية"
+          >
+            <img
+              class="layout__footer-logo"
+              src="/brand/codel-full-lime.svg"
+              alt=""
+              width="672"
+              height="117"
+              loading="lazy"
+            />
+          </NuxtLink>
+        </div>
+
+        <div class="layout__footer-meta">
+          <span>{{ company.name }}</span>
+          <span>{{ company.addressParts.city }}، العراق</span>
+        </div>
       </div>
     </footer>
 
@@ -715,64 +735,181 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
   }
 
   // ---------------------------------------------------------------------------
-  // Footer
+  // Footer: one clear invitation, then the practical information.
   // ---------------------------------------------------------------------------
 
   &__footer {
+    overflow: clip;
     border-block-start: 1px solid var(--border);
-    font-size: var(--text-ui);
-    color: var(--text-muted);
+    background-color: var(--bg);
+    color: var(--text);
   }
 
-  // Identity, links, contact: stacked, then identity across the top of two columns, then three.
-  &__footer-inner {
+  &__footer-frame {
+    max-inline-size: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--page-gutter);
+  }
+
+  &__footer-invite {
+    display: grid;
+    gap: var(--space-7);
+    padding-block: clamp(var(--space-8), 8vw, var(--space-10));
+    border-block-end: 1px solid var(--border);
+
+    @media (width >= $footer-three) {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      column-gap: var(--space-8);
+    }
+  }
+
+  &__footer-message {
+    min-inline-size: 0;
+  }
+
+  &__footer-overline {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--text-ui);
+    font-weight: 600;
+
+    &::before {
+      content: "";
+      inline-size: var(--point-sm);
+      block-size: var(--point-sm);
+      flex: 0 0 auto;
+      border-radius: var(--radius-pill);
+      background-color: var(--accent);
+    }
+  }
+
+  &__footer-title {
+    max-inline-size: 17ch;
+    margin-block: var(--space-5);
+    font-family: var(--font-display);
+    font-size: clamp(2.625rem, 5.6vw, 5.625rem);
+    font-weight: 800;
+    line-height: 1.2;
+    text-wrap: balance;
+
+    span {
+      display: block;
+      color: var(--accent-text);
+    }
+  }
+
+  &__footer-lede {
+    max-inline-size: var(--measure);
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--text-lead);
+    line-height: 1.75;
+  }
+
+  // The brand lean belongs to the action, while its text stays upright.
+  &__footer-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: start;
+    min-block-size: var(--control-lg);
+    padding-block: var(--space-3);
+    padding-inline: var(--space-6);
+    border-radius: var(--radius-pill);
+    background-color: var(--accent);
+    color: var(--on-accent);
+    font-size: var(--text-body);
+    font-weight: 700;
+    line-height: 1.4;
+    text-decoration: none;
+    transform: skewX(calc(var(--slant-angle) * -1));
+    transition: background-color var(--duration-fast) var(--ease-out);
+
+    @media (width >= $footer-three) {
+      min-block-size: 80px;
+      padding-inline: var(--space-7);
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--primary-hover);
+
+        .layout__footer-action-arrow {
+          transform: translate(4px, -4px);
+        }
+      }
+    }
+
+    &:active {
+      background-color: var(--primary-active);
+    }
+
+    &:focus-visible {
+      outline-offset: 5px;
+    }
+  }
+
+  &__footer-action-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-5);
+    transform: skewX(var(--slant-angle));
+  }
+
+  &__footer-action-arrow {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: var(--text-title);
+    font-weight: 400;
+    line-height: 1;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  &__footer-sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  &__footer-directory {
     display: grid;
     gap: var(--space-7) var(--space-8);
-    max-inline-size: var(--container-max);
-    margin-inline: auto;
-    padding: clamp(var(--space-7), 7vw, var(--space-9)) var(--page-gutter)
-      var(--space-7);
+    padding-block: var(--space-8);
 
     @media (width >= $footer-two) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     @media (width >= $footer-three) {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.5fr);
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 1fr);
     }
   }
 
-  &__identity {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    max-inline-size: var(--container-max);
-    margin-inline: auto;
-    padding: clamp(var(--space-7), 7vw, var(--space-9)) var(--page-gutter)
-      var(--space-7);
-
-    @media (width >= $footer-two) {
-      grid-column: 1 / -1;
-    }
-
-    @media (width >= $footer-three) {
-      grid-column: auto;
-    }
+  &__footer-group {
+    min-inline-size: 0;
   }
 
-  &__footer-logo {
-    block-size: 100%;
-    inline-size: auto;
-    margin-block-end: var(--space-3);
-    opacity: 1;
+  &__footer-heading {
+    margin-block-end: var(--space-4);
+    font-family: var(--font-sans);
+    font-size: var(--text-small);
+    font-weight: 700;
+    line-height: 1.6;
+    color: var(--text);
   }
 
-  &__footer-about {
-    margin: 0;
-  }
-
-  // A plain list: no points and never lime; the footer only repeats the way around.
   &__footer-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 var(--space-4);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -783,23 +920,111 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     align-items: center;
     min-block-size: var(--touch-target);
     color: var(--text-muted);
-    text-decoration: none;
-    transition: color var(--duration-fast) var(--ease-out);
+    font-size: var(--text-ui);
+    line-height: 1.7;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition:
+      color var(--duration-fast) var(--ease-out),
+      text-decoration-color var(--duration-fast) var(--ease-out);
 
     @media (hover: hover) {
       &:hover {
         color: var(--text);
+        text-decoration-color: var(--accent-text);
       }
     }
 
     &[aria-current="page"] {
-      font-weight: 600;
       color: var(--text);
+      font-weight: 700;
+      text-decoration-color: var(--accent-text);
     }
   }
 
   &__contact {
     font-style: normal;
+
+    // Reuse the source-of-truth ContactList, but make its compact rows fit this column.
+    :deep(.contact-list__row) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-1);
+      padding: 0;
+
+      &::after {
+        content: none;
+      }
+
+      dt {
+        color: var(--text-muted);
+        font-size: var(--text-small);
+      }
+
+      dd {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 var(--space-4);
+        min-inline-size: 0;
+        margin: 0;
+        font-size: var(--text-ui);
+        line-height: 1.7;
+      }
+
+      a {
+        min-block-size: var(--touch-target);
+        color: var(--text);
+      }
+    }
   }
+
+  &__footer-facts {
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+
+    dt {
+      margin-block-end: var(--space-1);
+      color: var(--text-muted);
+      font-size: var(--text-small);
+    }
+
+    dd {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--text-ui);
+      line-height: 1.75;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__footer-brand {
+    padding-block: var(--space-7) var(--space-5);
+    border-block-start: 1px solid var(--border);
+  }
+
+  &__footer-brand-link {
+    display: block;
+    border-radius: var(--radius-sm);
+  }
+
+  &__footer-logo {
+    display: block;
+    block-size: auto;
+    inline-size: 100%;
+  }
+
+  &__footer-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-6);
+    padding-block: var(--space-5);
+    border-block-start: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: var(--text-small);
+    line-height: 1.7;
+  }
+
 }
 </style>
