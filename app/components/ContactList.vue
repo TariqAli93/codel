@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { company } from '~/data/company'
+import { company } from "~/data/company";
 
 // Every way to reach the company, from company.ts. Default: ruled rows (/contact).
 // Compact: tighter rows with no rules (the footer).
 withDefaults(
   defineProps<{
-    compact?: boolean
+    compact?: boolean;
   }>(),
-  { compact: false }
-)
+  { compact: false },
+);
 
-const { main, secondary } = company.phones
+const { main, secondary } = company.phones;
 </script>
 
 <template>
@@ -33,20 +33,14 @@ const { main, secondary } = company.phones
     </div>
     <div class="contact-list__row">
       <dt>البريد الإلكتروني</dt>
-      <dd><a :href="`mailto:${company.email}`" dir="ltr">{{ company.email }}</a></dd>
-    </div>
-    <div class="contact-list__row">
-      <dt>العنوان</dt>
-      <dd>{{ company.address }}</dd>
-    </div>
-    <div class="contact-list__row">
-      <dt>ساعات الدوام</dt>
-      <dd>{{ company.hours.days }}، {{ company.hours.time }}</dd>
+      <dd>
+        <a :href="`mailto:${company.email}`" dir="ltr">{{ company.email }}</a>
+      </dd>
     </div>
   </dl>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 .contact-list {
   margin: 0;
 
@@ -56,10 +50,18 @@ const { main, secondary } = company.phones
     align-items: baseline;
     gap: 0 var(--space-5);
     padding-block: var(--space-4);
-    border-block-end: 1px solid var(--border);
+    position: relative;
+    height: max-content;
+    padding-inline: var(--space-5);
 
-    &:first-child {
-      border-block-start: 1px solid var(--border);
+    &::after {
+      position: absolute;
+      height: stretch;
+      inset-inline: 0;
+      inset-block: 0;
+      width: 1px;
+      content: "";
+      background-color: var(--border);
     }
 
     dt {

@@ -106,11 +106,11 @@ export const phases = {
 // (daily work), then the home screen's row of today's figures. Anchored on the menu side, so the
 // program's own menu stays in view.
 export const focus = {
-  operations: { origin: "100% 62%", scale: 1.14 },
-  insights: { origin: "100% 10%", scale: 1.16 },
+  operations: { origin: "100% 62%", scale: 1 },
+  insights: { origin: "100% 10%", scale: 1 },
   // Dalaly's list of offers, from the top of the menu side: the active "عروض البيع" item and the
   // first rows of offers (what its tagline is about).
-  listing: { origin: "100% 18%", scale: 1.1 },
+  listing: { origin: "100% 18%", scale: 1 },
 } as const satisfies Record<string, { origin: string; scale: number }>;
 
 // How far a headline's word or line travels through its mask (a share of its own height): far

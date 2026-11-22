@@ -261,20 +261,6 @@ onBeforeUnmount(() => {
 
     <footer class="layout__footer">
       <div class="layout__footer-inner">
-        <div class="layout__identity">
-          <img
-            class="layout__footer-logo"
-            src="/brand/codel-full-white.svg"
-            alt=""
-            width="160"
-            height="28"
-            loading="lazy"
-          />
-          <p class="layout__footer-about">
-            كودل شركة برمجيات عراقية في {{ company.addressParts.city }}.
-          </p>
-        </div>
-
         <nav class="layout__footer-nav" aria-label="روابط الموقع">
           <ul role="list" class="layout__footer-links">
             <li v-for="link in links" :key="link.to">
@@ -288,6 +274,56 @@ onBeforeUnmount(() => {
         <address class="layout__contact">
           <ContactList compact />
         </address>
+
+        <div
+          class="contact-list__row"
+          style="display: flex; flex-direction: column; gap: var(--space-2)"
+        >
+          <dt
+            class="contact-list__label"
+            style="display: block; width: 100%; flex: 0 0 auto !important"
+          >
+            العنوان
+          </dt>
+          <dd
+            style="
+              display: block !important;
+              width: 100%;
+              flex: 0 0 auto !important;
+            "
+          >
+            {{ company.address }}
+          </dd>
+
+          <dt
+            class="contact-list__label"
+            style="
+              display: block !important;
+              width: 100%;
+              flex: 0 0 auto !important;
+            "
+          >
+            ساعات الدوام
+          </dt>
+          <dd
+            style="
+              display: block !important;
+              width: 100%;
+              flex: 0 0 auto !important;
+            "
+          >
+            {{ company.hours.days }}، {{ company.hours.time }}
+          </dd>
+        </div>
+      </div>
+
+      <div class="layout__identity">
+        <img
+          class="layout__footer-logo"
+          src="/brand/codel-full-lime.svg"
+          alt=""
+          loading="lazy"
+        />
       </div>
     </footer>
 
@@ -306,8 +342,11 @@ $nav-wide: 60em;
 $bar-pad: max(
   var(--space-4),
   calc(
-    var(--page-gutter) -
-      clamp(0px, (var(--container-max) - 100%) / 2, var(--space-3))
+    var(--page-gutter) - clamp(
+        0px,
+        (var(--container-max) - 100%) / 2,
+        var(--space-3)
+      )
   )
 );
 // The menu panel's padding. It exists only below $nav-wide, where the bar is always inset the full
@@ -695,7 +734,7 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       var(--space-7);
 
     @media (width >= $footer-two) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     @media (width >= $footer-three) {
@@ -707,7 +746,10 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-2);
+    max-inline-size: var(--container-max);
+    margin-inline: auto;
+    padding: clamp(var(--space-7), 7vw, var(--space-9)) var(--page-gutter)
+      var(--space-7);
 
     @media (width >= $footer-two) {
       grid-column: 1 / -1;
@@ -719,9 +761,10 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
   }
 
   &__footer-logo {
-    block-size: 1.75rem;
+    block-size: 100%;
     inline-size: auto;
     margin-block-end: var(--space-3);
+    opacity: 1;
   }
 
   &__footer-about {
