@@ -151,7 +151,7 @@ function onMediaChange() {
 onMounted(() => {
   media = window.matchMedia(motionQuery);
   media.addEventListener("change", onMediaChange);
-  if (root.value) {
+  if (root.value && "ResizeObserver" in window) {
     observer = new ResizeObserver(() => {
       if (!active.value) return;
       reset();
