@@ -141,9 +141,9 @@ $dot-size: 6px;
   &__dot {
     position: fixed;
     inset-block-start: 0;
-    inset-inline-start: 0;
+    left: 0;
     z-index: 40;
-    // clientX counts from the left, so the inline start has to be the left on this RTL site too.
+    // clientX is a physical coordinate even in the RTL document.
     direction: ltr;
     border-radius: 50%;
     // Black or white, whichever stands out from what lies under each pixel: no surface list to keep.

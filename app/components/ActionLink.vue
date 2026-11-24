@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// One link for actions. Three looks are buttons, leaning pills with their content turned back
+// One link for actions. Three looks are buttons, leaning rectangles with their content turned back
 // upright: 'solid' is the lime button with the lime glow, for the page's main call; 'ink' is the
 // dark call button for a lime ground; 'outline' is the outlined button for a secondary action.
 // 'text' is a plain underlined link with no lean. Its colours read --link-color, --link-rule,
@@ -237,4 +237,8 @@ $upright: skewX(var(--slant-angle));
   .action--solid:hover,.action--ink:hover,.action--outline:hover { translate:0 -2px; }
   .action--solid:active,.action--ink:active,.action--outline:active { translate:0 1px; }
 }
+@media (prefers-reduced-motion:no-preference) {
+  .action--solid,.action--ink,.action--outline{transition:background-color .22s var(--ease-out),color .22s var(--ease-out),translate .22s var(--ease-out),border-color .22s var(--ease-out)}
+}
+.action:focus-visible{outline-offset:5px}
 </style>

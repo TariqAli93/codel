@@ -139,7 +139,7 @@
   --control-sm: 36px;
   --control-md: 48px;
   --control-lg: 56px;
-  --header-height: 72px;
+  --header-height: 84px;
   --container-max: 1680px; // wide desktop, still bounded
 
   --slant-angle: 10deg;
@@ -190,10 +190,10 @@
     2.25rem
   ); // running display lines: services, statements
   --text-card: clamp(1.25rem, 1.2143rem + 0.1786vw, 1.375rem); // card titles, the menu panel
-  --text-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.3125rem); // ledes
+  --text-lead: clamp(1.125rem, 1.02rem + 0.28vw, 1.25rem); // ledes
   --text-sub: 1.125rem; // h5, h6
-  --text-body: 1rem; // running text, larger buttons
-  --text-ui: 0.9375rem; // navigation, smaller buttons, labels
+  --text-body: clamp(1rem,.96rem + .18vw,1.125rem); // running text, larger buttons
+  --text-ui: 1rem; // navigation, smaller buttons, labels
   --text-small: 0.875rem;
   --text-caption: 0.75rem; // window title bars
 
@@ -389,3 +389,5 @@ a {
   .workline-button:active{translate:0 1px}
   // Headings remain at full contrast even in full-page screenshots and before intersection.
 }
+
+@media (max-width:959px){:root{--header-height:72px}}
