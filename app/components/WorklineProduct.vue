@@ -11,6 +11,11 @@ const galleryOpen = ref(false)
 const failedSrc = ref('')
 const hasInteracted = ref(false)
 const retryKey = ref(0)
+const stageImage = ref<HTMLImageElement | null>(null)
+onMounted(() => {
+  const image = stageImage.value
+  if (image?.complete && image.naturalWidth === 0 && shot.value) failedSrc.value = shot.value.src
+})
 function onImageError(event: Event) {
   const image = event.currentTarget as HTMLImageElement
   const current = shot.value
@@ -52,9 +57,9 @@ function onGalleryKey(event:KeyboardEvent) {
       <figure>
         <figcaption><span aria-live="polite">{{ label(shot) }}</span><button ref="opener" type="button" class="workline-button app-panel__enlarge" :aria-label="`تكبير واجهة ${solution.nameAr}`" @click="openGallery"><span>تكبير <span aria-hidden="true">⤢</span></span></button></figcaption>
         <div class="app-panel__stage" :class="{ 'app-panel__stage--back': direction<0 }">
-          <img v-if="failedSrc !== shot.src" :key="`${shot.src}-${retryKey}`" :class="{ 'app-panel__image--selected': hasInteracted }" :src="shot.src" :alt="shot.alt" :width="shot.width" :height="shot.height" loading="eager" decoding="sync" @error="onImageError">
-          <div v-else class="app-panel__fallback" role="status">
-            <p>تعذّر تحميل صورة واجهة {{ solution.nameAr }}.</p>
+          <img v-if="failedSrc !== shot.src" ref="stageImage" :key="`${shot.src}-${retryKey}`" :class="{ 'app-panel__image--selected': hasInteracted }" :src="shot.src" :alt="shot.alt" :width="shot.width" :height="shot.height" loading="eager" decoding="sync" @error="onImageError">
+          <div v-else class="app-panel__fallback">
+            <p role="status">تعذّر تحميل صورة واجهة {{ solution.nameAr }}.</p>
             <button type="button" class="workline-button" @click="retryImage"><span>إعادة المحاولة</span></button>
             <a :href="shot.src" target="_blank" rel="noopener noreferrer">فتح الصورة الأصلية</a>
           </div>
@@ -77,7 +82,7 @@ function onGalleryKey(event:KeyboardEvent) {
     <dialog ref="gallery" class="app-gallery" :aria-labelledby="`gallery-${solution.slug}`" @close="onClose" @keydown="onGalleryKey">
       <div class="app-gallery__bar"><h2 :id="`gallery-${solution.slug}`">{{ solution.nameAr }} — {{ shot ? label(shot) : '' }}</h2><button autofocus type="button" class="workline-button" @click="closeGallery"><span>إغلاق ×</span></button></div>
       <img v-if="galleryOpen && shot && failedSrc !== shot.src" :src="shot.src" :alt="shot.alt" :width="shot.width" :height="shot.height" @error="onImageError">
-      <p v-else-if="galleryOpen && shot" role="status">تعذّر تحميل الصورة. <button type="button" class="workline-button" @click="retryImage"><span>إعادة المحاولة</span></button></p>
+      <div v-else-if="galleryOpen && shot"><p role="status">تعذّر تحميل الصورة.</p><button type="button" class="workline-button" @click="retryImage"><span>إعادة المحاولة</span></button></div>
       <div class="app-gallery__bar"><button type="button" class="workline-button" @click="step(-1)"><span>السابق →</span></button><bdi aria-live="polite">{{ active+1 }} / {{ solution.images.length }}</bdi><button type="button" class="workline-button" @click="step(1)"><span>التالي ←</span></button></div>
     </dialog>
   </article>
