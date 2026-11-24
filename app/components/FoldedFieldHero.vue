@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import FoldedField from "./effects/FoldedField.vue";
+import { opticalFieldFragment } from "./effects/opticalFieldShader";
 </script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
     <div class="material-still" aria-hidden="true" />
-    <FoldedField />
+    <FoldedField :fragment="opticalFieldFragment" :settle-after="4" />
     <div class="workline-shell cover-inner">
       <div class="cover-main">
         <div class="material-copy">
@@ -28,7 +29,7 @@ import FoldedField from "./effects/FoldedField.vue";
   </section>
 </template>
 <style scoped lang="scss">
-/* V9.5 — original directional material, generated locally. */
+/* V9.7 — Optical Field, an original interpretation of Shader Studio’s Prismatic Liquid Glass direction. */
 .cover-hero {
   position: relative;
   isolation: isolate;
@@ -50,9 +51,9 @@ import FoldedField from "./effects/FoldedField.vue";
   z-index: -2;
 }
 .material-still {
-  background-image: url(/images/hero/folded-field-desktop.jpg);
+  background-image: url(/images/hero/optical-field-desktop.png);
   background-position: center;
-  background-size: 100% 100%;
+  background-size: cover;
 }
 :deep(.material-canvas) {
   opacity: 0;
@@ -66,7 +67,7 @@ import FoldedField from "./effects/FoldedField.vue";
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(270deg, #101411 4%, #101411f2 24%, #10141100 62%);
+  background: linear-gradient(270deg, #101411 1%, #101411e6 24%, #10141100 60%);
 }
 .cover-inner {
   display: grid;
@@ -169,7 +170,7 @@ import FoldedField from "./effects/FoldedField.vue";
 }
 @media (max-width: 560px) {
   .material-still {
-    background-image: url(/images/hero/folded-field-mobile.jpg);
+    background-image: url(/images/hero/optical-field-mobile.png);
   }
   .cover-hero {
     min-height: calc(100svh - var(--header-height));
