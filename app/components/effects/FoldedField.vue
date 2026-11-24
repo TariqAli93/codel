@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { foldedFieldFragment } from "./foldedFieldShader";
+const props = defineProps<{ fragment?: string; settleAfter?: number }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const ready = ref(false);
 let dispose: (() => void) | undefined;
@@ -41,7 +42,7 @@ onMounted(() => {
       ctx.VERTEX_SHADER,
       "#version 300 es\nvoid main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}",
     );
-    const fragment = compile(ctx.FRAGMENT_SHADER, foldedFieldFragment);
+    const fragment = compile(ctx.FRAGMENT_SHADER, props.fragment ?? foldedFieldFragment);
     if (!vertex || !fragment) {
       if (vertex) ctx.deleteShader(vertex);
       if (fragment) ctx.deleteShader(fragment);
@@ -88,6 +89,7 @@ onMounted(() => {
       if (disposed || lost || !visible || document.hidden || reduced.matches)
         return;
       elapsed += last ? Math.min((now - last) / 1000, 0.06) : 0;
+      if (props.settleAfter !== undefined) elapsed = Math.min(elapsed, props.settleAfter);
       last = now;
       px += (tx - px) * 0.08;
       py += (ty - py) * 0.08;
@@ -95,7 +97,12 @@ onMounted(() => {
       ctx.uniform1f(time, elapsed);
       ctx.drawArrays(ctx.TRIANGLES, 0, 3);
       if (!ready.value) ready.value = true;
-      frame = requestAnimationFrame(draw);
+      const moving = Math.abs(tx-px)+Math.abs(ty-py) > .0005;
+      if (props.settleAfter === undefined || elapsed < props.settleAfter || moving) {
+        frame = requestAnimationFrame(draw);
+      } else {
+        last = 0;
+      }
     }
     function resume() {
       if (
@@ -127,9 +134,11 @@ onMounted(() => {
       const r = host.getBoundingClientRect();
       tx = (e.clientX - r.left) / Math.max(r.width, 1) - 0.5;
       ty = (e.clientY - r.top) / Math.max(r.height, 1) - 0.5;
+      resume();
     }
     function reset() {
       tx = ty = 0;
+      resume();
     }
     function visibility() {
       document.hidden ? pause() : resume();
