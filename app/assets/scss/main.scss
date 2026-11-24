@@ -154,10 +154,10 @@
 // Page rhythm and motion: site-level tokens, not in tokens.json v1 yet.
 // Motion is optional: the reduced-motion block at the end of this file switches it off.
 :root {
-  --page-gutter: clamp(var(--space-4), 4vw, var(--space-8));
-  --section-gap: clamp(var(--space-8), 8vw, 120px); // between a page's sections
+  --page-gutter: clamp(16px, 4vw, 64px);
+  --section-gap: clamp(64px, 8vw, 128px); // between a page's sections
   --head-gap: var(--space-7); // between a section's heading and its content
-  --panel-pad: clamp(var(--space-5), 5vw, 72px); // inside large panels
+  --panel-pad: clamp(24px, 3vw, 40px); // inside large panels
   --measure: 42rem; // the widest a running paragraph gets
   --touch-target: 44px; // the smallest a standalone link gets (WCAG 2.5.5)
 
@@ -380,4 +380,15 @@ a {
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) and (forced-colors:none) {
   html.workline-cursor-active,html.workline-cursor-active body,html.workline-cursor-active a,html.workline-cursor-active button,html.workline-cursor-active summary {cursor:none}
   html.workline-cursor-active input,html.workline-cursor-active textarea,html.workline-cursor-active select,html.workline-cursor-active dialog,html.workline-cursor-active dialog * {cursor:auto}
+}
+
+/* Native, progressively enhanced motion. Never replace normal browser scrolling. */
+@media (prefers-reduced-motion:no-preference){
+  .workline-button{transition:background-color .22s var(--ease-out),color .22s var(--ease-out),border-color .22s var(--ease-out),translate .22s var(--ease-out)}
+  @media (hover:hover){.workline-button:hover{translate:0 -2px}}
+  .workline-button:active{translate:0 1px}
+  @supports(animation-timeline:view()){
+    .workline-heading h2,.services-intro h2,.proof-heading h2{animation:workline-reveal .6s var(--ease-out) both;animation-timeline:view();animation-range:entry 0% entry 55%}
+    @keyframes workline-reveal{from{transform:translateY(12px);opacity:.72}to{transform:none;opacity:1}}
+  }
 }

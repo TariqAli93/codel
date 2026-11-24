@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type Lenis from "lenis";
-import { VueLenis } from "lenis/vue";
 import { company } from "~/data/company";
 
 interface NavLink {
@@ -66,33 +64,7 @@ const path = computed(() => route.path.replace(/\/+$/, "") || "/");
 // /solutions/<slug> keeps "حلولنا" marked: the link's section is current, not only its exact page.
 const inSection = (to: string) => to !== "/" && path.value.startsWith(`${to}/`);
 
-// Smooth wheel scrolling on every page (Lenis). Like the cursor it is mounted after hydration and
-// only for a hovering, fine pointer without reduced motion: touch screens, reduced motion and visits
-// without JavaScript keep the browser's own scrolling. Pass it options only as a constant:
-// <VueLenis> rebuilds Lenis whenever it gets a new options object.
-const smoothQuery =
-  "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
-const smoothScroll = ref(false);
-const smooth = ref<{ lenis?: Lenis } | null>(null);
-let smoothMedia: MediaQueryList | undefined;
-
-function syncSmoothScroll() {
-  smoothScroll.value = Boolean(smoothMedia?.matches);
-}
-
-// While a wheel glide runs Lenis ignores native scrolling and would pull the page back to it. A key,
-// a focus move, a press and a new page each end the glide first, so their own scroll stands.
-// stop() then start() is Lenis's public way to drop a glide (its reset() is private).
-function endGlide() {
-  const lenis = smooth.value?.lenis;
-  if (!lenis?.isSmooth) return;
-  lenis.stop();
-  lenis.start();
-}
-
-// The router's scroll to the top or to the saved position (back and forward) waits for this hook.
-const nuxtApp = useNuxtApp();
-let stopGlideHook: (() => void) | undefined;
+// V8.4 uses native scrolling; no wheel interception.
 
 // Small-screen menu. Same breakpoint as $nav-wide in the styles below.
 const wideQuery = "(min-width: 60em)";
@@ -159,22 +131,10 @@ let wideMedia: MediaQueryList | undefined;
 onMounted(() => {
   wideMedia = window.matchMedia(wideQuery);
   wideMedia.addEventListener("change", onWideChange);
-  smoothMedia = window.matchMedia(smoothQuery);
-  smoothMedia.addEventListener("change", syncSmoothScroll);
-  syncSmoothScroll();
-  document.addEventListener("keydown", endGlide, true);
-  document.addEventListener("focusin", endGlide, true);
-  document.addEventListener("pointerdown", endGlide, true);
-  stopGlideHook = nuxtApp.hook("page:loading:end", endGlide);
 });
 
 onBeforeUnmount(() => {
   wideMedia?.removeEventListener("change", onWideChange);
-  smoothMedia?.removeEventListener("change", syncSmoothScroll);
-  document.removeEventListener("keydown", endGlide, true);
-  document.removeEventListener("focusin", endGlide, true);
-  document.removeEventListener("pointerdown", endGlide, true);
-  stopGlideHook?.();
   stopListening();
 });
 </script>
@@ -210,13 +170,12 @@ onBeforeUnmount(() => {
             </span>
           </button>
 
-          <!-- While open the menu scrolls on its own, so Lenis leaves its wheel alone. -->
+
           <ul
             id="site-menu"
             role="list"
             class="layout__menu"
             :class="{ 'layout__menu--open': menuOpen }"
-            :data-lenis-prevent="menuOpen ? '' : undefined"
           >
             <li
               v-for="link in headerLinks"
@@ -261,61 +220,31 @@ onBeforeUnmount(() => {
 
     <footer class="layout__footer">
       <div class="layout__footer-frame">
-        
-
         <div class="layout__footer-directory">
-          <div class="layout__footer-group layout__footer-intro"><NuxtLink to="/" aria-label="كودل — الرئيسية"><img src="/brand/codel-full-white.svg" alt="Codel" width="122" height="22" /></NuxtLink><p>شركة برمجيات عراقية في بغداد، تقدم برامج جاهزة وتطويراً حسب الطلب.</p></div>
-          <div class="layout__footer-group">
-            <h3 class="layout__footer-heading">استكشف</h3>
-            <nav aria-label="روابط الموقع">
-              <ul role="list" class="layout__footer-links">
-                <li v-for="link in links" :key="link.to">
-                  <NuxtLink class="layout__footer-link" :to="link.to">
-                    {{ link.label }}
-                  </NuxtLink>
-                </li>
-              </ul>
-            </nav>
+          <div class="layout__footer-group layout__footer-intro">
+            <p class="layout__footer-statement">برمجيات لأصحاب الأعمال في العراق.</p>
+            <p>شركة برمجيات عراقية في بغداد، تقدم برامج جاهزة وتطويراً حسب الطلب.</p>
+            <p>{{ company.address }}<br>{{ company.hours.days }}، {{ company.hours.time }}</p>
           </div>
-
+          <nav class="layout__footer-group" aria-label="روابط الموقع">
+            <h2 class="layout__footer-heading">استكشف كودل</h2>
+            <ul role="list" class="layout__footer-links">
+              <li v-for="link in links" :key="link.to"><NuxtLink class="layout__footer-link" :to="link.to">{{ link.label }}</NuxtLink></li>
+            </ul>
+          </nav>
           <div class="layout__footer-group">
-            <h3 class="layout__footer-heading">طرق التواصل</h3>
-            <address class="layout__contact">
-              <ContactList compact />
-            </address>
-          </div>
-
-          <div class="layout__footer-group">
-            <h3 class="layout__footer-heading">موقعنا والدوام</h3>
-            <dl class="layout__footer-facts">
-              <div>
-                <dt>العنوان</dt>
-                <dd>{{ company.address }}</dd>
-              </div>
-              <div>
-                <dt>ساعات العمل</dt>
-                <dd>{{ company.hours.days }}، {{ company.hours.time }}</dd>
-              </div>
-            </dl>
+            <h2 class="layout__footer-heading">تواصل معنا</h2>
+            <address class="layout__contact"><ContactList compact /></address>
           </div>
         </div>
-
-        <div class="layout__footer-bottom"><span>كودل — بغداد، العراق</span><nav aria-label="روابط قانونية"><NuxtLink to="/privacy">الخصوصية</NuxtLink><NuxtLink to="/terms">الشروط</NuxtLink></nav></div>
         <div class="layout__footer-brand">
-          <NuxtLink
-            class="layout__footer-brand-link"
-            to="/"
-            aria-label="كودل - العودة للرئيسية"
-          >
-            <FooterParticles />
-          </NuxtLink>
+          <NuxtLink class="layout__footer-brand-link" to="/" aria-label="كودل — العودة للرئيسية"><FooterParticles /></NuxtLink>
         </div>
-
+        <div class="layout__footer-bottom"><span>كودل — بغداد، العراق</span><nav aria-label="روابط قانونية"><NuxtLink to="/privacy">الخصوصية</NuxtLink><NuxtLink to="/terms">الشروط</NuxtLink></nav></div>
       </div>
     </footer>
 
     <DotRingCursor />
-    <VueLenis v-if="smoothScroll" ref="smooth" root />
   </div>
 </template>
 
@@ -888,13 +817,18 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
 
 }
 
-/* Flat header and directory-first footer for V8.3. */
-.layout__header{padding:0;background:var(--bg);border-block-end:1px solid var(--border)}
-.layout__bar{padding-inline:var(--page-gutter);&::before{content:none}}
-.layout__footer-directory{padding-block:clamp(48px,7vw,96px);@media(width >= 64em){grid-template-columns:1.2fr 1fr 1fr 1fr;gap:var(--space-6)}}
-.layout__footer-intro p{color:var(--text-muted);margin-block-start:var(--space-5);max-width:28ch}
-.layout__footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-block-start:1px solid var(--border);padding-block:var(--space-4);color:var(--text-muted);font-size:var(--text-small);nav{display:flex;gap:var(--space-4);a{display:inline-flex;align-items:center;min-height:44px}}}
-.layout__footer-brand{border:0;padding-block-start:var(--space-5)}
-@media(width < 60em){.js .layout__menu{background:var(--bg);border-radius:var(--radius-md);backdrop-filter:none;-webkit-backdrop-filter:none}.js .layout__menu-button{border-radius:var(--radius-sm)}}
-
+/* V8.4: editorial footer, with a reserved full-width brand signature. */
+.layout__header { padding:0;background:var(--bg);border-block-end:1px solid var(--border); }
+.layout__bar { padding-inline:var(--page-gutter);&::before{content:none} }
+.layout__footer-directory { grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);padding-block:clamp(40px,6vw,80px); }
+.layout__footer-intro { p{font-size:var(--text-body);color:var(--text-muted);max-width:34ch;margin-block-start:14px} .layout__footer-statement{font-family:var(--font-display);color:var(--text);font-size:clamp(1.55rem,2.4vw,2.2rem);line-height:1.4;margin:0;font-weight:700;max-width:22ch} }
+.layout__footer-heading { font-size:var(--text-sub);margin-block-end:16px; }
+.layout__footer-links { grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 16px; }
+.layout__footer-link { font-size:var(--text-body); }
+.layout__contact :deep(.contact-list__row) { dt{font-size:var(--text-small)} dd{font-size:var(--text-body);overflow-wrap:anywhere} }
+.layout__footer-brand { padding-block:clamp(24px,4vw,48px);border-block-start:1px solid var(--border); }
+.layout__footer-brand-link { display:block;inline-size:100%;aspect-ratio:672/117; }
+.layout__footer-bottom { display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-block-start:1px solid var(--border);padding-block:16px;color:var(--text-muted);font-size:var(--text-small);nav{display:flex;gap:var(--space-4);a{display:inline-flex;align-items:center;min-height:44px}} }
+@media(width < 60em){.js .layout__menu{background:var(--bg);border-radius:var(--radius-md);backdrop-filter:none;-webkit-backdrop-filter:none}.js .layout__menu-button{border-radius:var(--radius-sm)}.layout__footer-directory{grid-template-columns:repeat(2,minmax(0,1fr))}.layout__footer-intro{grid-column:1/-1}}
+@media(max-width:580px){.layout__footer-directory{grid-template-columns:1fr;gap:32px}.layout__footer-intro{grid-column:auto}.layout__footer-brand{padding-block:24px}}
 </style>

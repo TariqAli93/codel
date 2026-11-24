@@ -90,7 +90,7 @@ $upright: skewX(var(--slant-angle));
     line-height: 1.4;
     text-decoration: none;
     transform: $lean;
-    transition: background-color var(--duration-fast) var(--ease-out);
+    transition: background-color .22s var(--ease-out), color .22s var(--ease-out), translate .22s var(--ease-out);
 
     .action__content {
       justify-content: center;
@@ -232,5 +232,9 @@ $upright: skewX(var(--slant-angle));
     clip-path: inset(50%);
     white-space: nowrap;
   }
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+  .action--solid:hover,.action--ink:hover,.action--outline:hover { translate:0 -2px; }
+  .action--solid:active,.action--ink:active,.action--outline:active { translate:0 1px; }
 }
 </style>

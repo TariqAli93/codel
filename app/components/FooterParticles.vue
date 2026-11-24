@@ -180,11 +180,11 @@ onBeforeUnmount(() => {
     <img
       ref="wordmark"
       class="footer-particles__image"
-      src="/brand/codel-full-lime.svg"
+      src="/brand/codel-full-white.svg"
       alt=""
       width="672"
       height="117"
-      loading="lazy"
+      loading="eager"
     />
     <canvas ref="canvas" class="footer-particles__canvas" aria-hidden="true" />
   </span>
@@ -195,7 +195,8 @@ onBeforeUnmount(() => {
   position: relative;
   display: block;
   inline-size: 100%;
-  color: var(--accent);
+  color: var(--text);
+  aspect-ratio: 672 / 117;
 
   &__image {
     display: block;
@@ -219,7 +220,7 @@ onBeforeUnmount(() => {
     }
 
     &--active &__image {
-      opacity: 0;
+      opacity: .18;
     }
 
     &--active &__canvas {

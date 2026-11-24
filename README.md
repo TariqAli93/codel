@@ -194,3 +194,7 @@ images: [
 - **صور البرنامجين وأي فيديو**: لم تُرفع أي صورة أو فيديو بعد. طريقة الإضافة في الخطوة 4.
 - **شعار عربي (Wordmark)**: الموجود هو الشعار اللاتيني فقط؛ اسم "كودل" يُكتب كنص.
 - **نموذج تواصل وأدوات إحصاء الزوار**: غير موجودة لأن الموقع بلا خادم (Backend). لا تُضاف إلا بقرار من صاحب الشركة.
+
+## V8.4 — Editorial Product Experience
+
+Refines the native Workline design: directional hero image composition, wider product chapters, short screenshot selectors, a clear price/action row, compact service index, factual purchase evidence, a larger shared CTA, and full-width footer wordmark with particle interaction. Uses existing brand tokens and typed product/company data. Native scrolling replaces the previous Lenis mount; the dependency and superseded cinematic modules are deliberately retained for a separate cleanup. External hero artwork and license remain as documented above. Review the root route, solutions listing/detail, service routes, and shared layout in a real browser. This revision needs build, visual, responsive and accessibility checks before merge.

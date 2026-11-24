@@ -1,12 +1,12 @@
 <script setup lang="ts">
 // A dot pinned to the pointer and a ring that lags behind it, drawn over the page. The system cursor
 // is hidden only while the enhanced cursor is visible. Fine pointers, no reduced motion.
-const pointerQuery = '(hover: hover) and (pointer: fine)'
+const pointerQuery = '(hover: hover) and (pointer: fine) and (forced-colors: none)'
 const reducedQuery = '(prefers-reduced-motion: reduce)'
 const interactive = 'a, button, summary, [role=button]'
 
-const follow = 0.14
-const hoverScale = 1.375
+const follow = 0.2
+const hoverScale = 1.5
 const scaleFollow = 0.22
 // Same values as $ring-size and $dot-size in the styles below.
 const ringSize = 32
@@ -32,7 +32,7 @@ let pointerMedia: MediaQueryList | undefined
 let reducedMedia: MediaQueryList | undefined
 
 function onPointerMove(event: PointerEvent) {
-  if (event.pointerType === 'touch') return
+  if (event.pointerType === 'touch') { onPointerLeave(); return }
   if ((event.target as Element | null)?.closest?.('input, textarea, select, dialog, [contenteditable=true]')) { onPointerLeave(); return }
   x = event.clientX
   y = event.clientY
