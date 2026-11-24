@@ -75,410 +75,110 @@ const routes = [
 <template>
   <div class="workline">
     <WorklineHero />
-    <section
-      id="discover"
-      class="workline-shell discovery"
-      aria-labelledby="discovery-title"
-    >
+    <section id="discover" class="workline-shell discovery" aria-labelledby="discovery-title">
       <div class="discovery__head">
         <h2 id="discovery-title">ماذا تريد أن تطوّر في عملك؟</h2>
-        <p>ابدأ بما تحتاجه، لا بما نبرمجه.</p>
+        <p>اختر ما يناسب طبيعة عملك.</p>
       </div>
       <div class="discovery__paths">
-        <NuxtLink v-for="(item, i) in routes" :key="item.to" :to="item.to">
-          <span class="discovery__arrow" aria-hidden="true">↖</span
-          ><small>0{{ i + 1 }}</small
-          ><strong>{{ item.title }}</strong
-          ><span>{{ item.text }}</span>
+        <NuxtLink v-for="item in routes" :key="item.to" :to="item.to">
+          <span class="discovery__copy"><strong>{{ item.title }}</strong><span>{{ item.text }}</span></span>
+          <span class="discovery__arrow" aria-hidden="true">↖</span>
         </NuxtLink>
       </div>
     </section>
-    <section
-      class="workline-shell workline-heading"
-      aria-labelledby="solutions-title"
-    >
-      <h2 id="solutions-title">حلول جاهزة.<br />لعملك اليومي.</h2>
-      <div>
-        <p>
-          تعرّف على برامجنا من شاشاتها الفعلية، ومميزاتها وأسعارها قبل أن تختار.
-        </p>
+
+    <section class="workline-showcase" aria-labelledby="solutions-title">
+      <div class="workline-shell workline-heading">
+        <div><h2 id="solutions-title">حلول جاهزة لعملك اليومي.</h2><p>شاهد البرامج من واجهاتها الفعلية، وتعرّف على مميزاتها وأسعارها قبل أن تختار.</p></div>
         <ActionLink look="text" to="/solutions" label="جميع البرامج ↖" />
       </div>
-    </section>
-    <div class="workline-shell workline-apps">
-      <WorklineProduct
-        v-for="(solution, i) in solutions"
-        :key="solution.slug"
-        :solution="solution"
-        :number="i + 1"
-        :total="solutions.length"
-      />
-    </div>
-    <section
-      class="workline-shell workline-services"
-      aria-labelledby="services-title"
-    >
-      <div class="workline-heading workline-heading--inner">
-        <h2 id="services-title">ما تحتاجه،<br />نطوّره لك.</h2>
-        <div>
-          <p>
-            إذا لم تجد ما يناسبك في البرامج الجاهزة، اكتشف خدماتنا حسب متطلبات
-            مشروعك.
-          </p>
-          <ActionLink look="text" to="/services" label="عرض جميع الخدمات ↖" />
-        </div>
+      <div class="workline-shell workline-apps">
+        <WorklineProduct v-for="(solution,i) in solutions" :key="solution.slug" :solution="solution" :number="i+1" :total="solutions.length" />
       </div>
-      <details
-        v-for="(service, i) in services"
-        :key="service.id"
-        name="home-services"
-        :open="i === 0"
-        class="workline-service"
-      >
-        <summary>
-          <small>0{{ i + 1 }}</small
-          ><strong>{{ service.title }}</strong
-          ><span class="workline-plus" aria-hidden="true"><span>+</span></span>
-        </summary>
-        <div class="workline-service__body">
-          <WorklineServiceIcon :id="service.id" />
-          <div>
+    </section>
+
+    <section class="workline-shell workline-services" aria-labelledby="services-title">
+      <div class="services-intro">
+        <h2 id="services-title">ما تحتاجه،<br>نطوّره لك.</h2>
+        <p>إذا لم تجد ما يناسبك في البرامج الجاهزة، نطوّر برمجيات وفق متطلبات مشروعك.</p>
+        <ActionLink look="text" to="/services" label="عرض جميع الخدمات ↖" />
+      </div>
+      <div class="service-index">
+        <details v-for="(service,i) in services" :key="service.id" name="home-services" :open="i===0" class="workline-service">
+          <summary>
+            <WorklineServiceIcon :id="service.id" />
+            <strong>{{ service.title }}</strong>
+            <span class="workline-plus" aria-hidden="true"><span>+</span></span>
+          </summary>
+          <div class="workline-service__body">
             <p>{{ service.text }}</p>
-            <small>السعر حسب متطلبات المشروع</small>
+            <div class="service-meta"><small>السعر حسب متطلبات المشروع</small><ActionLink look="text" :to="`/services/${service.id}`" label="تفاصيل الخدمة ↖" /></div>
           </div>
-          <ActionLink
-            look="text"
-            :to="`/services/${service.id}`"
-            label="تفاصيل الخدمة ↖"
-          />
-        </div>
-      </details>
-    </section>
-    <section
-      class="workline-shell workline-proof"
-      aria-labelledby="proof-title"
-    >
-      <div class="workline-heading workline-heading--inner">
-        <h2 id="proof-title">من بغداد،<br />لأعمالك.</h2>
-        <p>
-          كودل شركة برمجيات عراقية تجمع بين البرامج الجاهزة والتطوير حسب الطلب.
-        </p>
+        </details>
       </div>
-      <div class="workline-evidence">
+    </section>
+
+    <section class="workline-shell workline-proof" aria-labelledby="proof-title">
+      <header class="proof-heading"><h2 id="proof-title">اعرف ما تختار، قبل أن تبدأ.</h2><p>معلومات واضحة تساعدك على اتخاذ القرار المناسب لأعمالك.</p></header>
+      <div class="proof-evidence">
         <article>
-          <h3>رحلة كودل</h3>
-          <div class="workline-years">
-            <div>
-              <bdi>{{ company.founded.idea }}</bdi
-              ><span>بداية الفكرة</span>
-            </div>
-            <div>
-              <bdi>{{ company.founded.launch }}</bdi
-              ><span>انطلاق الشركة</span>
-            </div>
-          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5"/></svg>
+          <h3>شاهد البرنامج قبل الشراء</h3><p>واجهات فعلية من نقطة بلس ودلالي، مع تفاصيل وظائف كل برنامج.</p><ActionLink look="text" to="/solutions" label="استعرض البرامج ↖" />
         </article>
-        <div class="workline-facts">
-          <article>
-            <h3>برامج جاهزة</h3>
-            <p>نقطة بلس ودلالي، بواجهات فعلية وأسعار واضحة.</p>
-            <ActionLink look="text" to="/solutions" label="استعرض البرامج ↖" />
-          </article>
-          <article>
-            <h3>عنواننا ودوامنا</h3>
-            <p>
-              {{ company.address }}<br />{{ company.hours.days }}،
-              {{ company.hours.time }}
-            </p>
-            <ActionLink look="text" to="/about" label="تعرّف على كودل ↖" />
-          </article>
-        </div>
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2V3Z M8 8h8M8 12h8M8 16h5"/></svg>
+          <h3>أسعار واضحة</h3><p>سعر كل برنامج جاهز معلن، أما الخدمات الخاصة فتُسعّر حسب احتياجك.</p><ActionLink look="text" to="/services" label="تعرّف على الخدمات ↖" />
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          <h3>شركة برمجيات عراقية</h3><p>{{ company.address }}<br>{{ company.hours.days }}، {{ company.hours.time }}</p><ActionLink look="text" to="/about" label="تعرّف على كودل ↖" />
+        </article>
       </div>
+      <div class="proof-history"><span>رحلة كودل</span><div><bdi>{{ company.founded.idea }}</bdi><span>بداية الفكرة</span></div><div><bdi>{{ company.founded.launch }}</bdi><span>انطلاق الشركة</span></div></div>
     </section>
-    <div class="workline-shell">
-      <ClosingCall
-        heading="خلّينا نبدأ من شغلك."
-        text="أخبرنا ما الذي تريد تنظيمه أو تطويره."
-        ><ActionLink
-          look="ink"
-          size="lg"
-          to="/contact"
-          label="ناقش مشروعك ↖" /><ActionLink
-          look="text"
-          :to="company.phones.main.whatsapp"
-          new-tab
-          label="أو راسلنا على واتساب"
-      /></ClosingCall>
+
+    <div class="workline-shell workline-end">
+      <ClosingCall heading="شنو تحتاج حتى يصير شغلك أسهل؟" text="احچيلنا عن احتياجك، ونناقش الحل المناسب لأعمالك.">
+        <ActionLink look="ink" size="lg" to="/contact" label="ناقش مشروعك ↖" />
+        <ActionLink look="text" :to="company.phones.main.whatsapp" new-tab label="أو راسلنا على واتساب" />
+      </ClosingCall>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.discovery {
-  padding-block: clamp(36px, 5vw, 72px);
+.discovery { padding-block:clamp(32px,5vw,72px); }
+.discovery__head { display:flex;justify-content:space-between;align-items:baseline;gap:16px; margin-block-end:24px; h2{font-size:clamp(1.3rem,2vw,1.8rem);margin:0} p{font-size:var(--text-body);color:var(--text-muted)} }
+.discovery__paths { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--border); }
+.discovery__paths a { display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:128px;padding:clamp(16px,2.2vw,32px);border-inline-end:1px solid var(--border);text-decoration:none;transition:background-color .22s var(--ease-out),color .22s var(--ease-out); &:last-child{border-inline-end:0} &:hover,&:focus-visible{background:var(--surface);color:var(--accent)} &:focus-visible{outline-offset:-3px} }
+.discovery__copy { display:grid;gap:5px;min-width:0;strong{font-family:var(--font-display);font-size:clamp(1.15rem,1.7vw,1.6rem);line-height:1.5} >span{font-size:var(--text-body);color:var(--text-muted)} }
+.discovery__arrow { font-size:1.65rem;flex:none;color:var(--accent);transition:translate .22s var(--ease-out); }
+.discovery__paths a:hover .discovery__arrow { translate:-3px -3px; }
+
+.workline-showcase { padding-block:clamp(36px,4.4vw,72px) var(--section-gap); }
+.workline-heading { display:flex;justify-content:space-between;align-items:end;gap:24px;margin-block-end:clamp(24px,4vw,48px);h2{font-size:clamp(2rem,4.8vw,4.25rem);line-height:1.28;margin-block-end:16px}p{color:var(--text-muted);font-size:var(--text-lead);max-width:42rem} }
+.workline-apps { max-inline-size:1760px;padding-inline:var(--page-gutter);display:grid;gap:clamp(18px,2vw,28px); }
+
+.workline-services { display:grid;grid-template-columns:minmax(0,.68fr) minmax(0,1.32fr);gap:clamp(32px,5vw,88px);padding-block:0 var(--section-gap); }
+.services-intro { align-self:start;h2{font-size:clamp(2.2rem,4.5vw,4.25rem);line-height:1.25}p{font-size:var(--text-lead);color:var(--text-muted);max-width:32ch;margin-block:20px} }
+.service-index { min-width:0;border-block-end:1px solid var(--border); }
+.workline-service { border-block-start:1px solid var(--border);summary{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:clamp(10px,1.4vw,20px);min-height:88px;padding:18px 8px;align-items:center;list-style:none;cursor:pointer;transition:color .22s var(--ease-out),background-color .22s var(--ease-out);&::-webkit-details-marker{display:none}&:hover{background:var(--surface)}strong{font-family:var(--font-display);font-size:clamp(1.15rem,1.75vw,1.7rem);line-height:1.5}:deep(.service-icon){width:44px;height:44px;padding:9px;border-color:var(--border);color:var(--text-muted);transition:color .22s,border-color .22s}} &[open] summary{color:var(--accent);:deep(.service-icon){color:var(--accent);border-color:var(--accent)}.workline-plus{background:var(--accent);color:var(--on-accent)}.workline-plus>span{transform:skewX(var(--slant-angle)) rotate(45deg)}} }
+.workline-plus { display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-size:1.5rem;transform:skewX(calc(-1 * var(--slant-angle)));span{transform:skewX(var(--slant-angle));transition:transform .22s var(--ease-out)} }
+.workline-service__body { padding:0 20px 24px;padding-inline-start:calc(52px + clamp(10px,1.4vw,20px));font-size:clamp(1rem,1.15vw,1.2rem);p{max-width:56ch;line-height:1.85} }
+.service-meta { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin-block-start:16px;small{font-size:var(--text-small);color:var(--text-muted)} }
+@supports (interpolate-size: allow-keywords) and selector(details::details-content) {
+  .workline-service { interpolate-size:allow-keywords; &::details-content { block-size:0;overflow:clip;transition:block-size .35s var(--ease-out),content-visibility .35s allow-discrete; } &[open]::details-content { block-size:auto; } }
 }
-.discovery__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--space-4);
-  margin-block-end: var(--space-4);
-  h2 {
-    font-size: clamp(1.25rem, 2vw, 1.7rem);
-    margin: 0;
-  }
-  p {
-    color: var(--text-muted);
-    font-size: var(--text-ui);
-    margin: 0;
-  }
-}
-.discovery__paths {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--surface);
-  a {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    gap: 6px;
-    min-height: 174px;
-    padding: clamp(18px, 2.2vw, 32px);
-    border-inline-end: 1px solid var(--border);
-    text-decoration: none;
-    transition:
-      background var(--duration-base),
-      color var(--duration-base);
-    &:last-child {
-      border: 0;
-    }
-    &:hover,
-    &:focus-visible {
-      background: var(--accent);
-      color: var(--on-accent);
-      small,
-      span {
-        color: inherit;
-      }
-    }
-    &:focus-visible {
-      outline-offset: -4px;
-    }
-    strong {
-      font-family: var(--font-display);
-      font-size: clamp(1.25rem, 2.15vw, 2rem);
-      line-height: 1.45;
-    }
-    small,
-    span {
-      color: var(--text-muted);
-      font-size: var(--text-small);
-    }
-    .discovery__arrow {
-      align-self: end;
-      margin-block-end: auto;
-      font-size: 1.6rem;
-      line-height: 1;
-    }
-  }
-}
-.workline-heading {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-  gap: clamp(24px, 5vw, 80px);
-  align-items: end;
-  padding-block: var(--section-gap) var(--space-6);
-  h2 {
-    font-size: clamp(2.125rem, 5vw, 4.375rem);
-    line-height: 1.25;
-    margin: 0;
-  }
-  p {
-    color: var(--text-muted);
-    font-size: var(--text-lead);
-    max-width: 38rem;
-  }
-}
-.workline-heading--inner {
-  padding-block: 0 var(--space-6);
-}
-.workline-apps {
-  display: grid;
-  gap: 20px;
-}
-.workline-services,
-.workline-proof {
-  padding-block: var(--section-gap);
-}
-.workline-service {
-  border-block-start: 1px solid var(--border);
-  &:last-child {
-    border-block-end: 1px solid var(--border);
-  }
-  summary {
-    list-style: none;
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    align-items: center;
-    gap: 16px;
-    min-height: 88px;
-    padding: 22px 12px;
-    cursor: pointer;
-    transition:
-      background var(--duration-base),
-      color var(--duration-base);
-    &::-webkit-details-marker {
-      display: none;
-    }
-    &:hover {
-      background: var(--surface);
-    }
-    strong {
-      font-family: var(--font-display);
-      font-size: clamp(1.25rem, 2.8vw, 2.5rem);
-      line-height: 1.4;
-    }
-    small {
-      color: var(--text-muted);
-    }
-  }
-  &[open] summary {
-    color: var(--accent);
-    .workline-plus {
-      background: var(--accent);
-      color: var(--on-accent);
-    }
-    .workline-plus > span {
-      transform: skewX(var(--slant-angle)) rotate(45deg);
-    }
-  }
-}
-.workline-plus {
-  display: grid;
-  place-items: center;
-  inline-size: 42px;
-  block-size: 42px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 1.7rem;
-  transform: skewX(calc(-1 * var(--slant-angle)));
-  span {
-    transform: skewX(var(--slant-angle));
-    transition: transform var(--duration-base);
-  }
-}
-.workline-service__body {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-5);
-  padding: 4px 72px 28px;
-  > div {
-    flex: 1;
-    min-width: 0;
-  }
-  small {
-    color: var(--text-muted);
-  }
-}
-.workline-proof {
-  border-block-start: 1px solid var(--border);
-}
-.workline-evidence {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: var(--space-7);
-  border-block: 1px solid var(--border);
-  > article {
-    padding-block: var(--space-6);
-  }
-  h3 {
-    font-size: var(--text-card);
-  }
-}
-.workline-years {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin-block: var(--space-6);
-  > div {
-    display: grid;
-    gap: 6px;
-    border-block-start: 1px solid var(--border-strong);
-    padding-block-start: 20px;
-    position: relative;
-    &:before {
-      content: "";
-      position: absolute;
-      inset-block-start: -5px;
-      inset-inline-start: 0;
-      width: 9px;
-      height: 9px;
-      background: var(--accent);
-      border-radius: 50%;
-    }
-  }
-  bdi {
-    font: 600 clamp(2.375rem, 5vw, 4.375rem)/1.2 var(--font-display);
-    font-variant-numeric: tabular-nums;
-  }
-  span {
-    color: var(--text-muted);
-  }
-}
-.workline-facts {
-  border-inline-start: 1px solid var(--border);
-  padding-inline-start: var(--space-7);
-  article {
-    padding-block: var(--space-5);
-    & + article {
-      border-block-start: 1px solid var(--border);
-    }
-  }
-}
-.workline :deep(.closing) {
-  margin-block-start: 0;
-  margin-block-end: var(--section-gap);
-}
-@media (max-width: 850px) {
-  .workline-heading,
-  .workline-evidence {
-    grid-template-columns: 1fr;
-    gap: var(--space-5);
-  }
-  .workline-facts {
-    border-inline-start: 0;
-    border-block-start: 1px solid var(--border);
-    padding: 0;
-  }
-  .discovery__paths {
-    grid-template-columns: 1fr;
-    a {
-      min-height: 118px;
-      border-inline-end: 0;
-      border-block-end: 1px solid var(--border);
-      position: relative;
-      padding-inline-end: 58px;
-      .discovery__arrow {
-        position: absolute;
-        inset-inline-end: 18px;
-        inset-block-start: 18px;
-      }
-    }
-  }
-  .discovery__head {
-    display: block;
-  }
-  .workline-service__body {
-    padding-inline: 16px;
-    flex-wrap: wrap;
-  }
-  .workline-service summary {
-    grid-template-columns: 28px minmax(0, 1fr) 40px;
-    gap: 8px;
-    padding-inline: 4px;
-  }
-}
+
+.workline-proof { padding-block:var(--section-gap);border-block-start:1px solid var(--border); }
+.proof-heading { max-width:50rem;margin-block-end:36px;h2{font-size:clamp(2rem,3.8vw,3.5rem);line-height:1.3}p{color:var(--text-muted);font-size:var(--text-lead)} }
+.proof-evidence { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--border);article{display:flex;flex-direction:column;align-items:start;gap:12px;padding:clamp(20px,2.4vw,36px);border-inline-end:1px solid var(--border);min-width:0;&:first-child{padding-inline-start:0}&:last-child{border:0;padding-inline-end:0}svg{width:32px;height:32px;color:var(--accent)}h3{font-size:clamp(1.2rem,1.8vw,1.55rem);margin:0}p{color:var(--text-muted);font-size:var(--text-body);line-height:1.8} :deep(.action){margin-block-start:auto}} }
+ .proof-history { display:flex;align-items:center;flex-wrap:wrap;gap:16px clamp(24px,4vw,64px);padding-block:20px;border-block-end:1px solid var(--border);color:var(--text-muted);font-size:var(--text-small);>div{display:flex;align-items:baseline;gap:12px}bdi{font-family:var(--font-display);font-weight:700;font-size:1.4rem;color:var(--text);font-variant-numeric:tabular-nums} }
+.workline-end { padding-block-end:var(--section-gap); }
+.workline-end :deep(.closing){margin-block-start:0}
+.proof-evidence article :deep(.action){font-size:var(--text-body)}
+.proof-heading h2,.workline-heading h2,.services-intro h2{color:var(--text)}
+@media(max-width:900px){.workline-services{grid-template-columns:1fr;gap:24px}.services-intro h2 br{display:none}.services-intro p{max-width:44ch}.workline-heading{align-items:start;flex-direction:column;gap:8px}}
+@media(max-width:720px){.discovery__head{display:block}.discovery__head p{margin-block-start:8px}.discovery__paths,.proof-evidence{grid-template-columns:1fr}.discovery__paths a{min-height:96px;padding:16px 4px;border-inline-end:0;border-block-end:1px solid var(--border);&:last-child{border-block-end:0}}.proof-evidence article{padding:24px 0;border-inline-end:0;border-block-end:1px solid var(--border)}.proof-history{gap:12px 24px}.workline-service__body{padding-inline:12px}.workline-service summary{grid-template-columns:36px minmax(0,1fr) 36px;gap:10px;padding-inline:2px;:deep(.service-icon){width:36px;height:36px;padding:7px}}.workline-plus{width:34px;height:38px}}
 </style>
