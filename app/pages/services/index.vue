@@ -16,10 +16,12 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
     <ul role="list" class="services__list">
       <!-- Permanent service IDs preserve these public links when the list is reordered. -->
       <li v-for="service in services" :id="service.id" :key="service.id" class="services__item">
+        <WorklineServiceIcon :id="service.id" />
         <h2 class="services__title">{{ service.title }}</h2>
         <p class="services__text">{{ service.text }}</p>
         <div class="services__actions">
-          <WhatsAppCall look="text" :subject="service.title" label="استفسر عن هذه الخدمة" :hidden-suffix="service.title" />
+          <small>السعر حسب متطلبات المشروع</small>
+          <ActionLink :to="`/services/${service.id}`" label="تفاصيل الخدمة ↖" />
           <ActionLink v-if="service.related" look="text" :to="service.related" label="حلولنا الجاهزة" />
         </div>
       </li>
@@ -31,45 +33,4 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
   </div>
 </template>
 
-<style scoped lang="scss">
-$wide: 64em;
-
-.services {
-  &__list {
-    margin-block-start: var(--head-gap);
-    padding: 0;
-    list-style: none;
-  }
-
-  &__item {
-    display: grid;
-    gap: var(--space-3);
-    padding-block: var(--space-6);
-    border-block-start: 1px solid var(--border);
-
-    @media (width >= $wide) {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) auto;
-      column-gap: var(--space-7);
-      align-items: baseline;
-    }
-  }
-
-  &__title {
-    margin: 0;
-    font-size: var(--text-flow);
-    font-weight: 700;
-    line-height: 1.5;
-  }
-
-  &__text {
-    line-height: 1.75;
-    color: var(--text-muted);
-  }
-
-  &__actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-</style>
+<style scoped lang="scss">.services__list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:var(--space-5);padding:0;list-style:none;margin-block-start:var(--head-gap)}.services__item{display:flex;flex-direction:column;gap:var(--space-4);padding:clamp(18px,3vw,38px);border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);transition:border-color var(--duration-base),background var(--duration-base);&:hover{border-color:var(--border-strong);background:var(--surface-raised)}}.services__title{font-size:var(--text-name);margin:0}.services__text{color:var(--text-muted)}.services__actions{margin-block-start:auto;display:flex;flex-direction:column;align-items:start;gap:var(--space-3);small{color:var(--text-muted)}}</style>

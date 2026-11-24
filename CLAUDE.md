@@ -4,6 +4,8 @@ Conventions for AI assistants working on this repository.
 
 ## Project
 
+**V8.3 Workline update:** The owner approved the Workline design for native Nuxt implementation. The previous cinematic-home, header and footer design descriptions are historical, not requirements for the new homepage. `WorklineHero`, `WorklineProduct` and `WorklineServiceIcon` implement the new design. `/services` is now `app/pages/services/index.vue`, with `/services/[id]` using permanent service IDs. The contact form is explicitly approved as a WhatsApp-only handoff, not a backend or a successful-submission simulation. Global shared Workline classes are permitted in `main.scss`. Keep the existing semantic brand tokens and scoped SCSS until a separately verified Tailwind/shadcn migration. Review the original V8.3 design and verify the real routes before merging.
+
 Website for **Codel - كودل**, an Iraqi software company. Primary audience reads Arabic, so the site is Arabic-first and right-to-left.
 
 The site has real content and is due for a full redesign. Passages marked **Current design** describe how the site looks today; a redesign may replace them. Everything else in this file is a standing rule.
@@ -56,7 +58,7 @@ File-based routing under `app/pages/`. One file per route:
 | ------------------- | -------------------------------- |
 | `/`                 | `app/pages/index.vue`            |
 | `/about`            | `app/pages/about.vue`            |
-| `/services`         | `app/pages/services.vue`         |
+| `/services`         | `app/pages/services/index.vue`         |
 | `/solutions`        | `app/pages/solutions/index.vue`  |
 | `/solutions/[slug]` | `app/pages/solutions/[slug].vue` |
 | `/contact`          | `app/pages/contact.vue`          |

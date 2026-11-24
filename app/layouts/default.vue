@@ -261,29 +261,10 @@ onBeforeUnmount(() => {
 
     <footer class="layout__footer">
       <div class="layout__footer-frame">
-        <section class="layout__footer-invite" aria-labelledby="footer-invite-title">
-          <div class="layout__footer-message">
-            <h2 id="footer-invite-title" class="layout__footer-title">
-              تريد برنامج أو موقع يسهّل شغلك؟
-            </h2>
-            <p class="layout__footer-lede">
-              احچِ ويانا عن احتياجك. عدنا برامج جاهزة، ونبرمج حلول خاصة حسب طبيعة عملك.
-            </p>
-          </div>
-
-          <div class="layout__footer-action-wrap">
-            <ActionLink
-              look="solid"
-              size="lg"
-              :glow="false"
-              :to="company.phones.main.whatsapp"
-              :new-tab="true"
-              label="احچي ويانا على واتساب"
-            />
-          </div>
-        </section>
+        
 
         <div class="layout__footer-directory">
+          <div class="layout__footer-group layout__footer-intro"><NuxtLink to="/" aria-label="كودل — الرئيسية"><img src="/brand/codel-full-white.svg" alt="Codel" width="122" height="22" /></NuxtLink><p>شركة برمجيات عراقية في بغداد، تقدم برامج جاهزة وتطويراً حسب الطلب.</p></div>
           <div class="layout__footer-group">
             <h3 class="layout__footer-heading">استكشف</h3>
             <nav aria-label="روابط الموقع">
@@ -319,6 +300,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
+        <div class="layout__footer-bottom"><span>كودل — بغداد، العراق</span><nav aria-label="روابط قانونية"><NuxtLink to="/privacy">الخصوصية</NuxtLink><NuxtLink to="/terms">الشروط</NuxtLink></nav></div>
         <div class="layout__footer-brand">
           <NuxtLink
             class="layout__footer-brand-link"
@@ -905,4 +887,14 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
   }
 
 }
+
+/* Flat header and directory-first footer for V8.3. */
+.layout__header{padding:0;background:var(--bg);border-block-end:1px solid var(--border)}
+.layout__bar{padding-inline:var(--page-gutter);&::before{content:none}}
+.layout__footer-directory{padding-block:clamp(48px,7vw,96px);@media(width >= 64em){grid-template-columns:1.2fr 1fr 1fr 1fr;gap:var(--space-6)}}
+.layout__footer-intro p{color:var(--text-muted);margin-block-start:var(--space-5);max-width:28ch}
+.layout__footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-block-start:1px solid var(--border);padding-block:var(--space-4);color:var(--text-muted);font-size:var(--text-small);nav{display:flex;gap:var(--space-4);a{display:inline-flex;align-items:center;min-height:44px}}}
+.layout__footer-brand{border:0;padding-block-start:var(--space-5)}
+@media(width < 60em){.js .layout__menu{background:var(--bg);border-radius:var(--radius-md);backdrop-filter:none;-webkit-backdrop-filter:none}.js .layout__menu-button{border-radius:var(--radius-sm)}}
+
 </style>

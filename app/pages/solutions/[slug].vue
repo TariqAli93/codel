@@ -2,6 +2,7 @@
 import { company } from '~/data/company'
 import { solutions } from '~/data/solutions'
 
+definePageMeta({ key: route => route.path })
 const route = useRoute()
 
 // A route param can be string | string[]: normalise it before the lookup.
@@ -132,8 +133,7 @@ const activeImage = computed(() => images[active.value] ?? images[0])
           :aria-current="index === active ? 'true' : undefined"
           @click="active = index"
         >
-          <img :src="image.src" alt="" :width="image.width" :height="image.height" loading="lazy" decoding="async">
-          <span class="product__thumb-label">{{ label(image.alt) }}</span>
+          <span class="product__thumb-inner"><img :src="image.src" alt="" :width="image.width" :height="image.height" loading="lazy" decoding="async"><span class="product__thumb-label">{{ label(image.alt) }}</span></span>
         </button>
       </div>
     </section>
@@ -142,7 +142,6 @@ const activeImage = computed(() => images[active.value] ?? images[0])
       class="product__closing"
       heading="للاستفسار أو الشراء"
       :text="closingText"
-      :data-theme="solution.look === 'sand' ? 'light' : undefined"
     >
       <div class="product__closing-side">
         <ProductPrice :amount="solution.priceIqd" />
@@ -187,7 +186,7 @@ $wide: 64em;
     display: grid;
     gap: var(--space-7);
     padding: var(--panel-pad);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     color: var(--text);
 
     @media (width >= $wide) {
@@ -488,11 +487,8 @@ $wide: 64em;
   // ---------------------------------------------------------------------------
 
   &__closing {
-    --closing-ground: var(--nuqta-ground);
 
     .product--sand & {
-      --closing-ground: var(--dalaly-ground);
-      --closing-ink: var(--dalaly-ink);
     }
   }
 
@@ -510,4 +506,5 @@ $wide: 64em;
     max-inline-size: 28rem;
   }
 }
+.product__thumb{transform:skewX(calc(-1 * var(--slant-angle)));border-radius:var(--radius-sm);margin-inline:4px;min-inline-size:0}.product__thumb-inner{display:block;transform:skewX(var(--slant-angle));min-inline-size:0}
 </style>

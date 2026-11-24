@@ -27,7 +27,7 @@ const props = withDefaults(
     label: undefined,
     detail: undefined,
     hiddenSuffix: undefined,
-    glow: true
+    glow: false
   }
 )
 
@@ -84,7 +84,7 @@ $upright: skewX(var(--slant-angle));
   &--ink,
   &--outline {
     justify-content: center;
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-sm);
     font-family: var(--font-sans);
     font-weight: 600;
     line-height: 1.4;

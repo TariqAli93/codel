@@ -1,15 +1,15 @@
 <script setup lang="ts">
 // A dot pinned to the pointer and a ring that lags behind it, drawn over the page. The system cursor
-// stays as it is. Only for a hovering, fine pointer, and never under reduced motion.
+// is hidden only while the enhanced cursor is visible. Fine pointers, no reduced motion.
 const pointerQuery = '(hover: hover) and (pointer: fine)'
 const reducedQuery = '(prefers-reduced-motion: reduce)'
-const interactive = 'a, button, input'
+const interactive = 'a, button, summary, [role=button]'
 
 const follow = 0.14
-const hoverScale = 1.9
+const hoverScale = 1.375
 const scaleFollow = 0.22
 // Same values as $ring-size and $dot-size in the styles below.
-const ringSize = 36
+const ringSize = 32
 const dotSize = 6
 
 // Stays false on the server and until mount, so the first render has no cursor to hydrate.
@@ -25,12 +25,15 @@ let ringX = 0
 let ringY = 0
 let scale = 1
 let overInteractive = false
+let pressed = false
+const targetScale = () => pressed ? .6875 : overInteractive ? hoverScale : 1
 let frame = 0
 let pointerMedia: MediaQueryList | undefined
 let reducedMedia: MediaQueryList | undefined
 
 function onPointerMove(event: PointerEvent) {
   if (event.pointerType === 'touch') return
+  if ((event.target as Element | null)?.closest?.('input, textarea, select, dialog, [contenteditable=true]')) { onPointerLeave(); return }
   x = event.clientX
   y = event.clientY
   // Entering the window the ring starts on the pointer instead of sweeping in from its last place.
@@ -38,6 +41,7 @@ function onPointerMove(event: PointerEvent) {
     ringX = x
     ringY = y
     present.value = true
+    document.documentElement.classList.add("workline-cursor-active")
   }
   overInteractive = Boolean(document.elementFromPoint(x, y)?.closest(interactive))
   // Wake the loop if it was resting.
@@ -46,13 +50,15 @@ function onPointerMove(event: PointerEvent) {
 
 function onPointerLeave() {
   overInteractive = false
+  pressed = false
   present.value = false
+  document.documentElement.classList.remove("workline-cursor-active")
 }
 
 function tick() {
   ringX += (x - ringX) * follow
   ringY += (y - ringY) * follow
-  scale += ((overInteractive ? hoverScale : 1) - scale) * scaleFollow
+  scale += (targetScale() - scale) * scaleFollow
   if (ring.value) {
     ring.value.style.transform = `translate(${ringX - ringSize / 2}px, ${ringY - ringSize / 2}px) scale(${scale})`
   }
@@ -64,12 +70,19 @@ function tick() {
   const settled =
     Math.abs(x - ringX) < 0.1 &&
     Math.abs(y - ringY) < 0.1 &&
-    Math.abs((overInteractive ? hoverScale : 1) - scale) < 0.001
+    Math.abs(targetScale() - scale) < 0.001
   frame = settled ? 0 : requestAnimationFrame(tick)
 }
 
+function onPress() { if (present.value) { pressed = true; if (!frame) frame = requestAnimationFrame(tick) } }
+function onRelease() { pressed = false; if (present.value && !frame) frame = requestAnimationFrame(tick) }
 function start() {
   window.addEventListener('pointermove', onPointerMove, { passive: true })
+  window.addEventListener('pointerdown', onPress)
+  window.addEventListener('pointerup', onRelease)
+  window.addEventListener('pointercancel', onRelease)
+  window.addEventListener('keydown', onPointerLeave)
+  window.addEventListener('blur', onPointerLeave)
   document.documentElement.addEventListener('pointerleave', onPointerLeave)
   frame = requestAnimationFrame(tick)
 }
@@ -78,10 +91,16 @@ function stop() {
   cancelAnimationFrame(frame)
   frame = 0
   window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('pointerdown', onPress)
+  window.removeEventListener('pointerup', onRelease)
+  window.removeEventListener('pointercancel', onRelease)
+  window.removeEventListener('keydown', onPointerLeave)
+  window.removeEventListener('blur', onPointerLeave)
   document.documentElement.removeEventListener('pointerleave', onPointerLeave)
   overInteractive = false
   present.value = false
   scale = 1
+  onPointerLeave()
 }
 
 function syncEnabled() {
@@ -114,7 +133,7 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 // Same values as ringSize and dotSize in the script.
-$ring-size: 36px;
+$ring-size: 32px;
 $dot-size: 6px;
 
 .dot-ring {
