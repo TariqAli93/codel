@@ -198,3 +198,7 @@ images: [
 ## V8.4 — Editorial Product Experience
 
 Refines the native Workline design: directional hero image composition, wider product chapters, short screenshot selectors, a clear price/action row, compact service index, factual purchase evidence, a larger shared CTA, and full-width footer wordmark with particle interaction. Uses existing brand tokens and typed product/company data. Native scrolling replaces the previous Lenis mount; the dependency and superseded cinematic modules are deliberately retained for a separate cleanup. External hero artwork and license remain as documented above. Review the root route, solutions listing/detail, service routes, and shared layout in a real browser. This revision needs build, visual, responsive and accessibility checks before merge.
+
+### V8.4.1 — rendered-site polish
+
+Follow-up to the V8.4 browser review. The existing product screenshot assets and paths were confirmed in GitHub. Initial and explicitly selected product images now load eagerly in a stable stage, with an error/retry state instead of a blank panel. Headings no longer depend on scroll-linked opacity. Wider desktop layout, separated hero image/text, more compact product information and adjacent pricing/action, integrated screenshot navigation, stronger CTA proportions, and larger footer directory text. Build and browser validation remain required before merge; the original missing screenshot root cause has not been reproduced.

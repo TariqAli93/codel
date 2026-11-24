@@ -67,12 +67,12 @@ onMounted(() => {
 <style scoped lang="scss">
 .v83-hero { min-height:calc(100vh - var(--header-height) - 1px);min-height:calc(100svh - var(--header-height) - 1px);display:grid;grid-template-rows:1fr auto;position:relative;isolation:isolate;overflow:hidden;background:var(--bg);border-block-end:1px solid var(--border); }
 .v83-background { position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none; }
-.v83-stock { position:absolute;inset-block:0;inset-inline-end:0;width:74%;height:100%;max-width:none;object-fit:cover;object-position:32% 50%;filter:brightness(.94) saturate(.92);animation:art-in .9s var(--ease-out) both; }
-.v83-background::after { content:'';position:absolute;inset:0;background:linear-gradient(270deg,var(--bg) 0%,var(--bg) 25%,rgba(16,20,17,.96) 38%,rgba(16,20,17,.58) 51%,rgba(16,20,17,.10) 75%,rgba(16,20,17,.08) 100%),linear-gradient(0deg,var(--bg),transparent 25%,transparent 82%,rgba(16,20,17,.18)); }
+.v83-stock { position:absolute;inset-block:0;inset-inline-end:0;width:62%;height:100%;max-width:none;object-fit:contain;object-position:left center;filter:brightness(.98) saturate(.94);mask-image:linear-gradient(to right,#000 0%,#000 76%,transparent 100%);animation:art-in .9s var(--ease-out) both; }
+.v83-background::after { content:'';position:absolute;inset:0;background:linear-gradient(to left,var(--bg) 0%,var(--bg) 40%,rgba(16,20,17,.85) 46%,rgba(16,20,17,.25) 58%,transparent 71%),linear-gradient(0deg,var(--bg),transparent 17%,transparent 88%,rgba(16,20,17,.12)); }
 .v83-content { display:grid;align-content:center;position:relative;padding-block:clamp(54px,9vh,112px) clamp(36px,6vh,76px);min-width:0; }
-.v9-hero-copy { width:min(100%,720px); }
+.v9-hero-copy { width:min(49%,780px); }
 .v4-caption { color:var(--text-muted);font-size:clamp(.95rem,1.1vw,1.125rem);margin-block-end:20px; }
-.v83-hero h1 { font-family:var(--font-hero);font-size:clamp(3rem,6.7vw,7rem);font-weight:700;line-height:1.27;letter-spacing:normal;margin-block-end:24px; }
+.v83-hero h1 { font-family:var(--font-hero);font-size:clamp(3rem,5.8vw,6.9rem);font-weight:700;line-height:1.27;letter-spacing:normal;margin-block-end:24px; }
 .v4-line { display:block;overflow:hidden;padding-block:4px 12px; >span{display:block;animation:word-in .9s var(--ease-out) both} &:nth-child(2)>span{color:var(--accent);animation-delay:.1s} }
 .v4-hero-intro { max-width:36rem; p{font-size:clamp(1.125rem,1.6vw,1.45rem);line-height:1.85;color:var(--text);max-width:35rem} }
 .actions { display:flex;align-items:center;flex-wrap:wrap;gap:clamp(16px,2vw,28px);margin-block-start:30px;padding-inline:4px; :deep(.action--solid){min-height:58px;padding-inline:clamp(20px,2vw,32px);font-size:1.125rem} :deep(.action--text){font-size:1.05rem} }
@@ -87,7 +87,7 @@ onMounted(() => {
     @keyframes hero-depth { from{translate:0 0}to{translate:0 8%} }
   }
 }
-@media(max-width:900px){.v83-stock{width:100%;object-position:30% 50%}.v83-background::after{background:linear-gradient(270deg,rgba(16,20,17,.98),rgba(16,20,17,.82) 48%,rgba(16,20,17,.32)),linear-gradient(0deg,var(--bg),transparent 45%)}.v83-hero h1{font-size:clamp(2.8rem,9vw,5.5rem)}}
+@media(max-width:900px){ .v9-hero-copy{width:min(100%,650px)}.v83-stock{width:100%;object-fit:cover;object-position:30% 50%;mask-image:none}.v83-background::after{background:linear-gradient(270deg,rgba(16,20,17,.98),rgba(16,20,17,.82) 48%,rgba(16,20,17,.32)),linear-gradient(0deg,var(--bg),transparent 45%)} .v83-hero h1{font-size:clamp(2.8rem,9vw,5.5rem)}}
 @media(max-width:560px){.v83-content{align-content:end;padding-block:clamp(64px,14vh,120px) 36px}.v83-stock{object-position:34% 30%;filter:brightness(.8) saturate(.9)}.v83-background::after{background:linear-gradient(0deg,var(--bg) 8%,rgba(16,20,17,.94) 42%,rgba(16,20,17,.58) 72%,rgba(16,20,17,.2)),linear-gradient(270deg,rgba(16,20,17,.78),transparent)}.v83-hero h1{font-size:clamp(2.3rem,10.4vw,3.8rem);margin-block-end:14px}.v4-caption{margin-block-end:12px}.v4-hero-intro p{font-size:1rem}.actions{gap:12px 18px;margin-block-start:20px;:deep(.action--solid){min-height:52px;font-size:1rem}}.v83-credit{font-size:.7rem}}
 @media(prefers-reduced-motion:reduce){.v83-stock,.v4-line>span{animation:none;transform:none;translate:none}}
 </style>
