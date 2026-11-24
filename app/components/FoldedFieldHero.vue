@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import FoldedField from "./effects/FoldedField.vue";
+import RibbonStrata from "./effects/RibbonStrata.vue";
 </script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
     <div class="material-still" aria-hidden="true" />
-    <FoldedField />
+    <RibbonStrata />
     <div class="workline-shell cover-inner">
       <div class="cover-main">
         <div class="material-copy">
@@ -28,7 +28,7 @@ import FoldedField from "./effects/FoldedField.vue";
   </section>
 </template>
 <style scoped lang="scss">
-/* V9.5 — original directional material, generated locally. */
+/* V9.6 — architectural ribbon strata, inspired by Shader Studio. */
 .cover-hero {
   position: relative;
   isolation: isolate;
@@ -50,9 +50,9 @@ import FoldedField from "./effects/FoldedField.vue";
   z-index: -2;
 }
 .material-still {
-  background-image: url(/images/hero/folded-field-desktop.jpg);
+  background-image: url(/images/hero/ribbon-strata-desktop.svg);
   background-position: center;
-  background-size: 100% 100%;
+  background-size: cover;
 }
 :deep(.material-canvas) {
   opacity: 0;
@@ -169,7 +169,7 @@ import FoldedField from "./effects/FoldedField.vue";
 }
 @media (max-width: 560px) {
   .material-still {
-    background-image: url(/images/hero/folded-field-mobile.jpg);
+    background-image: url(/images/hero/ribbon-strata-mobile.svg);
   }
   .cover-hero {
     min-height: calc(100svh - var(--header-height));
