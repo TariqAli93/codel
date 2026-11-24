@@ -150,8 +150,8 @@ onBeforeUnmount(() => {
             class="layout__logo"
             src="/brand/codel-full-white.svg"
             alt="Codel"
-            width="126"
-            height="22"
+            width="156"
+            height="27"
           />
         </NuxtLink>
 
@@ -223,7 +223,6 @@ onBeforeUnmount(() => {
         <div class="layout__footer-directory">
           <div class="layout__footer-group layout__footer-intro">
             <p class="layout__footer-statement">برمجيات لأصحاب الأعمال في العراق.</p>
-            <p>شركة برمجيات عراقية في بغداد، تقدم برامج جاهزة وتطويراً حسب الطلب.</p>
             <p>{{ company.address }}<br>{{ company.hours.days }}، {{ company.hours.time }}</p>
           </div>
           <nav class="layout__footer-group" aria-label="روابط الموقع">
@@ -820,11 +819,20 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
 /* V8.4: editorial footer, with a reserved full-width brand signature. */
 .layout__header { padding:0;background:var(--bg);border-block-end:1px solid var(--border); }
 .layout__bar { padding-inline:var(--page-gutter);&::before{content:none} }
+.layout__logo { block-size:clamp(24px,1.75vw,32px);inline-size:auto; }
+@media(width >= 60em){
+  .layout__menu{gap:0 clamp(20px,2.3vw,38px);flex-wrap:nowrap}
+  .layout__link{font-size:1rem;text-decoration:none;min-block-size:48px;transition:color .22s var(--ease-out)}
+  .layout__link-label::after{content:'';position:absolute;inset-inline:0;inset-block-end:-8px;block-size:2px;background:var(--accent);transform:skewX(calc(-1 * var(--slant-angle))) scaleX(0);transform-origin:right;transition:transform .24s var(--ease-out)}
+  .layout__link[aria-current="page"] .layout__link-label::after,.layout__link--section .layout__link-label::after,.layout__link:hover .layout__link-label::after{transform:skewX(calc(-1 * var(--slant-angle))) scaleX(1)}
+  .layout__cta{min-block-size:52px;font-size:1rem;padding-inline:28px}
+}
+
 .layout__footer-directory { grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);padding-block:clamp(40px,6vw,80px); }
 .layout__footer-intro { p{font-size:var(--text-body);color:var(--text-muted);max-width:34ch;margin-block-start:14px} .layout__footer-statement{font-family:var(--font-display);color:var(--text);font-size:clamp(1.55rem,2.4vw,2.2rem);line-height:1.4;margin:0;font-weight:700;max-width:22ch} }
 .layout__footer-heading { font-size:clamp(1.125rem,1.25vw,1.4rem);margin-block-end:16px; }
-.layout__footer-links { grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 16px; }
-.layout__footer-link { font-size:clamp(1rem,1.06vw,1.125rem); }
+.layout__footer-links { grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 20px; }
+.layout__footer-link { font-size:clamp(1rem,1.06vw,1.125rem);min-block-size:44px; }
 .layout__contact :deep(.contact-list__row) { dt{font-size:var(--text-small)} dd{font-size:clamp(1rem,1.06vw,1.125rem);overflow-wrap:anywhere} }
 .layout__footer-brand { padding-block:clamp(24px,4vw,48px);border-block-start:1px solid var(--border); }
 .layout__footer-brand-link { display:block;inline-size:100%;aspect-ratio:672/117; }

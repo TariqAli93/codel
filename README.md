@@ -202,3 +202,7 @@ Refines the native Workline design: directional hero image composition, wider pr
 ### V8.4.1 — rendered-site polish
 
 Follow-up to the V8.4 browser review. The existing product screenshot assets and paths were confirmed in GitHub. Initial and explicitly selected product images now load eagerly in a stable stage, with an error/retry state instead of a blank panel. Headings no longer depend on scroll-linked opacity. Wider desktop layout, separated hero image/text, more compact product information and adjacent pricing/action, integrated screenshot navigation, stronger CTA proportions, and larger footer directory text. Build and browser validation remain required before merge; the original missing screenshot root cause has not been reproduced.
+
+### V8.5 — continuing art direction
+
+V8.5 is an iteration of the approved Workline design, not a final release. It improves the shared header and type scale, replaces the heavy screenshot frame with real thumbnail navigation, preserves initial image loading and retry handling, aligns product purchase information, gives open services a larger detail area and animated functional icon, and uses asymmetric evidence with direct links to the two real products. Hero depth is pointer-driven on fine pointers only, and heading content remains visible. Footer branding, all routes, semantic tokens, and native scrolling remain. The native build and visual/keyboard/responsive audit are still required; no 10/10 score is claimed.
