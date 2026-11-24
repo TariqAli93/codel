@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { company } from "~/data/company";
+import { company, services } from "~/data/company";
 import { solutions } from "~/data/solutions";
 
 // The story's stage runs to the window edges, so this page draws its own full-width sections instead
@@ -69,94 +69,50 @@ const routes = [
     to: "/services",
   },
 ];
+
+const labels=['المواقع الإلكترونية','تطبيقات الهواتف','أنظمة الحسابات والمخازن','إدارة السيرفرات','برمجيات خاصة']
+const words=['مواقع.','تطبيقات.','حسابات.','سيرفرات.','حسب الطلب.']
+const activeService=ref(0)
+const service=computed(()=>services[activeService.value])
+const tablist=ref<HTMLElement|null>(null)
+function serviceKey(e:KeyboardEvent,i:number){
+ let next=i
+ if(e.key==='ArrowDown')next=(i+1)%services.length
+ else if(e.key==='ArrowUp')next=(i-1+services.length)%services.length
+ else if(e.key==='Home')next=0
+ else if(e.key==='End')next=services.length-1
+ else return
+ e.preventDefault();activeService.value=next;tablist.value?.querySelectorAll('button')[next]?.focus()
+}
 </script>
-
 <template>
-  <div class="workline">
-    <WorklineHero />
-    <section id="discover" class="workline-shell discovery" aria-labelledby="discovery-title">
-      <div class="discovery__head">
-        <h2 id="discovery-title">ماذا تريد أن تطوّر في عملك؟</h2>
-        <p>اختر ما يناسب طبيعة عملك.</p>
-      </div>
-      <div class="discovery__paths">
-        <NuxtLink v-for="item in routes" :key="item.to" :to="item.to">
-          <span class="discovery__copy"><strong>{{ item.title }}</strong><span>{{ item.text }}</span></span>
-          <span class="discovery__arrow" aria-hidden="true">↖</span>
-        </NuxtLink>
-      </div>
-    </section>
-
-    <section class="workline-showcase" aria-labelledby="solutions-title">
-      <div class="workline-shell workline-heading">
-        <div><h2 id="solutions-title">حلول جاهزة لعملك اليومي.</h2><p>شاهد البرامج من واجهاتها الفعلية، وتعرّف على مميزاتها وأسعارها قبل أن تختار.</p></div>
-        <ActionLink look="text" to="/solutions" label="جميع البرامج ↖" />
-      </div>
-      <div class="workline-shell workline-apps">
-        <WorklineProduct v-for="(solution,i) in solutions" :key="solution.slug" :solution="solution" :number="i+1" :total="solutions.length" />
-      </div>
-    </section>
-
-    <WorklineServices />
-
-    <section class="workline-shell workline-proof" aria-labelledby="proof-title">
-      <header class="proof-heading"><h2 id="proof-title">قبل أن تبدأ، كل شيء واضح.</h2></header>
-      <div class="proof-evidence">
-        <article class="proof-evidence__lead">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5"/></svg>
-          <h3>أي برنامج يناسب عملك؟</h3><div class="proof-product-links"><NuxtLink v-for="solution in solutions" :key="solution.slug" :to="`/solutions/${solution.slug}`"><strong>{{ solution.nameAr }}</strong><span>{{ solution.tagline }}</span><span class="proof-product-arrow" aria-hidden="true">↖</span></NuxtLink></div>
-        </article>
-        <article>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2V3Z M8 8h8M8 12h8M8 16h5"/></svg>
-          <h3>كم تكلّف البرمجيات؟</h3><dl class="proof-prices"><div v-for="solution in solutions" :key="solution.slug"><dt>{{ solution.nameAr }}</dt><dd><ProductPrice :amount="solution.priceIqd" size="inline" /></dd></div></dl><p>الخدمات الخاصة تُسعّر حسب متطلبات المشروع.</p>
-        </article>
-        <article>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-          <h3>كيف تتواصل معنا؟</h3><p>{{ company.address }}<br>{{ company.hours.days }}، {{ company.hours.time }}</p><ActionLink look="text" :to="company.phones.main.whatsapp" new-tab label="راسلنا على واتساب ↖" /><a class="proof-phone" :href="company.phones.main.tel" dir="ltr">{{ company.phones.main.display }}</a>
-        </article>
-      </div>
-      <div class="proof-history"><span>رحلة كودل</span><div><bdi>{{ company.founded.idea }}</bdi><span>بداية الفكرة</span></div><div><bdi>{{ company.founded.launch }}</bdi><span>انطلاق الشركة</span></div></div>
-    </section>
-
-    <div class="workline-shell workline-end">
-      <ClosingCall heading="شنو تحتاج حتى يصير شغلك أسهل؟" text="احچيلنا عن احتياجك، ونناقش الحل المناسب لأعمالك.">
-        <ActionLink look="ink" size="lg" to="/contact" label="ناقش مشروعك ↖" />
-        <ActionLink look="text" :to="company.phones.main.whatsapp" new-tab label="أو راسلنا على واتساب" />
-      </ClosingCall>
-    </div>
-  </div>
+ <div class="visual-character">
+  <FoldedFieldHero />
+  <section id="discover" class="discovery workline-shell"><h2 class="discovery-title">اختار اللي يناسب شغلك</h2><div class="choices"><NuxtLink v-for="item in routes" :key="item.to" :to="item.to"><div><strong>{{ item.title }}.</strong><small>{{ item.text }}</small></div><span class="arrow" aria-hidden="true">↖</span></NuxtLink></div></section>
+  <section aria-labelledby="solutions-title"><div class="workline-shell section-intro"><h2 id="solutions-title">برامج جاهزة.<br>لشغلك اليومي.</h2><div><p>مرّ على تفاصيل الشغل اليومي وشوف شلون كل برنامج يساعدك.</p><ActionLink look="text" to="/solutions" label="كل البرامج ↖"/></div></div><VisualProductStory v-for="solution in solutions" :key="solution.slug" :solution="solution"/></section>
+  <section class="services workline-shell" id="services" aria-labelledby="services-title"><div class="section-intro"><h2 id="services-title">مو كل شغل<br>إله برنامج جاهز.</h2><div><p>نطوّر لك الحل اللي يناسب تفاصيل مشروعك.</p><ActionLink look="text" to="/services" label="جميع الخدمات ↖"/></div></div><div v-if="service" class="service-wall"><div ref="tablist" class="service-choices" role="tablist" aria-label="الخدمات" aria-orientation="vertical"><button v-for="(item,i) in services" :key="item.id" :id="'service-tab-'+i" type="button" class="service-tab" role="tab" :aria-selected="i===activeService" aria-controls="service-stage" :tabindex="i===activeService?0:-1" @click="activeService=i" @keydown="serviceKey($event,i)">{{ labels[i] || item.title }}<span class="arrow" aria-hidden="true">↖</span></button></div><article id="service-stage" role="tabpanel" :aria-labelledby="'service-tab-'+activeService" class="service-stage" tabindex="0"><div :key="service.id" class="service-graphic" :data-variant="activeService" aria-hidden="true"><span class="service-word">{{ words[activeService] }}</span></div><div class="service-detail"><h3>{{ service.title }}</h3><p>{{ service.text }}</p><div class="service-detail-foot"><small>السعر حسب متطلبات المشروع</small><ActionLink look="text" :to="'/services/'+service.id" label="تفاصيل الخدمة ↖"/></div></div></article></div></section>
+  <section class="proof workline-shell"><div class="proof-layout"><div class="proof-title"><h2>قبل لا<br>تبدي.</h2><p>الاختيار والسعر والتواصل. كلّها واضحة.</p></div><div><div class="proof-ledger"><div class="ledger-row"><h3>أي برنامج يناسبني؟</h3><div><p>للمتاجر والشركات: نقطة بلس.<br>لمكاتب العقارات: دلالي.</p><ActionLink look="text" to="/solutions" label="قارن البرامج ↖"/></div></div><div class="ledger-row"><h3>شكد يكلف؟</h3><div class="ledger-products"><NuxtLink v-for="solution in solutions" :key="solution.slug" :to="'/solutions/'+solution.slug"><span>{{ solution.nameAr }}</span><ProductPrice :amount="solution.priceIqd" size="inline"/></NuxtLink><p>الخدمات حسب متطلبات المشروع.</p></div></div><div class="ledger-row"><h3>شلون أتواصل؟</h3><div><p>{{ company.address }}<br>{{ company.hours.days }}، {{ company.hours.time }}</p><ActionLink look="text" :to="company.phones.main.whatsapp" new-tab label="واتساب ↖"/></div></div></div><div class="proof-history"><span>رحلة كودل</span><span><bdi>{{ company.founded.idea }}</bdi> بداية الفكرة</span><span><bdi>{{ company.founded.launch }}</bdi> انطلاق الشركة</span></div></div></div></section>
+  <section class="contact-poster" data-theme="light"><div class="workline-shell"><h2>خلّينا<br>نرتّبها.</h2><div class="contact-actions"><p>احچيلنا عن شغلك. نناقش وياك البرنامج أو الحل المناسب.</p><ActionLink look="ink" to="/contact" label="ناقش مشروعك ↖"/><ActionLink look="text" :to="company.phones.main.whatsapp" new-tab label="راسلنا على واتساب ↖"/></div></div></section>
+ </div>
 </template>
-
 <style scoped lang="scss">
-.discovery { padding-block:clamp(32px,5vw,72px); }
-.discovery__head { display:flex;justify-content:space-between;align-items:baseline;gap:16px; margin-block-end:24px; h2{font-size:clamp(1.3rem,2vw,1.8rem);margin:0} p{font-size:var(--text-body);color:var(--text-muted)} }
-.discovery__paths { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid var(--border); }
-.discovery__paths a { display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:128px;padding:clamp(16px,2.2vw,32px);border-inline-end:1px solid var(--border);text-decoration:none;transition:background-color .22s var(--ease-out),color .22s var(--ease-out); &:last-child{border-inline-end:0} &:hover,&:focus-visible{background:var(--surface);color:var(--accent)} &:focus-visible{outline-offset:-3px} }
-.discovery__copy { display:grid;gap:5px;min-width:0;strong{font-family:var(--font-display);font-size:clamp(1.15rem,1.7vw,1.6rem);line-height:1.5} >span{font-size:var(--text-body);color:var(--text-muted)} }
-.discovery__arrow { font-size:1.65rem;flex:none;color:var(--accent);transition:translate .22s var(--ease-out); }
-.discovery__paths a:hover .discovery__arrow { translate:-3px -3px; }
+/* Directional discovery, not cards. */
+.discovery{padding-block:clamp(34px,4.5vw,72px) var(--section-gap)}.discovery-title{font:500 15px/1.6 var(--font-sans);color:var(--text-muted);margin-bottom:20px}.choices{display:grid;grid-template-columns:1fr 1fr 1fr;border-block:1px solid var(--border)}.choices a{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:22px clamp(10px,2vw,28px);min-height:100px;border-inline-end:1px solid var(--border);transition:background .3s var(--ease-out),color .3s var(--ease-out)}.choices a:first-child{padding-inline-start:0}.choices a:last-child{border-inline-end:0}.choices a strong{display:block;font-family:var(--font-hero);font-size:clamp(21px,2vw,30px);line-height:1.5}.choices a small{color:var(--text-muted);font-size:14px}.choices a .arrow{font-size:25px;color:var(--accent)}.choices a:hover{background:var(--surface);color:var(--accent)}
+.section-intro{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.5fr);align-items:end;gap:24px;padding-bottom:clamp(24px,4vw,56px)}.section-intro h2{font-size:clamp(44px,6.3vw,100px);line-height:1.25}.section-intro p{max-width:30ch;font-size:clamp(17px,1.4vw,21px);color:var(--text-muted);margin-bottom:12px}.section-intro :deep(.action--text){font-size:16px}
+.services{padding-block:var(--section-gap)}.service-wall{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:clamp(24px,5vw,86px);align-items:stretch;border-block:1px solid var(--border)}.service-choices{display:flex;flex-direction:column;min-width:0}.service-tab{appearance:none;border:0;border-bottom:1px solid var(--border);background:none;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:start;color:var(--charcoal-50);min-height:76px;padding:18px 0;font-family:var(--font-hero);font-size:clamp(21px,2vw,34px);font-weight:650;line-height:1.5;flex:1}.service-tab:last-child{border-bottom:0}.service-tab .arrow{font-size:28px;color:var(--text-muted)}.service-tab[aria-selected=true]{color:var(--accent)}.service-tab[aria-selected=true] .arrow{color:var(--accent);transform:translate(-4px,-3px)}.service-tab:hover{color:var(--accent)}.service-stage{min-width:0;display:grid;grid-template-rows:minmax(190px,1fr) auto;gap:22px;padding:24px 0;position:relative;overflow:hidden}.service-graphic{min-height:clamp(190px,24vw,360px);display:grid;place-items:center;position:relative;isolation:isolate;overflow:hidden;background:var(--surface-raised);clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}.service-graphic:before{content:'';position:absolute;inset:-10% 2% -10% auto;width:12%;background:var(--accent);transform:skewX(-10deg);z-index:-1}.service-word{font-family:var(--font-hero);font-size:clamp(62px,9.8vw,160px);font-weight:850;line-height:1.25;text-align:center;color:var(--charcoal-50);position:relative;z-index:1;overflow-wrap:anywhere;animation:service-word .5s var(--ease-out) both;text-shadow:0 3px 20px #10141140}.service-graphic[data-variant="1"]:before{width:43%;right:0}.service-graphic[data-variant="2"]:before{width:100%;right:50%}.service-graphic[data-variant="3"]:before{width:3%;right:3%;box-shadow:-18px 0 0 var(--accent),-36px 0 0 var(--accent)}.service-graphic[data-variant="4"]:before{width:12%;right:2%}.service-graphic[data-variant="4"] .service-word{font-size:clamp(48px,6.8vw,110px)}.service-graphic[data-variant="1"] .service-word,.service-graphic[data-variant="2"] .service-word{color:var(--on-accent);text-shadow:none}.service-graphic[data-variant="1"],.service-graphic[data-variant="2"]{background:var(--accent)}.service-graphic[data-variant="1"]:before,.service-graphic[data-variant="2"]:before{background:var(--charcoal-50)}@keyframes service-word{from{clip-path:inset(100% 0 0 0);translate:0 12px}to{clip-path:inset(-10%);translate:none}}.service-detail{display:grid;gap:14px}.service-detail h3{font-size:clamp(24px,2.4vw,38px)}.service-detail p{color:var(--text-muted);max-width:52ch;font-size:clamp(17px,1.4vw,20px)}.service-detail-foot{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}.service-detail-foot small{font-size:14px;color:var(--text-muted)}
+/* Evidence: practical editorial ledger. */
+.proof{padding-block:0 var(--section-gap)}.proof-layout{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:clamp(32px,5vw,84px);align-items:start}.proof-title h2{font-size:clamp(40px,5.6vw,88px);line-height:1.3}.proof-title p{font-size:18px;color:var(--text-muted);max-width:29ch;margin-top:16px}.proof-ledger{border-top:1px solid var(--border)}.ledger-row{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:18px;padding:25px 0;border-bottom:1px solid var(--border);align-items:start}.ledger-row h3{font-size:clamp(20px,2vw,30px)}.ledger-row p,.ledger-row a{font-size:16px}.ledger-row p{color:var(--text-muted)}.ledger-products{display:grid;gap:8px}.ledger-products a{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;min-height:44px;border-bottom:1px solid var(--border)}.ledger-products a:last-child{border-bottom:0}.ledger-products bdi{font-family:var(--font-sans);font-weight:700;color:var(--charcoal-50)}.ledger-products small{font-size:12px;color:var(--text-muted)}.proof-history{margin-top:22px;display:flex;gap:16px 26px;flex-wrap:wrap;color:var(--text-muted);font-size:14px}.proof-history bdi{color:var(--charcoal-50);font-weight:700;font-size:18px}
+/* Graphic interruption, not a contained banner. */
+.contact-poster{background:var(--accent);color:var(--on-accent);position:relative;overflow:hidden;isolation:isolate;padding-block:clamp(54px,8vw,130px)}.contact-poster:before{content:'';position:absolute;inset:-25% auto -25% -28px;width:clamp(48px,7vw,112px);transform:skewX(-10deg);background:var(--on-accent);z-index:-1}.contact-poster .workline-shell{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:end;gap:clamp(24px,5vw,80px)}.contact-poster h2{font-size:clamp(58px,8.8vw,145px);font-weight:850;line-height:1.22;max-width:12ch}.contact-poster p{font-size:clamp(18px,1.8vw,26px);max-width:29ch;margin-bottom:24px}.contact-poster .contact-actions{padding-inline-end:clamp(18px,4vw,90px);display:flex;align-items:start;flex-direction:column;gap:18px}.contact-poster :deep(.action--ink){min-height:76px;font-size:clamp(18px,2vw,30px);width:min(100%,340px)}.contact-poster :deep(.action--text){font-size:17px}
 
-.workline-showcase { padding-block:clamp(36px,4.4vw,72px) var(--section-gap); }
-.workline-heading { display:flex;justify-content:space-between;align-items:end;gap:24px;margin-block-end:clamp(24px,4vw,48px);h2{font-size:clamp(2rem,4.8vw,4.25rem);line-height:1.28;margin-block-end:16px}p{color:var(--text-muted);font-size:var(--text-lead);max-width:42rem} }
-.workline-apps { max-inline-size:1760px;padding-inline:var(--page-gutter);display:grid;gap:clamp(18px,2vw,28px); }
-
-.workline-proof { padding-block:var(--section-gap);border-block-start:1px solid var(--border); }
-.proof-heading { max-width:50rem;margin-block-end:36px;h2{font-size:clamp(2rem,3.8vw,3.5rem);line-height:1.3}p{color:var(--text-muted);font-size:var(--text-lead)} }
-.proof-evidence { display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);border-block:1px solid var(--border);article{display:flex;flex-direction:column;align-items:start;gap:14px;padding:clamp(24px,3vw,44px);min-width:0;svg{width:32px;height:32px;color:var(--accent)}h3{font-size:clamp(1.3rem,2vw,1.85rem);margin:0}p{color:var(--text-muted);font-size:var(--text-body);line-height:1.85} :deep(.action){margin-block-start:0}}article+article{border-inline-start:1px solid var(--border)}.proof-evidence__lead{padding-inline-start:0;h3{font-size:clamp(1.75rem,3vw,3rem);max-width:18ch}p{font-size:var(--text-lead);max-width:40ch}svg{width:42px;height:42px}} }
-.proof-product-links{width:100%;margin-block-start:10px;display:grid;gap:0;a{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:3px 14px;padding-block:18px;border-block-start:1px solid var(--border);text-decoration:none;strong{font-size:var(--text-sub)}span:not(.proof-product-arrow){font-size:var(--text-ui);color:var(--text-muted);grid-row:2;grid-column:1}.proof-product-arrow{grid-column:2;grid-row:1/3;font-size:1.5rem;color:var(--accent);transition:translate .22s var(--ease-out)}&:hover .proof-product-arrow{translate:-3px -3px}}}
-
- .proof-history { display:flex;align-items:center;flex-wrap:wrap;gap:16px clamp(24px,4vw,64px);padding-block:20px;border-block-end:1px solid var(--border);color:var(--text-muted);font-size:var(--text-small);>div{display:flex;align-items:baseline;gap:12px}bdi{font-family:var(--font-display);font-weight:700;font-size:1.4rem;color:var(--text);font-variant-numeric:tabular-nums} }
-.workline-end { padding-block-end:var(--section-gap); }
-.workline-end :deep(.closing){margin-block-start:0}
-.proof-evidence article :deep(.action){font-size:var(--text-body)}
-.proof-heading h2,.workline-heading h2,.services-intro h2{color:var(--text)}
-@media(max-width:900px){.workline-heading{align-items:start;flex-direction:column;gap:8px}}
-@media(max-width:720px){.discovery__head{display:block}.discovery__head p{margin-block-start:8px}.discovery__paths,.proof-evidence{grid-template-columns:1fr}.discovery__paths a{min-height:96px;padding:16px 4px;border-inline-end:0;border-block-end:1px solid var(--border);&:last-child{border-block-end:0}}.proof-evidence article,.proof-evidence .proof-evidence__lead{padding:24px 0;border-inline:0;border-block-end:1px solid var(--border)}.proof-evidence article:last-child{border-block-end:0}.proof-history{gap:12px 24px}}
-
-.proof-prices{width:100%;margin:0;display:grid;gap:8px}
-.proof-prices>div{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding-block:10px;border-block-end:1px solid var(--border)}
-.proof-prices dt{color:var(--text-muted);font-size:var(--text-ui)}
-.proof-prices dd{margin:0;font-weight:600}
-.proof-phone{display:inline-flex;align-items:center;min-block-size:44px;font-size:var(--text-body);text-decoration-color:var(--border-strong)}
-@media(min-width:721px) and (max-width:1050px){.proof-evidence{grid-template-columns:1fr 1fr}.proof-evidence__lead{grid-column:1/-1}.proof-evidence article:nth-child(2){border-inline-start:0}.proof-evidence article+article{border-block-start:1px solid var(--border)}}
+.visual-character h2,.visual-character h3{font-family:var(--font-hero)}
+.arrow{display:inline-block;transition:transform .3s var(--ease-out)}
+.choices a{text-decoration:none}
+.choices a:hover .arrow{transform:translate(-3px,-3px)}
+.contact-poster{--text:var(--charcoal-950);--text-muted:var(--charcoal-950);--link-color:var(--charcoal-950);--link-rule:var(--charcoal-950);--link-rule-hover:var(--charcoal-950);--link-active:var(--charcoal-950);--focus:var(--charcoal-950)}
+.contact-poster :deep(.action--ink){color:var(--accent);background:var(--charcoal-950)}
+.contact-poster h2{color:var(--charcoal-950)}
+@media(max-width:900px){.section-intro,.service-wall,.proof-layout,.contact-poster .workline-shell{grid-template-columns:minmax(0,1fr)}.section-intro{gap:18px}.service-wall{gap:0}.service-stage{min-height:0}.service-tab{min-height:60px}.proof-layout{gap:24px}.contact-poster .contact-actions{padding-inline-end:20px}.contact-poster h2{font-size:clamp(48px,11vw,100px)}}
+@media(max-width:600px){.choices{grid-template-columns:1fr}.choices a{padding:14px 4px;min-height:80px;border-inline-end:0;border-block-end:1px solid var(--border)}.choices a:last-child{border-block-end:0}.section-intro h2{font-size:clamp(35px,10vw,58px)}.ledger-row{grid-template-columns:1fr;gap:8px}.service-word{font-size:clamp(45px,12vw,75px)}.contact-poster::before{width:34px;left:-18px}.contact-poster .contact-actions{padding-inline-end:16px}}
+@media(prefers-reduced-motion:reduce){.service-word{animation:none}}
 </style>
