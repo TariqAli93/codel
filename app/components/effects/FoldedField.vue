@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { foldedFieldFragment } from "./foldedFieldShader";
+const props = defineProps<{ fragment?: string; settleAfter?: number; scrollMotion?: boolean; maxResolution?: number }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const ready = ref(false);
 let dispose: (() => void) | undefined;
@@ -41,7 +42,7 @@ onMounted(() => {
       ctx.VERTEX_SHADER,
       "#version 300 es\nvoid main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}",
     );
-    const fragment = compile(ctx.FRAGMENT_SHADER, foldedFieldFragment);
+    const fragment = compile(ctx.FRAGMENT_SHADER, props.fragment ?? foldedFieldFragment);
     if (!vertex || !fragment) {
       if (vertex) ctx.deleteShader(vertex);
       if (fragment) ctx.deleteShader(fragment);
@@ -63,11 +64,14 @@ onMounted(() => {
       return;
     }
     const vao = ctx.createVertexArray();
+    if (!vao) { ctx.deleteProgram(program); return; }
     ctx.bindVertexArray(vao);
     ctx.useProgram(program);
     const resolution = ctx.getUniformLocation(program, "u_resolution");
     const pointer = ctx.getUniformLocation(program, "u_pointer");
     const time = ctx.getUniformLocation(program, "u_time");
+    const scrollUniform = ctx.getUniformLocation(program, "u_scroll");
+    let scroll = 0, targetScroll = 0;
     let frame = 0,
       visible = false,
       disposed = false,
@@ -87,15 +91,23 @@ onMounted(() => {
       frame = 0;
       if (disposed || lost || !visible || document.hidden || reduced.matches)
         return;
-      elapsed += last ? Math.min((now - last) / 1000, 0.06) : 0;
+      const dt = last ? Math.min((now - last) / 1000, 0.06) : 1 / 60;
+      if (props.maxResolution && last && now-last < 24) { frame = requestAnimationFrame(draw); return; }
+      elapsed += dt;
+      if (props.settleAfter !== undefined) elapsed = Math.min(elapsed, props.settleAfter);
       last = now;
-      px += (tx - px) * 0.08;
-      py += (ty - py) * 0.08;
+      const ease = 1-Math.exp(-dt*10);
+      px += (tx - px) * ease;
+      py += (ty - py) * ease;
+      scroll += (targetScroll-scroll)*ease;
       ctx.uniform2f(pointer, px, py);
       ctx.uniform1f(time, elapsed);
+      ctx.uniform1f(scrollUniform, scroll);
       ctx.drawArrays(ctx.TRIANGLES, 0, 3);
       if (!ready.value) ready.value = true;
-      frame = requestAnimationFrame(draw);
+      const moving = Math.abs(tx-px)+Math.abs(ty-py)+Math.abs(targetScroll-scroll) > .0005;
+      if (props.settleAfter === undefined || elapsed < props.settleAfter || moving) frame = requestAnimationFrame(draw);
+      else last=0;
     }
     function resume() {
       if (
@@ -114,8 +126,8 @@ onMounted(() => {
       const scale = Math.min(
         devicePixelRatio || 1,
         1.25,
-        1600 / Math.max(r.width, 1),
-        1600 / Math.max(r.height, 1),
+        (props.maxResolution ?? 1600) / Math.max(r.width, 1),
+        (props.maxResolution ?? 1600) / Math.max(r.height, 1),
       );
       el.width = Math.max(1, Math.round(r.width * scale));
       el.height = Math.max(1, Math.round(r.height * scale));
@@ -127,9 +139,17 @@ onMounted(() => {
       const r = host.getBoundingClientRect();
       tx = (e.clientX - r.left) / Math.max(r.width, 1) - 0.5;
       ty = (e.clientY - r.top) / Math.max(r.height, 1) - 0.5;
+      resume();
     }
     function reset() {
       tx = ty = 0;
+      resume();
+    }
+    function onScroll() {
+      if (!host || !props.scrollMotion) return;
+      const r=host.getBoundingClientRect();
+      targetScroll=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height)));
+      resume();
     }
     function visibility() {
       document.hidden ? pause() : resume();
@@ -145,10 +165,12 @@ onMounted(() => {
     }
     const ro = new ResizeObserver(() => {
       size();
+      onScroll();
       resume();
     });
     const io = new IntersectionObserver((entries) => {
       visible = entries.some((e) => e.isIntersecting);
+      if (visible) onScroll();
       visible ? resume() : pause();
     });
     ro.observe(host);
@@ -156,9 +178,11 @@ onMounted(() => {
     host.addEventListener("pointermove", move);
     host.addEventListener("pointerleave", reset);
     document.addEventListener("visibilitychange", visibility);
+    if (props.scrollMotion) window.addEventListener("scroll", onScroll, { passive: true });
     el.addEventListener("webglcontextlost", contextLost);
     el.addEventListener("webglcontextrestored", contextRestored);
     size();
+    onScroll();
     cleanup = () => {
       disposed = true;
       pause();
@@ -167,6 +191,7 @@ onMounted(() => {
       host.removeEventListener("pointermove", move);
       host.removeEventListener("pointerleave", reset);
       document.removeEventListener("visibilitychange", visibility);
+      window.removeEventListener("scroll", onScroll);
       el.removeEventListener("webglcontextlost", contextLost);
       el.removeEventListener("webglcontextrestored", contextRestored);
       ctx.deleteVertexArray(vao);

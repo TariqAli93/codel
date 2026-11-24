@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import FoldedField from "./effects/FoldedField.vue";
+import { obsidianCutFragment } from "./effects/obsidianCutShader";
 </script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
     <div class="material-still" aria-hidden="true" />
-    <FoldedField />
+    <FoldedField :fragment="obsidianCutFragment" :settle-after="1.5" scroll-motion :max-resolution="1280" />
     <div class="workline-shell cover-inner">
       <div class="cover-main">
         <div class="material-copy">
@@ -28,7 +29,7 @@ import FoldedField from "./effects/FoldedField.vue";
   </section>
 </template>
 <style scoped lang="scss">
-/* V9.5 — original directional material, generated locally. */
+/* V9.8 — Obsidian Cut, original ray-marched material. */
 .cover-hero {
   position: relative;
   isolation: isolate;
@@ -50,12 +51,13 @@ import FoldedField from "./effects/FoldedField.vue";
   z-index: -2;
 }
 .material-still {
-  background-image: url(/images/hero/folded-field-desktop.jpg);
+  background-image: url(/images/hero/obsidian-cut-desktop.svg);
   background-position: center;
-  background-size: 100% 100%;
+  background-size: cover;
 }
 :deep(.material-canvas) {
   opacity: 0;
+  transition: opacity .32s ease;
 }
 :deep(.material-canvas.ready) {
   opacity: 1;
@@ -169,7 +171,7 @@ import FoldedField from "./effects/FoldedField.vue";
 }
 @media (max-width: 560px) {
   .material-still {
-    background-image: url(/images/hero/folded-field-mobile.jpg);
+    background-image: url(/images/hero/obsidian-cut-mobile.svg);
   }
   .cover-hero {
     min-height: calc(100svh - var(--header-height));
@@ -233,5 +235,17 @@ import FoldedField from "./effects/FoldedField.vue";
 }
 .cover-bottom .link:hover {
   text-decoration: underline;
+}
+/* A single entrance sequence. Text never follows the pointer or scrolls out independently. */
+@media (prefers-reduced-motion: no-preference) {
+  .material-copy h1 span { animation: obsidian-type-in .75s cubic-bezier(.2,.75,.2,1) both; }
+  .material-copy h1 span:nth-child(2) { animation-delay: .10s; }
+  .material-copy p { animation: obsidian-copy-in .6s .15s cubic-bezier(.2,.75,.2,1) both; }
+  .cover-actions { animation: obsidian-copy-in .6s .23s cubic-bezier(.2,.75,.2,1) both; }
+  .cover-hero:focus-within .material-copy h1 span,
+  .cover-hero:focus-within .material-copy p,
+  .cover-hero:focus-within .cover-actions { animation: none; }
+  @keyframes obsidian-type-in { from { clip-path: inset(0 0 100% 0); transform: translateY(12px); } to { clip-path: inset(0); transform: none; } }
+  @keyframes obsidian-copy-in { from { transform: translateY(9px); } to { transform: none; } }
 }
 </style>
