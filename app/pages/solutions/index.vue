@@ -11,7 +11,7 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
   <div class="solutions">
     <PageHead title="حلولنا" lede="برامج جاهزة للاستخدام، بأسعار معلنة." />
 
-    <div class="workline-list"><WorklineProduct v-for="(solution,i) in solutions" :key="solution.slug" :solution="solution" :number="i+1" :total="solutions.length" /></div>
+    <div class="workline-list"><WorklineProduct v-for="(solution,i) in solutions" :key="solution.slug" :solution="solution" :number="i+1" :total="solutions.length" :level="2" /></div>
 
     <ClosingCall heading="تحتاج حلاً غير موجود هنا؟" text="نبرمجه لك حسب طلبك.">
       <WhatsAppCall look="outline" />

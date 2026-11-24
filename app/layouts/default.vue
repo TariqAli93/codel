@@ -21,7 +21,7 @@ const links: NavLink[] = [
   { to: "/contact", label: "تواصل معنا", cta: true },
 ];
 
-const headerLinks = links;
+const headerLinks = links.filter((link) => !link.footerOnly);
 
 // Site-wide share tags. Each page sets its own title, description, og:title and og:description.
 // canonical and og:url need the real domain, so they only appear once company.siteUrl is filled in.
@@ -887,4 +887,14 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
   }
 
 }
+
+/* Flat header and directory-first footer for V8.3. */
+.layout__header{padding:0;background:var(--bg);border-block-end:1px solid var(--border)}
+.layout__bar{padding-inline:var(--page-gutter);&::before{content:none}}
+.layout__footer-directory{padding-block:clamp(48px,7vw,96px);@media(width >= 64em){grid-template-columns:1.2fr 1fr 1fr 1fr;gap:var(--space-6)}}
+.layout__footer-intro p{color:var(--text-muted);margin-block-start:var(--space-5);max-width:28ch}
+.layout__footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-block-start:1px solid var(--border);padding-block:var(--space-4);color:var(--text-muted);font-size:var(--text-small);nav{display:flex;gap:var(--space-4);a{display:inline-flex;align-items:center;min-height:44px}}}
+.layout__footer-brand{border:0;padding-block-start:var(--space-5)}
+@media(width < 60em){.js .layout__menu{background:var(--bg);border-radius:var(--radius-md);backdrop-filter:none;-webkit-backdrop-filter:none}.js .layout__menu-button{border-radius:var(--radius-sm)}}
+
 </style>

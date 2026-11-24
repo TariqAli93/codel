@@ -48,6 +48,10 @@ $closing-split: 64em;
   --primary-hover: var(--charcoal-700);
   --primary-active: var(--charcoal-800);
   --text: var(--on-accent);
+  --text-muted: var(--on-accent);
+  --surface: var(--accent);
+  --surface-raised: var(--accent);
+  --link-active: var(--on-accent);
   --border-strong: var(--on-accent);
   --glow-accent: none;
   &__heading {
@@ -75,4 +79,5 @@ $closing-split: 64em;
     }
   }
 }
+.closing :deep(.action--outline:hover){background:var(--on-accent);color:var(--accent)}.closing :deep(.action--ink:hover){background:var(--charcoal-700);color:var(--accent)}
 </style>

@@ -37,7 +37,8 @@ npm run generate
 | -------------------- | -------------------------- | --------------------------------- |
 | `/`                  | Home                       | `app/pages/index.vue`             |
 | `/about`             | About                      | `app/pages/about.vue`             |
-| `/services`          | Services                   | `app/pages/services.vue`          |
+| `/services`          | Services                   | `app/pages/services/index.vue`          |
+| `/services/[id]`     | Service detail (dynamic)   | `app/pages/services/[id].vue`     |
 | `/solutions`         | Solutions (listing)        | `app/pages/solutions/index.vue`   |
 | `/solutions/[slug]`  | Solution detail (dynamic)  | `app/pages/solutions/[slug].vue`  |
 | `/contact`           | Contact                    | `app/pages/contact.vue`           |
@@ -55,6 +56,10 @@ Notes:
 - `/solutions/[slug]` serves the products in `app/data/solutions.ts` (`nuqta-plus`, `dalaly`); any other slug returns a 404. `npm run generate` renders them because `/solutions` links to each one.
 - Company facts (services, phones, email, address, hours) live in `app/data/company.ts`; the ready-made products (names, prices, features, images) live in `app/data/solutions.ts`. Edit those two files to change content. `CLAUDE.md` lists every fact.
 - Product screenshots go in `public/images/solutions/<slug>/` and are listed in the product's `images` array.
+
+## Workline V8.3 design review
+
+The root Nuxt route now renders the full-viewport Workline hero, business discovery, product panels, services index, factual proof and CTA. The shared layout uses the same spacing and action geometry across routes. Service detail routes use the permanent IDs in `company.ts`. The contact form opens a prefilled WhatsApp message; there is no submission backend. Hero artwork: [VectorElements / Unsplash](https://unsplash.com/illustrations/isometric-business-people-interacting-with-technology-and-data-lyKf9UWWrdg), Unsplash License; a local inline SVG is the fallback. Product screenshots and fonts are local. Legal and team content remain unapproved placeholders. This branch keeps the existing Nuxt/SCSS stack; Tailwind/shadcn-vue migration is not included. Build, static generation, visual parity and accessibility need verification before merge.
 
 ## Dependencies
 

@@ -16,6 +16,7 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
     <ul role="list" class="services__list">
       <!-- Permanent service IDs preserve these public links when the list is reordered. -->
       <li v-for="service in services" :id="service.id" :key="service.id" class="services__item">
+        <WorklineServiceIcon :id="service.id" />
         <h2 class="services__title">{{ service.title }}</h2>
         <p class="services__text">{{ service.text }}</p>
         <div class="services__actions">

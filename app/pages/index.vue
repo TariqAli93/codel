@@ -82,7 +82,7 @@ const routes = [
       <div class="workline-heading workline-heading--inner"><h2 id="services-title">ما تحتاجه،<br>نطوّره لك.</h2><div><p>إذا لم تجد ما يناسبك في البرامج الجاهزة، اكتشف خدماتنا حسب متطلبات مشروعك.</p><ActionLink look="text" to="/services" label="عرض جميع الخدمات ↖" /></div></div>
       <details v-for="(service, i) in services" :key="service.id" name="home-services" :open="i === 0" class="workline-service">
         <summary><small>0{{ i + 1 }}</small><strong>{{ service.title }}</strong><span class="workline-plus" aria-hidden="true"><span>+</span></span></summary>
-        <div class="workline-service__body"><div><p>{{ service.text }}</p><small>السعر حسب متطلبات المشروع</small></div><ActionLink look="text" :to="`/services/${service.id}`" label="تفاصيل الخدمة ↖" /></div>
+        <div class="workline-service__body"><WorklineServiceIcon :id="service.id" /><div><p>{{ service.text }}</p><small>السعر حسب متطلبات المشروع</small></div><ActionLink look="text" :to="`/services/${service.id}`" label="تفاصيل الخدمة ↖" /></div>
       </details>
     </section>
     <section class="workline-shell workline-proof" aria-labelledby="proof-title">
@@ -106,7 +106,7 @@ const routes = [
 .workline-services,.workline-proof{padding-block:var(--section-gap)}
 .workline-service{border-block-start:1px solid var(--border);&:last-child{border-block-end:1px solid var(--border)} summary{list-style:none;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:16px;min-height:88px;padding:22px 12px;cursor:pointer;transition:background var(--duration-base),color var(--duration-base); &::-webkit-details-marker{display:none} &:hover{background:var(--surface)} strong{font-family:var(--font-display);font-size:clamp(1.25rem,2.8vw,2.5rem);line-height:1.4} small{color:var(--text-muted)}} &[open] summary{color:var(--accent); .workline-plus{background:var(--accent);color:var(--on-accent)} .workline-plus>span{transform:skewX(var(--slant-angle)) rotate(45deg)}}}
 .workline-plus{display:grid;place-items:center;inline-size:42px;block-size:42px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:1.7rem;transform:skewX(calc(-1 * var(--slant-angle)));span{transform:skewX(var(--slant-angle));transition:transform var(--duration-base)}}
-.workline-service__body{display:flex;justify-content:space-between;align-items:center;gap:var(--space-5);padding:4px 72px 28px;small{color:var(--text-muted)}}
+.workline-service__body{display:flex;justify-content:space-between;align-items:center;gap:var(--space-5);padding:4px 72px 28px;>div{flex:1;min-width:0}small{color:var(--text-muted)}}
 .workline-proof{border-block-start:1px solid var(--border)}
 .workline-evidence{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:var(--space-7);border-block:1px solid var(--border);>article{padding-block:var(--space-6)}h3{font-size:var(--text-card)}}
 .workline-years{display:grid;grid-template-columns:1fr 1fr;margin-block:var(--space-6);>div{display:grid;gap:6px;border-block-start:1px solid var(--border-strong);padding-block-start:20px;position:relative;&:before{content:'';position:absolute;inset-block-start:-5px;inset-inline-start:0;width:9px;height:9px;background:var(--accent);border-radius:50%}} bdi{font:600 clamp(2.375rem,5vw,4.375rem)/1.2 var(--font-display);font-variant-numeric:tabular-nums}span{color:var(--text-muted)}}
