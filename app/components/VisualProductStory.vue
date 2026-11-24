@@ -21,6 +21,7 @@ const layout=ref<HTMLElement|null>(null)
 const gallery=ref<HTMLDialogElement|null>(null)
 const opener=ref<HTMLButtonElement|null>(null)
 const galleryIndex=ref(0)
+const galleryOpen=ref(false)
 const galleryShot=computed(()=>steps.value[galleryIndex.value])
 const failed=ref('')
 const retry=ref(0)
@@ -40,10 +41,19 @@ function sync(){
  if(next!==active.value){active.value=next;failed.value=''}
 }
 function queue(){if(!frame)frame=requestAnimationFrame(sync)}
-function jump(i:number){const el=elements()[i];if(el)el.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'})}
+function jump(i:number){
+ const el=elements()[i]
+ if(!el||!stage.value)return
+ const mobile=matchMedia('(max-width:900px)').matches
+ const top=parseFloat(getComputedStyle(stage.value).top)||0
+ const bottom=top+stage.value.getBoundingClientRect().height
+ const threshold=mobile?Math.min(innerHeight-45,Math.max(220,bottom+Math.max(60,(innerHeight-bottom)*.46))):innerHeight*.58
+ window.scrollTo({top:Math.max(0,window.scrollY+el.getBoundingClientRect().top-threshold+12),behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'})
+}
 function imageError(e:Event){const image=e.currentTarget as HTMLImageElement;const current=shot.value;if(current&&image.getAttribute('src')===current.src)failed.value=current.src}
 function retryImage(){failed.value='';retry.value++}
-function open(){galleryIndex.value=active.value;gallery.value?.showModal()}
+function open(){if(!gallery.value||gallery.value.open)return;galleryIndex.value=active.value;galleryOpen.value=true;gallery.value.showModal()}
+function onGalleryClose(){galleryOpen.value=false;opener.value?.focus()}
 function shift(delta:number){if(steps.value.length)galleryIndex.value=(galleryIndex.value+delta+steps.value.length)%steps.value.length}
 function keys(e:KeyboardEvent){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();shift(e.key==='ArrowLeft'?1:-1)}}
 onMounted(()=>{
@@ -67,7 +77,7 @@ onBeforeUnmount(()=>{window.removeEventListener('scroll',queue);window.removeEve
    <div class="story-steps"><article v-for="(step,i) in steps" :key="step.src" class="story-step" :class="{'is-current':i===active}" data-story-step><div class="story-step-inner"><span class="story-count" dir="ltr">{{ String(i+1).padStart(2,'0') }} / {{ String(steps.length).padStart(2,'0') }}</span><h4>{{ step.title }}</h4><p>{{ step.description }}</p><figure class="story-inline"><img :src="step.src" :alt="step.alt" :width="step.width" :height="step.height" loading="lazy" decoding="async"></figure></div></article></div>
   </div>
   <div class="workline-shell story-end"><p>{{ solution.description }}</p><ActionLink look="text" :to="'/solutions/'+solution.slug" :label="'كل مميزات '+solution.nameAr+' ↖'"/></div>
-  <dialog ref="gallery" class="story-dialog" :aria-label="'واجهات '+solution.nameAr" @close="opener?.focus()" @keydown="keys"><header><h2>{{ galleryShot?.label }}</h2><button autofocus type="button" class="workline-button" @click="gallery?.close()"><span>إغلاق ×</span></button></header><img v-if="galleryShot" :src="galleryShot.src" :alt="galleryShot.alt" :width="galleryShot.width" :height="galleryShot.height" loading="lazy"><footer><button type="button" class="workline-button" @click="shift(-1)"><span>السابق →</span></button><bdi aria-live="polite">{{ galleryIndex+1 }} / {{ steps.length }}</bdi><button type="button" class="workline-button" @click="shift(1)"><span>التالي ←</span></button></footer></dialog>
+  <dialog ref="gallery" class="story-dialog" :aria-label="'واجهات '+solution.nameAr" @close="onGalleryClose" @keydown="keys"><header><h2>{{ galleryShot?.label }}</h2><button autofocus type="button" class="workline-button" @click="gallery?.close()"><span>إغلاق ×</span></button></header><img v-if="galleryOpen && galleryShot" :src="galleryShot.src" :alt="galleryShot.alt" :width="galleryShot.width" :height="galleryShot.height" loading="lazy"><footer><button type="button" class="workline-button" @click="shift(-1)"><span>السابق →</span></button><bdi aria-live="polite">{{ galleryIndex+1 }} / {{ steps.length }}</bdi><button type="button" class="workline-button" @click="shift(1)"><span>التالي ←</span></button></footer></dialog>
  </section>
 </template>
 <style scoped lang="scss">
@@ -89,4 +99,10 @@ onBeforeUnmount(()=>{window.removeEventListener('scroll',queue);window.removeEve
 .story-chapter{--text-muted:var(--chapter-muted)}.story-chapter.dalaly{--text:var(--dalaly-ink);--text-muted:var(--chapter-muted)}.story-stage .screen{aspect-ratio:16/9;overflow:hidden;background:var(--charcoal-950);margin:0}.story-stage .screen img{width:100%;height:100%;object-fit:contain;display:block}.story-stage .screen img.scene-change{animation:scene-in .3s var(--ease-out) both}@keyframes scene-in{from{transform:translateX(5px)}to{transform:none}}.story-stage .screen{position:relative}.story-image-error{position:absolute;inset:0;display:grid;place-content:center;gap:12px;text-align:center;padding:12px;color:var(--charcoal-50)}.story-dialog{margin:auto;width:min(1120px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:20px;background:var(--charcoal-800);color:var(--charcoal-50);border:1px solid var(--charcoal-400);border-radius:var(--radius-md);overflow:auto}.story-dialog::backdrop{background:#0b0e0ce8}.story-dialog img{width:100%;max-height:65dvh;object-fit:contain;margin-block:16px}.story-dialog header,.story-dialog footer{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.story-buy :deep(.price__amount){font-size:clamp(38px,4.2vw,68px)}.story-stage .story-jumps button{min-height:44px}.story-enlarge{min-height:44px}.story-inline img{display:block}.story-chapter.dalaly .story-jumps button:focus-visible{outline-color:var(--charcoal-950)}@media(prefers-reduced-motion:reduce){.story-stage .screen img.scene-change{animation:none}}
 
 .story-chapter:not(.enhanced) .story-stage{display:none}.story-chapter:not(.enhanced) .story-layout{display:block}.story-chapter:not(.enhanced) .story-step{min-height:auto}.story-chapter:not(.enhanced) .story-inline{display:block}
+.story-heading h3,.story-step h4{font-family:var(--font-hero)}
+.story-step-inner{min-width:0;width:100%}
+.story-chapter:not(.enhanced) .story-inline img{width:100%;height:auto}
+.story-dialog{--text:var(--charcoal-50);--text-muted:var(--charcoal-300);--border-strong:var(--charcoal-400);--focus:var(--accent)}
+.story-image-error .workline-button{color:var(--charcoal-50);border-color:var(--charcoal-400)}
+@media(max-width:900px) and (max-height:720px){.story-stage .screen{max-height:30svh;width:100%}}
 </style>

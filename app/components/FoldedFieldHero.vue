@@ -1,7 +1,10 @@
+<script setup lang="ts">
+import FoldedField from "./effects/FoldedField.vue"
+</script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
     <div class="material-still" aria-hidden="true" />
-    <EffectsFoldedField />
+    <FoldedField />
     <div class="workline-shell cover-inner">
       <div class="cover-main"><div class="material-copy">
         <h1 id="hero-title"><span>شغلك يصير</span><span>أوضح.</span></h1>
@@ -15,7 +18,7 @@
 <style scoped lang="scss">
 /* V9.5 — original directional material, generated locally. */
 .cover-hero{position:relative;isolation:isolate;overflow:hidden;min-height:calc(100svh - var(--header-height));background:#101411;color:var(--text);display:grid;align-items:stretch;border-bottom:1px solid var(--border)}
-.material-still,:deep(.material-canvas){position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:-2}.material-still{background-image:url(/images/hero/folded-field-desktop.jpg);background-position:center;background-size:100% 100%}:deep(.material-canvas){opacity:0}:deep(.material-canvas).ready{opacity:1}.cover-hero::after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(270deg,#101411 4%,#101411f2 24%,#10141100 62%)}
+.material-still,:deep(.material-canvas){position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:-2}.material-still{background-image:url(/images/hero/folded-field-desktop.jpg);background-position:center;background-size:100% 100%}:deep(.material-canvas){opacity:0}:deep(.material-canvas.ready){opacity:1}.cover-hero::after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(270deg,#101411 4%,#101411f2 24%,#10141100 62%)}
 .cover-inner{display:grid;grid-template-rows:1fr auto;position:relative;padding-block:clamp(36px,5vh,64px) 26px;min-width:0}.cover-main{display:flex;align-items:center;min-width:0;padding-block:24px}.material-copy{width:min(57%,850px);display:grid;gap:clamp(14px,2.4vh,25px)}.material-copy h1{font-size:clamp(64px,7.3vw,125px);font-weight:800;line-height:1.28;letter-spacing:normal}.material-copy h1 span{display:block}.material-copy h1 span:last-child{color:var(--accent)}.material-copy p{max-width:31ch;color:var(--text);font-size:clamp(18px,1.55vw,25px);line-height:1.8}.cover-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px 25px;padding-inline:5px}.cover-actions :deep(.action--solid){min-height:60px;font-size:18px;margin-inline:0}.cover-actions :deep(.action--text){font-size:17px}.cover-bottom{display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1px solid #ffffff30;padding-block:14px;color:var(--text);font-size:15px}.cover-bottom .link{border:0}.cover-bottom .material-index{font-family:var(--font-sans);color:var(--text-muted);font-size:13px}
 @media(min-width:901px) and (max-height:680px){.material-copy h1{font-size:clamp(54px,6vw,88px)}.cover-inner{padding-block:20px 10px}.material-copy{gap:12px}}
 @media(max-width:900px){.cover-hero{min-height:calc(100svh - var(--header-height))}.material-copy{width:min(75%,650px)}.material-copy h1{font-size:clamp(58px,9vw,100px)}.cover-hero::after{background:linear-gradient(270deg,#101411 2%,#101411de 35%,#10141100 90%)}}

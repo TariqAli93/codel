@@ -210,3 +210,9 @@ V8.5 is an iteration of the approved Workline design, not a final release. It im
 ### V8.6 — Spatial Editorial
 
 Continues V8.5: shared isometric workplane behind the existing licensed hero artwork, keyboard-operable service exhibition with five original schematic illustrations, upright screenshot thumbnails with separate leaning selection shells, compact product purchasing areas, and direct customer questions answered from existing product and company data. No new dependencies, fabricated product imagery or claims. The review branch must pass the native Nuxt build, strict type check, responsive and browser interaction checks before merge.
+
+## V9.5 — Folded Field review branch
+
+The homepage is a native Vue port of the V9.5 interactive prototype: the exact desktop/mobile folded-material JPEGs and original WebGL2 fragment shader (with a defined square operation for negative inputs), seven scroll-driven scenes using the full-resolution local product assets, a typographic service selector, an editorial proof ledger, and a full-width CTA. The existing native inner pages, shared header/footer, cursor, company facts, local fonts and logo are preserved. No new dependencies. Shader Studio was an inspiration, not the source of an exported preset.
+
+The shader is optional: static artwork is always present, motion is paused offscreen and in hidden tabs, context loss falls back to the static image, and reduced motion disables the shader and displays product screenshots inline. Native build, strict TypeScript, static generation, visual comparison and real GPU testing remain required before merge.
