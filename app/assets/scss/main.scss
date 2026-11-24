@@ -140,7 +140,7 @@
   --control-md: 48px;
   --control-lg: 56px;
   --header-height: 72px;
-  --container-max: 1200px; // more size
+  --container-max: 1440px; // more size
 
   --slant-angle: 10deg;
 
@@ -154,10 +154,10 @@
 // Page rhythm and motion: site-level tokens, not in tokens.json v1 yet.
 // Motion is optional: the reduced-motion block at the end of this file switches it off.
 :root {
-  --page-gutter: clamp(var(--space-4), 5vw, var(--space-6));
-  --section-gap: clamp(var(--space-8), 8vw, var(--space-10)); // between a page's sections
+  --page-gutter: clamp(var(--space-4), 4vw, var(--space-8));
+  --section-gap: clamp(var(--space-8), 8vw, 120px); // between a page's sections
   --head-gap: var(--space-7); // between a section's heading and its content
-  --panel-pad: clamp(var(--space-5), 5vw, var(--space-9)); // inside large panels
+  --panel-pad: clamp(var(--space-5), 5vw, 72px); // inside large panels
   --measure: 42rem; // the widest a running paragraph gets
   --touch-target: 44px; // the smallest a standalone link gets (WCAG 2.5.5)
 
@@ -372,3 +372,7 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/* Workline layout primitives, using the existing Codel tokens. */
+.workline-shell{width:100%;max-inline-size:var(--container-max);padding-inline:var(--page-gutter);margin-inline:auto}
+.workline-button{display:inline-flex;align-items:center;justify-content:center;min-block-size:var(--touch-target);padding:8px 13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:transparent;color:inherit;font-size:var(--text-small);cursor:pointer;transform:skewX(calc(-1 * var(--slant-angle)));transition:background-color var(--duration-base) var(--ease-out),color var(--duration-base) var(--ease-out);>span{display:inline-block;transform:skewX(var(--slant-angle))}&:hover,&[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}&--icon{inline-size:44px;padding:0;font-size:1.4rem}}

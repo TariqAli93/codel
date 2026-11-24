@@ -21,7 +21,7 @@ const links: NavLink[] = [
   { to: "/contact", label: "تواصل معنا", cta: true },
 ];
 
-const headerLinks = links.filter((link) => !link.footerOnly);
+const headerLinks = links;
 
 // Site-wide share tags. Each page sets its own title, description, og:title and og:description.
 // canonical and og:url need the real domain, so they only appear once company.siteUrl is filled in.
@@ -261,29 +261,10 @@ onBeforeUnmount(() => {
 
     <footer class="layout__footer">
       <div class="layout__footer-frame">
-        <section class="layout__footer-invite" aria-labelledby="footer-invite-title">
-          <div class="layout__footer-message">
-            <h2 id="footer-invite-title" class="layout__footer-title">
-              تريد برنامج أو موقع يسهّل شغلك؟
-            </h2>
-            <p class="layout__footer-lede">
-              احچِ ويانا عن احتياجك. عدنا برامج جاهزة، ونبرمج حلول خاصة حسب طبيعة عملك.
-            </p>
-          </div>
-
-          <div class="layout__footer-action-wrap">
-            <ActionLink
-              look="solid"
-              size="lg"
-              :glow="false"
-              :to="company.phones.main.whatsapp"
-              :new-tab="true"
-              label="احچي ويانا على واتساب"
-            />
-          </div>
-        </section>
+        
 
         <div class="layout__footer-directory">
+          <div class="layout__footer-group layout__footer-intro"><NuxtLink to="/" aria-label="كودل — الرئيسية"><img src="/brand/codel-full-white.svg" alt="Codel" width="122" height="22" /></NuxtLink><p>شركة برمجيات عراقية في بغداد، تقدم برامج جاهزة وتطويراً حسب الطلب.</p></div>
           <div class="layout__footer-group">
             <h3 class="layout__footer-heading">استكشف</h3>
             <nav aria-label="روابط الموقع">
@@ -319,6 +300,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
+        <div class="layout__footer-bottom"><span>كودل — بغداد، العراق</span><nav aria-label="روابط قانونية"><NuxtLink to="/privacy">الخصوصية</NuxtLink><NuxtLink to="/terms">الشروط</NuxtLink></nav></div>
         <div class="layout__footer-brand">
           <NuxtLink
             class="layout__footer-brand-link"

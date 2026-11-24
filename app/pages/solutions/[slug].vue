@@ -187,7 +187,7 @@ $wide: 64em;
     display: grid;
     gap: var(--space-7);
     padding: var(--panel-pad);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     color: var(--text);
 
     @media (width >= $wide) {

@@ -20,6 +20,8 @@ withDefaults(
 
 <style scoped lang="scss">
 .page-head {
+  padding-block: clamp(12px,2vw,32px) var(--space-5);
+  &__title { font-size: clamp(2.25rem,5.5vw,4.75rem); line-height: 1.3; }
   &__title:last-child {
     margin-block-end: 0;
   }
