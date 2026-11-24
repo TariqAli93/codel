@@ -34,6 +34,17 @@ onMounted(() => {
 <template>
   <section ref="hero" class="v4-hero v83-hero" aria-labelledby="v83-title" @pointermove="onHeroMove" @pointerleave="resetArtwork" @pointercancel="resetArtwork">
     <div class="v83-background" aria-hidden="true">
+      <svg class="hero-workplane" viewBox="0 0 1000 760" fill="none" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <g class="hero-workplane__base" stroke="currentColor" stroke-width="1">
+          <path d="M35 488 436 276 943 508 545 720Z M35 488V510L545 742 943 530V508"/>
+          <path d="M136 435 645 667M236 382 745 614M336 329 845 561M137 535 538 323M239 581 640 369M341 628 742 416M443 674 844 462"/>
+          <path d="M35 488V160M943 508V180M436 276V52" stroke-dasharray="3 9"/>
+        </g>
+        <g class="hero-workplane__signal" stroke="var(--accent)" stroke-width="1.5">
+          <path d="M35 488 136 435 238 482 438 376 640 469 742 416 943 508" pathLength="1"/>
+          <circle cx="136" cy="435" r="3" fill="var(--accent)"/><circle cx="640" cy="469" r="3" fill="var(--accent)"/>
+        </g>
+      </svg>
       <img
         v-if="!failed"
         ref="artwork"
@@ -56,8 +67,8 @@ onMounted(() => {
         </h1>
         <div class="v4-hero-intro">
           <p>
-            برامج جاهزة تنظم عملك، وبرمجيات خاصة تُبنى على احتياجاتك. اختر ما
-            يناسب أعمالك وابدأ من هناك.
+            برامج جاهزة تنظّم عملك، وبرمجيات تُبنى على احتياجاتك. اختر ما
+            يناسب أعمالك.
           </p>
           <div class="actions">
             <ActionLink
@@ -92,8 +103,8 @@ onMounted(() => {
 <style scoped lang="scss">
 .v83-hero { min-height:calc(100vh - var(--header-height) - 1px);min-height:calc(100svh - var(--header-height) - 1px);display:grid;grid-template-rows:1fr auto;position:relative;isolation:isolate;overflow:hidden;background:var(--bg);border-block-end:1px solid var(--border); }
 .v83-background { position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none; }
-.v83-stock { position:absolute;inset-block:0;inset-inline-end:0;width:62%;height:100%;max-width:none;object-fit:contain;object-position:left center;filter:brightness(.98) saturate(.94);mask-image:linear-gradient(to right,#000 0%,#000 72%,transparent 100%);translate:var(--art-x,0px) var(--art-y,0px);transition:translate .45s var(--ease-out);animation:art-in .9s var(--ease-out) both; }
-.v83-background::after { content:'';position:absolute;inset:0;background:linear-gradient(to left,var(--bg) 0%,var(--bg) 40%,rgba(16,20,17,.85) 46%,rgba(16,20,17,.25) 58%,transparent 71%),linear-gradient(0deg,var(--bg),transparent 17%,transparent 88%,rgba(16,20,17,.12)); }
+.v83-stock { position:absolute;inset-block:0;inset-inline-end:0;width:61%;height:100%;max-width:none;object-fit:contain;object-position:left 43%;filter:brightness(.98) saturate(.94);mask-image:linear-gradient(to right,#000 0%,#000 72%,transparent 100%);translate:var(--art-x,0px) var(--art-y,0px);transition:translate .45s var(--ease-out);animation:art-in .9s var(--ease-out) both; }
+.v83-background::after { content:'';position:absolute;inset:0;background:linear-gradient(to left,var(--bg) 0%,var(--bg) 38%,color-mix(in srgb,var(--bg) 87%,transparent) 46%,color-mix(in srgb,var(--bg) 24%,transparent) 59%,transparent 73%),linear-gradient(0deg,var(--bg),transparent 17%,transparent 88%,rgba(16,20,17,.12)); }
 .v83-content { display:grid;align-content:center;position:relative;padding-block:clamp(54px,9vh,112px) clamp(36px,6vh,76px);min-width:0; }
 .v9-hero-copy { width:min(49%,780px); }
 .v4-caption { color:var(--text-muted);font-size:clamp(.95rem,1.1vw,1.125rem);margin-block-end:20px; }
@@ -114,4 +125,11 @@ onMounted(() => {
 @media(max-width:900px){ .v9-hero-copy{width:min(100%,650px)}.v83-stock{width:100%;object-fit:cover;object-position:30% 50%;mask-image:none}.v83-background::after{background:linear-gradient(270deg,rgba(16,20,17,.98),rgba(16,20,17,.82) 48%,rgba(16,20,17,.32)),linear-gradient(0deg,var(--bg),transparent 45%)} .v83-hero h1{font-size:clamp(2.8rem,9vw,5.5rem)}}
 @media(max-width:560px){.v83-content{align-content:end;padding-block:clamp(64px,14vh,120px) 36px}.v83-stock{object-position:34% 30%;filter:brightness(.8) saturate(.9)}.v83-background::after{background:linear-gradient(0deg,var(--bg) 8%,rgba(16,20,17,.94) 42%,rgba(16,20,17,.58) 72%,rgba(16,20,17,.2)),linear-gradient(270deg,rgba(16,20,17,.78),transparent)}.v83-hero h1{font-size:clamp(2.3rem,10.4vw,3.8rem);margin-block-end:14px}.v4-caption{margin-block-end:12px}.v4-hero-intro p{font-size:1rem}.actions{gap:12px 18px;margin-block-start:20px;:deep(.action--solid){min-height:52px;font-size:1rem}}.v83-credit{font-size:.7rem}}
 @media(prefers-reduced-motion:reduce){.v83-stock,.v4-line>span{animation:none;transform:none;translate:none}}
+
+.hero-workplane{position:absolute;inset-block-start:8%;inset-inline-end:0;width:64%;height:88%;max-width:none;color:var(--border-strong);opacity:.40;translate:calc(var(--art-x,0px) * -.45) calc(var(--art-y,0px) * -.45);transition:translate .65s var(--ease-out)}
+.hero-workplane__signal{opacity:.65}
+@media(prefers-reduced-motion:no-preference){.hero-workplane__signal path{stroke-dasharray:1;animation:workplane-trace 1.5s .15s var(--ease-out) both}@keyframes workplane-trace{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}}
+@media(max-width:900px){.hero-workplane{width:100%;opacity:.24;inset-block-start:0}}
+@media(max-width:560px){.hero-workplane{display:none}}
+@media(prefers-reduced-motion:reduce){.hero-workplane{animation:none;translate:none}}
 </style>

@@ -206,3 +206,7 @@ Follow-up to the V8.4 browser review. The existing product screenshot assets and
 ### V8.5 — continuing art direction
 
 V8.5 is an iteration of the approved Workline design, not a final release. It improves the shared header and type scale, replaces the heavy screenshot frame with real thumbnail navigation, preserves initial image loading and retry handling, aligns product purchase information, gives open services a larger detail area and animated functional icon, and uses asymmetric evidence with direct links to the two real products. Hero depth is pointer-driven on fine pointers only, and heading content remains visible. Footer branding, all routes, semantic tokens, and native scrolling remain. The native build and visual/keyboard/responsive audit are still required; no 10/10 score is claimed.
+
+### V8.6 — Spatial Editorial
+
+Continues V8.5: shared isometric workplane behind the existing licensed hero artwork, keyboard-operable service exhibition with five original schematic illustrations, upright screenshot thumbnails with separate leaning selection shells, compact product purchasing areas, and direct customer questions answered from existing product and company data. No new dependencies, fabricated product imagery or claims. The review branch must pass the native Nuxt build, strict type check, responsive and browser interaction checks before merge.

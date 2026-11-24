@@ -114,11 +114,11 @@ function onGalleryKey(event:KeyboardEvent) {
 .app-panel__stage { aspect-ratio:16/9;position:relative;overflow:hidden;border-radius:var(--radius-md);background:var(--charcoal-900);box-shadow:0 0 0 1px color-mix(in srgb,currentColor 13%,transparent);img{display:block;width:100%;height:100%;object-fit:contain} }
 .app-panel__controls { display:grid;grid-template-columns:repeat(var(--shot-count),minmax(0,1fr));gap:clamp(10px,1.2vw,18px);padding-inline:4px; }
 .app-panel__thumb { appearance:none;border:0;background:transparent;padding:0 0 8px;min-width:0;min-height:44px;display:flex;flex-direction:column;align-items:stretch;gap:10px;text-align:start;cursor:pointer;border-block-end:2px solid color-mix(in srgb,currentColor 23%,transparent);color:var(--text-muted);transition:border-color .22s var(--ease-out),color .22s var(--ease-out); }
-.app-panel__thumb-frame { display:block;transform:skewX(calc(-1 * var(--slant-angle)));border-radius:var(--radius-sm);padding:2px;border:1px solid color-mix(in srgb,currentColor 25%,transparent);transition:background-color .22s,border-color .22s; }
-.app-panel__thumb-image { display:grid;place-items:center;aspect-ratio:16/9;transform:skewX(var(--slant-angle));overflow:hidden;border-radius:3px;background:var(--charcoal-900);img{width:100%;height:100%;object-fit:contain} }
+.app-panel__thumb-frame { display:block;position:relative;isolation:isolate;padding:4px 6px; &::before{content:"";position:absolute;inset:0;z-index:-1;transform:skewX(calc(-1 * var(--slant-angle)));border-radius:var(--radius-sm);border:1px solid color-mix(in srgb,currentColor 25%,transparent);transition:background-color var(--duration-base),border-color var(--duration-base)} }
+.app-panel__thumb-image { display:grid;place-items:center;aspect-ratio:16/9;overflow:hidden;border-radius:3px;background:var(--charcoal-900);img{width:100%;height:100%;object-fit:contain} }
 .app-panel__thumb-label { display:block;font-size:var(--text-ui);line-height:1.55;overflow-wrap:anywhere; }
-.app-panel__thumb[aria-pressed="true"] { color:var(--text);border-color:var(--primary);font-weight:600;.app-panel__thumb-frame{background:var(--primary);border-color:var(--primary)} }
-@media(hover:hover){.app-panel__thumb:hover{color:var(--text);border-color:var(--primary);.app-panel__thumb-frame{border-color:var(--primary)}}}
+.app-panel__thumb[aria-pressed="true"] { color:var(--text);border-color:var(--primary);font-weight:600;.app-panel__thumb-frame::before{background:var(--primary);border-color:var(--primary)} }
+@media(hover:hover){.app-panel__thumb:hover{color:var(--text);border-color:var(--primary);.app-panel__thumb-frame::before{border-color:var(--primary)}}}
 .app-panel--sand .app-panel__thumb[aria-pressed="true"]{color:var(--dalaly-ink)}
 
 .app-panel__fallback { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center;color:var(--charcoal-50);a{color:inherit}button{color:inherit;border-color:var(--charcoal-400);&:hover{color:var(--on-accent);background:var(--accent)}} }
@@ -126,12 +126,22 @@ function onGalleryKey(event:KeyboardEvent) {
 .app-panel__stage--back .app-panel__image--selected { animation-name:screen-settle-back; }
 @keyframes screen-settle { from{transform:translateX(7px) scale(.994)}to{transform:none} }
 @keyframes screen-settle-back { from{transform:translateX(-7px) scale(.994)}to{transform:none} }
-.app-panel__aside { grid-area:aside;display:flex;flex-direction:column;gap:clamp(18px,2vw,30px);min-width:0;align-self:stretch;line-height:1.85;font-size:clamp(1.0625rem,1.12vw,1.2rem);p{margin:0} }
+.app-panel__aside { grid-area:aside;display:flex;flex-direction:column;gap:clamp(16px,1.6vw,24px);min-width:0;align-self:start;line-height:1.75;font-size:clamp(1.0625rem,1.12vw,1.2rem);p{margin:0} }
 .app-panel__benefits { padding-block-start:4px;h3,h4{font-size:var(--text-sub);margin-block-end:12px}ul{list-style:none;padding:0;display:grid;gap:12px;font-size:clamp(1rem,1.05vw,1.0625rem)}li{position:relative;padding-inline-start:18px;&::before{content:'';position:absolute;inset-inline-start:1px;inset-block-start:.75em;width:6px;height:6px;background:currentColor;transform:skewX(-10deg)}} }
-.app-panel__purchase { display:flex;flex-direction:column;align-items:stretch;gap:16px;margin-block-start:auto;padding-block-start:22px;border-block-start:1px solid color-mix(in srgb,currentColor 20%,transparent);>div{display:grid;gap:8px}small{font-size:var(--text-small);color:var(--text-muted)}:deep(.price__amount){font-size:clamp(2.5rem,3.15vw,3rem)}:deep(.action){min-height:58px;padding-inline:18px;margin-inline:5px;font-size:1.05rem;justify-content:center} }
+.app-panel__purchase { display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-block-start:0;padding-block-start:20px;border-block-start:1px solid color-mix(in srgb,currentColor 20%,transparent);>div{display:grid;gap:8px}small{font-size:var(--text-small);color:var(--text-muted)}:deep(.price__amount){font-size:clamp(2.5rem,3.15vw,3rem)}:deep(.action){min-height:58px;padding-inline:18px;margin-inline:5px;font-size:1.05rem;justify-content:center} }
 .app-gallery { position:fixed;inset:0;margin:auto;width:min(1120px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:clamp(12px,2vw,24px);background:var(--charcoal-800);color:var(--charcoal-50);border:1px solid var(--charcoal-400);border-radius:var(--radius-lg);overflow:auto;img{width:100%;height:auto;max-height:65dvh;object-fit:contain;margin-block:16px}&::backdrop{background:rgba(11,14,12,.91)} }
 .app-gallery__bar { display:flex;justify-content:space-between;align-items:center;gap:12px;h2{font-size:var(--text-card);margin:0}button{color:var(--charcoal-50);border-color:var(--charcoal-400);&:hover{background:var(--charcoal-700);color:var(--charcoal-50)}} }
 @media(max-width:900px){.app-panel,.app-panel--sand{grid-template-columns:minmax(0,1fr);grid-template-areas:'head' 'screen' 'aside'}.app-panel__head{align-items:start;flex-direction:column;gap:6px}.app-panel__tagline{text-align:start;max-width:none}.app-panel__aside{gap:16px}}
 @media(max-width:440px){.app-panel{padding:16px}.app-panel__caption{gap:6px;font-size:var(--text-small)}.app-panel__controls{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.app-panel__thumb-label{font-size:var(--text-small)}.app-panel__purchase{align-items:stretch;flex-direction:column;:deep(.action){align-self:stretch}}.app-gallery__bar{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.app-panel__image--selected{animation:none}}
+
+/* The real UI pixels are never sheared. Only the selection shell has the brand lean. */
+.app-panel__thumb-image img{transform:none}
+.app-panel__thumb:focus-visible{outline-offset:4px}
+@media(min-width:901px){
+  .app-panel__controls{max-inline-size:640px}
+  .app-panel__aside{padding-block-start:4px}
+  .app-panel__purchase :deep(.action){align-self:stretch}
+}
+@media(max-width:440px){.app-panel__fallback{gap:6px;padding:8px;font-size:var(--text-small)}}
 </style>
