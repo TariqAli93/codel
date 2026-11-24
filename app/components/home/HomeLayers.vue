@@ -184,10 +184,7 @@ const scanBox = `0 0 ${width} ${plateArt.faceHeight}`;
         data-reveal
       >
         <!-- The story's timeline moves the item itself; anything else that moves a layer moves this. -->
-        <div
-          :ref="(element) => keepBody(element, index)"
-          class="layers__body"
-        >
+        <div :ref="(element) => keepBody(element, index)" class="layers__body">
           <HomeLayerPlate
             v-if="layer.kind"
             class="layers__plate"
@@ -262,8 +259,8 @@ $note-size: 0.8125rem;
   --tag-numeral: 1.3125rem;
   --tag-gap: var(--space-3);
   --tag-room: calc(
-    var(--tag-max, 14.75rem) - var(--tag-pad-start) - var(--tag-pad-end) - 3px -
-      var(--tag-numeral) - var(--tag-gap)
+    var(--tag-max, 14.75rem) - var(--tag-pad-start) - var(--tag-pad-end) -
+      3px - var(--tag-numeral) - var(--tag-gap)
   );
 
   position: relative;

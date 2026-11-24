@@ -200,7 +200,13 @@ const riser = (foot: Point): Shape[] => {
       look: cls("riser"),
       points: `${x},${round(from)} ${x},${round(underside - TUCK)}`,
     },
-    { tag: "circle", look: cls("foot", "detail"), cx: x, cy: round(from), r: 2 },
+    {
+      tag: "circle",
+      look: cls("foot", "detail"),
+      cx: x,
+      cy: round(from),
+      r: 2,
+    },
     {
       tag: "circle",
       look: cls("pulse"),
@@ -241,7 +247,12 @@ const plate: Shape[] = [
   ),
   polygon(cls("top"), ...corners),
   flat(cls("inset", "detail"), 1, 1, GRID - 1, GRID - 1, 0),
-  stroke(cls("edge", "edge--front"), [0, GRID, 0], [GRID, GRID, 0], [GRID, 0, 0]),
+  stroke(
+    cls("edge", "edge--front"),
+    [0, GRID, 0],
+    [GRID, GRID, 0],
+    [GRID, 0, 0],
+  ),
   stroke(cls("edge", "edge--rear"), [0, GRID, 0], [0, 0, 0], [GRID, 0, 0]),
 ];
 // The right vertex, where the layer's leader starts.
@@ -263,7 +274,8 @@ const leds = ([x, y, , w]: Box, lit: boolean) =>
       1.1,
     ),
   );
-const server = (box: Box, lit: boolean) => solid(box, "graphite", leds(box, lit));
+const server = (box: Box, lit: boolean) =>
+  solid(box, "graphite", leds(box, lit));
 
 // A whole drawing, in painting order: the plate (with the join of the riser from below), what
 // stands on it, the lime part that floats over it, its own riser, and over everything the vertex
@@ -680,8 +692,8 @@ $settle: 4s;
     &__riser {
       transform-box: fill-box;
       transform-origin: 50% 100%;
-      animation: plate-grow 400ms var(--ease-out) calc(var(--enter, 0ms) + 300ms)
-        backwards;
+      animation: plate-grow 400ms var(--ease-out)
+        calc(var(--enter, 0ms) + 300ms) backwards;
     }
 
     &__foot {

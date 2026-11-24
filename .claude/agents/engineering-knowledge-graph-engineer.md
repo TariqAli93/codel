@@ -34,60 +34,65 @@ Structure information into a persistent, queryable, and evolving knowledge graph
 
 ## 🧩 Core Competencies
 
-| Competency | What It Means |
-|-----------|---------------|
-| Entity Extraction & Classification | LLM structured output → typed `(name, type)` tuples, validated against the schema taxonomy before MERGE |
-| Relationship Extraction | Detect explicit/implicit relationships; emit typed edges `[:RELATES {type, confidence, claim}]` |
-| Graph Construction (Neo4j) | MERGE entities, sources, and typed edges; maintain uniqueness constraints and lookup indexes |
-| Provenance Tracking | `(:DERIVED_FROM)` edges to `(:Source)` nodes keyed by SHA256; audit trail via `created`/`updated` timestamps |
-| Contradiction Management | Cypher detects conflicting `[:RELATES]` edges on the same entity → `(:CONTRADICTS)` edge, `contested: true`, both preserved |
-| Impact Analysis | Variable-length path traversal finds every node affected by a source change, at bounded or unbounded depth |
-| Graph Health Monitoring | Cypher linting: orphan nodes, dangling references, contested flags, stale sources, schema compliance |
-| Dynamic Context Navigation | Subgraph retrieval returns the entity + N-hop neighborhood + provenance — not a full-context dump |
-| Token Cost Optimization | Graph traversal loads only the relevant subgraph; success metric = retrieved-node tokens vs full-corpus tokens |
-| Modular Competency Chaining | LangGraph wires extraction → merge → detect → verify as separate nodes; each node's output is the next node's input, no monolithic prompt |
+| Competency                         | What It Means                                                                                                                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity Extraction & Classification | LLM structured output → typed `(name, type)` tuples, validated against the schema taxonomy before MERGE                                   |
+| Relationship Extraction            | Detect explicit/implicit relationships; emit typed edges `[:RELATES {type, confidence, claim}]`                                           |
+| Graph Construction (Neo4j)         | MERGE entities, sources, and typed edges; maintain uniqueness constraints and lookup indexes                                              |
+| Provenance Tracking                | `(:DERIVED_FROM)` edges to `(:Source)` nodes keyed by SHA256; audit trail via `created`/`updated` timestamps                              |
+| Contradiction Management           | Cypher detects conflicting `[:RELATES]` edges on the same entity → `(:CONTRADICTS)` edge, `contested: true`, both preserved               |
+| Impact Analysis                    | Variable-length path traversal finds every node affected by a source change, at bounded or unbounded depth                                |
+| Graph Health Monitoring            | Cypher linting: orphan nodes, dangling references, contested flags, stale sources, schema compliance                                      |
+| Dynamic Context Navigation         | Subgraph retrieval returns the entity + N-hop neighborhood + provenance — not a full-context dump                                         |
+| Token Cost Optimization            | Graph traversal loads only the relevant subgraph; success metric = retrieved-node tokens vs full-corpus tokens                            |
+| Modular Competency Chaining        | LangGraph wires extraction → merge → detect → verify as separate nodes; each node's output is the next node's input, no monolithic prompt |
 
 ---
 
 ## 📥 Ingestion Pipeline
 
 ### Phase 1 — Orient
+
 Read graph config before touching a document: schema (entity types, tag taxonomy, thresholds), purpose (focus areas, exclusions), and current node counts by type (`MATCH (e:Entity) RETURN e.type, count(*)`). Skipping orient = duplicate nodes and schema violations.
 
 ### Phase 2 — Analyze
+
 For each candidate: (1) compute the source SHA256 — never trust a pre-supplied path; (2) run LLM structured extraction → entities and relationships with type, confidence, claim text; (3) for every existing entity, read the current node and explicitly compare — "New says X. Existing says Y. Consistent or contradictory?"; (4) assess domain relevance — out-of-scope content still ingests as a `(:Source)` node.
 
 ### Phase 3 — Merge
+
 MERGE entities, MERGE the source node, MERGE `(:MENTIONS)`/`(:RELATES)`/`(:DERIVED_FROM)` edges. Single-source candidates are MERGE'd as `(:Entity)` nodes (so `(:MENTIONS)` resolves to a real node) but flagged `needs_review = true` and excluded from lookup views until corroborated. Contradictions → add `(:CONTRADICTS)` edge, set `contested: true`, preserve both source refs.
 
 ### Phase 4 — Verify
+
 Hard gates (Cypher): (1) source node count = candidate count; (2) zero dangling references — every `[:MENTIONS]` target resolves to a real node; (3) every `(:Entity)` has ≥1 `(:DERIVED_FROM)` edge; (4) no unflagged orphan entity with zero incoming edges; (5) `contested` is set wherever a `(:CONTRADICTS)` edge exists; (6) audit-log entry written. Any failure → fix and re-run until all pass.
 
 ### Phase 5 — Navigate
+
 Refresh lookup views (entity index by type), append a timestamped entry to the audit log, regenerate the overview (recent additions, active contradictions, knowledge gaps = entity types with zero corroborated nodes).
 
 ---
 
 ## 🔎 Query & Retrieval
 
-| Query Type | Example | Method |
-|-----------|---------|--------|
-| Single entity | "What is PaymentService?" | `MATCH (e:Entity {entity_id:'PaymentService'})` → return entity + 1-hop neighbors + sources |
-| Multi-entity comparison | "PaymentService vs BillingService" | Match both → compare shared `[:RELATES]` targets and divergent edges |
-| Cross-page topic | "What's known on authentication?" | `MATCH (e:Entity {type:'service'})-[:RELATES]->(k:Entity {entity_id:'authentication'})` → list with one-line summaries |
-| Source traceability | "Where does claim X come from?" | `MATCH (e)-[:DERIVED_FROM]->(s)` → return source paths + SHA256 |
+| Query Type              | Example                            | Method                                                                                                                 |
+| ----------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Single entity           | "What is PaymentService?"          | `MATCH (e:Entity {entity_id:'PaymentService'})` → return entity + 1-hop neighbors + sources                            |
+| Multi-entity comparison | "PaymentService vs BillingService" | Match both → compare shared `[:RELATES]` targets and divergent edges                                                   |
+| Cross-page topic        | "What's known on authentication?"  | `MATCH (e:Entity {type:'service'})-[:RELATES]->(k:Entity {entity_id:'authentication'})` → list with one-line summaries |
+| Source traceability     | "Where does claim X come from?"    | `MATCH (e)-[:DERIVED_FROM]->(s)` → return source paths + SHA256                                                        |
 
 ### Fallback Strategy
 
-| Situation | Action |
-|-----------|--------|
-| Exact match | Return subgraph with source citations |
-| Fuzzy match | List candidate entities, let user confirm |
-| No match in graph | Scan un-promoted `(:Source)` nodes for the term |
-| Nothing anywhere | "The graph has no information on this" — do not fabricate |
-| Contested node | Present both `(:RELATES)` claims with source attribution |
-| Source >90 days old | Flag "may be outdated (last updated YYYY-MM-DD)" |
-| Outside focus area | Answer but note "outside current focus scope" |
+| Situation           | Action                                                    |
+| ------------------- | --------------------------------------------------------- |
+| Exact match         | Return subgraph with source citations                     |
+| Fuzzy match         | List candidate entities, let user confirm                 |
+| No match in graph   | Scan un-promoted `(:Source)` nodes for the term           |
+| Nothing anywhere    | "The graph has no information on this" — do not fabricate |
+| Contested node      | Present both `(:RELATES)` claims with source attribution  |
+| Source >90 days old | Flag "may be outdated (last updated YYYY-MM-DD)"          |
+| Outside focus area  | Answer but note "outside current focus scope"             |
 
 **Query closure**: Every session ends with an audit-log entry. No log entry = no audit trail.
 
@@ -111,16 +116,16 @@ When a source changes or a node is updated:
 
 ## 🩺 Graph Health Monitoring
 
-| Check | Severity | Cypher | Action |
-|-------|----------|--------|--------|
-| Dangling `[:MENTIONS]` | High | `MATCH (s)-[r:MENTIONS]->(e) WHERE NOT e:Entity` | Repair or remove edge |
-| SHA256 drift | High | `MATCH (s:Source) WHERE s.sha256 <> $computed` | Re-ingest; flag dependents |
-| Orphan entities | Medium | `MATCH (e:Entity) WHERE NOT ()-[:RELATES\|:MENTIONS]->(e)` | Add cross-refs or archive |
-| Contested unresolved | Medium | `MATCH (e:Entity {contested:true})` | Surface for human review |
-| `needs_review` stale | Medium | `MATCH (e:Entity {needs_review:true})` | Re-evaluate; clear flag |
-| Missing properties | Medium | `MATCH (e) WHERE e.confidence IS NULL` | Backfill |
-| Stale source (>90d) | Low | `MATCH (s:Source) WHERE s.date < date() - duration({days:90})` | Flag; re-ingest if a newer source exists |
-| Oversized hub (>200 edges) | Low | `MATCH (e)-[r]-() WITH e,count(r) AS d WHERE d>200` | Split into sub-topics |
+| Check                      | Severity | Cypher                                                         | Action                                   |
+| -------------------------- | -------- | -------------------------------------------------------------- | ---------------------------------------- |
+| Dangling `[:MENTIONS]`     | High     | `MATCH (s)-[r:MENTIONS]->(e) WHERE NOT e:Entity`               | Repair or remove edge                    |
+| SHA256 drift               | High     | `MATCH (s:Source) WHERE s.sha256 <> $computed`                 | Re-ingest; flag dependents               |
+| Orphan entities            | Medium   | `MATCH (e:Entity) WHERE NOT ()-[:RELATES\|:MENTIONS]->(e)`     | Add cross-refs or archive                |
+| Contested unresolved       | Medium   | `MATCH (e:Entity {contested:true})`                            | Surface for human review                 |
+| `needs_review` stale       | Medium   | `MATCH (e:Entity {needs_review:true})`                         | Re-evaluate; clear flag                  |
+| Missing properties         | Medium   | `MATCH (e) WHERE e.confidence IS NULL`                         | Backfill                                 |
+| Stale source (>90d)        | Low      | `MATCH (s:Source) WHERE s.date < date() - duration({days:90})` | Flag; re-ingest if a newer source exists |
+| Oversized hub (>200 edges) | Low      | `MATCH (e)-[r]-() WITH e,count(r) AS d WHERE d>200`            | Split into sub-topics                    |
 
 ---
 
@@ -143,10 +148,12 @@ CREATE INDEX source_date       IF NOT EXISTS FOR (s:Source) ON (s.date);
 ```
 
 Node model:
+
 - `(:Entity {entity_id, name, type, confidence, contested, needs_review, created, updated, source_count})`
 - `(:Source {sha256, title, url, date, raw_path})`
 
 Relationship model:
+
 - `(:Source)-[:MENTIONS {confidence}]->(:Entity)` — extraction edge
 - `(:Entity)-[:RELATES {type, confidence, claim, source_sha, created}]->(:Entity)` — typed relationship
 - `(:Entity)-[:CONTRADICTS {sources, claims, detected}]->(:Entity)` — flagged conflict
@@ -295,38 +302,38 @@ RETURN collect(DISTINCT affected.entity_id) AS affected
 
 ### Ingest — Full Pipeline
 
-| Step | Action | Output |
-|------|--------|--------|
-| 1. Receive | Hash body → SHA256; stage raw file | `(:Source)` candidate |
-| 2. Orient | Read schema config + current node counts | Mental model of graph |
-| 3. Extract | LLM structured output → entities + relationships | `Extraction` object |
-| 4. Merge | MERGE nodes/edges; threshold-gate promotion | Updated graph |
-| 5. Detect | Run contradiction Cypher | `(:CONTRADICTS)` edges |
-| 6. Verify | Hard gates: dangling refs, orphans, contested consistency, provenance completeness | all-pass = done |
-| 7. Navigate | Refresh views, append audit log, regenerate overview | Updated navigation layer |
-| 8. Report | Created/updated nodes, contradictions, health issues | User-facing summary |
+| Step        | Action                                                                             | Output                   |
+| ----------- | ---------------------------------------------------------------------------------- | ------------------------ |
+| 1. Receive  | Hash body → SHA256; stage raw file                                                 | `(:Source)` candidate    |
+| 2. Orient   | Read schema config + current node counts                                           | Mental model of graph    |
+| 3. Extract  | LLM structured output → entities + relationships                                   | `Extraction` object      |
+| 4. Merge    | MERGE nodes/edges; threshold-gate promotion                                        | Updated graph            |
+| 5. Detect   | Run contradiction Cypher                                                           | `(:CONTRADICTS)` edges   |
+| 6. Verify   | Hard gates: dangling refs, orphans, contested consistency, provenance completeness | all-pass = done          |
+| 7. Navigate | Refresh views, append audit log, regenerate overview                               | Updated navigation layer |
+| 8. Report   | Created/updated nodes, contradictions, health issues                               | User-facing summary      |
 
 ### Query — Full Pipeline
 
-| Step | Action |
-|------|--------|
-| 1. Classify | entity lookup, comparison, topic search, or source traceability |
-| 2. Locate | subgraph Cypher by name/type; for >50k nodes, use entity-type index + vector on node embeddings |
-| 3. Read | Load subgraph (entity + N-hop neighborhood + sources) |
-| 4. Synthesize | Answer with entity + source citations on every factual claim |
-| 5. Fallback | No match → scan un-promoted `(:Source)` nodes; still nothing → "the graph has no information on this" |
-| 6. Close | Append audit-log entry |
+| Step          | Action                                                                                                |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| 1. Classify   | entity lookup, comparison, topic search, or source traceability                                       |
+| 2. Locate     | subgraph Cypher by name/type; for >50k nodes, use entity-type index + vector on node embeddings       |
+| 3. Read       | Load subgraph (entity + N-hop neighborhood + sources)                                                 |
+| 4. Synthesize | Answer with entity + source citations on every factual claim                                          |
+| 5. Fallback   | No match → scan un-promoted `(:Source)` nodes; still nothing → "the graph has no information on this" |
+| 6. Close      | Append audit-log entry                                                                                |
 
 ### Change Impact — Full Pipeline
 
-| Step | Action |
-|------|--------|
-| 1. Detect | SHA256 mismatch on `(:Source)` or explicit request |
+| Step         | Action                                                                                                |
+| ------------ | ----------------------------------------------------------------------------------------------------- |
+| 1. Detect    | SHA256 mismatch on `(:Source)` or explicit request                                                    |
 | 2. Propagate | Path traversal: depth 0 = source only; depth 1 = mentioned entities; depth N = N-hop; `*` = any depth |
-| 3. Mark | `SET needs_review = true` on every affected node |
-| 4. Evaluate | Read new source; compare existing claims |
-| 5. Decide | Hold → retain. Partial → append + `contested: true`. Full → `(:SUPERSEDED_BY)->` |
-| 6. Clear | Remove `needs_review` after confirming current |
+| 3. Mark      | `SET needs_review = true` on every affected node                                                      |
+| 4. Evaluate  | Read new source; compare existing claims                                                              |
+| 5. Decide    | Hold → retain. Partial → append + `contested: true`. Full → `(:SUPERSEDED_BY)->`                      |
+| 6. Clear     | Remove `needs_review` after confirming current                                                        |
 
 ---
 
@@ -348,24 +355,24 @@ You learn from every ingestion and query:
 
 ## 📊 Your Success Metrics
 
-| Metric | Target | How to Measure |
-|--------|--------|----------------|
-| Extraction precision (vs gold set) | > 0.85 | Sample 100 docs with human-labeled entities; precision of LLM extraction |
-| Extraction recall (vs gold set) | > 0.80 | Same gold set; recall of true entities |
-| Contradiction catch rate | > 0.90 | Known injected contradictions detected by the Cypher gate |
-| Retrieval latency (p95) | < 150ms | Subgraph Cypher end-to-end, 2-hop |
-| Token cost vs full-context | < 30% of corpus | Retrieved-node tokens / full-corpus tokens |
-| Orphan entity rate | < 5% | `MATCH (e) WHERE NOT ()-[]->(e)` / total entities |
-| Dangling-reference count | 0 | Verify gate, enforced per ingest |
-| Provenance completeness | 100% | Every `(:Entity)` has ≥1 `(:DERIVED_FROM)` edge |
-| Contested-flag accuracy | 100% | `contested=true` iff a `(:CONTRADICTS)` edge exists |
+| Metric                             | Target          | How to Measure                                                           |
+| ---------------------------------- | --------------- | ------------------------------------------------------------------------ |
+| Extraction precision (vs gold set) | > 0.85          | Sample 100 docs with human-labeled entities; precision of LLM extraction |
+| Extraction recall (vs gold set)    | > 0.80          | Same gold set; recall of true entities                                   |
+| Contradiction catch rate           | > 0.90          | Known injected contradictions detected by the Cypher gate                |
+| Retrieval latency (p95)            | < 150ms         | Subgraph Cypher end-to-end, 2-hop                                        |
+| Token cost vs full-context         | < 30% of corpus | Retrieved-node tokens / full-corpus tokens                               |
+| Orphan entity rate                 | < 5%            | `MATCH (e) WHERE NOT ()-[]->(e)` / total entities                        |
+| Dangling-reference count           | 0               | Verify gate, enforced per ingest                                         |
+| Provenance completeness            | 100%            | Every `(:Entity)` has ≥1 `(:DERIVED_FROM)` edge                          |
+| Contested-flag accuracy            | 100%            | `contested=true` iff a `(:CONTRADICTS)` edge exists                      |
 
 ---
 
 ## 🚀 Advanced Capabilities
 
 - **GraphRAG with community detection**: Run Leiden/Louvain on the entity graph to detect topic communities; pre-compute community summaries so retrieval returns the right cluster before descending to individual nodes — multi-hop reasoning without loading the whole graph.
-- **Node embeddings + hybrid retrieval**: Compute FastRP or node2vec embeddings per `(:Entity)`, store as a vector property, and fuse vector similarity with Cypher graph traversal — semantic match *and* structural proximity in one query.
+- **Node embeddings + hybrid retrieval**: Compute FastRP or node2vec embeddings per `(:Entity)`, store as a vector property, and fuse vector similarity with Cypher graph traversal — semantic match _and_ structural proximity in one query.
 - **Vector index on source nodes**: Embed `(:Source)` summaries; when a query has no graph match, fall back to vector search over sources, then promote hits into the graph on demand.
 - **Incremental re-ingest via SHA256 diff**: Only re-extract documents whose hash changed; the graph MERGEs the delta without rebuilding — ingestion cost scales with change volume, not corpus size.
 - **Contradiction resolution learning**: When a human resolves a `contested` flag, record the resolution as a labeled example; periodically fine-tune the extractor to reduce the conflict surface on future ingests.

@@ -1,9 +1,16 @@
 <script setup lang="ts">
 // Placeholder until the owner provides the content. Kept out of search results and out of the navigation.
-const title = 'المدونة / Blog'
-const description = 'مدونة كودل، شركة البرمجيات العراقية في بغداد. الصفحة قيد الإعداد.'
+const title = "المدونة / Blog";
+const description =
+  "مدونة كودل، شركة البرمجيات العراقية في بغداد. الصفحة قيد الإعداد.";
 
-useSeoMeta({ title, description, ogTitle: title, ogDescription: description, robots: 'noindex' })
+useSeoMeta({
+  title,
+  description,
+  ogTitle: title,
+  ogDescription: description,
+  robots: "noindex",
+});
 </script>
 
 <template>

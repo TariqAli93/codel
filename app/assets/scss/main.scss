@@ -175,7 +175,11 @@
 // is live now. Lime fills the solid buttons and the home contact band; the solid buttons carry the
 // one glow (--glow-accent, on its own layer), and a light ground switches it off.
 :root {
-  --text-hero: clamp(3.5rem, 0.5rem + 9vw, 7.5rem); // the home h1 (a ceiling: it fits its measure)
+  --text-hero: clamp(
+    3.5rem,
+    0.5rem + 9vw,
+    7.5rem
+  ); // the home h1 (a ceiling: it fits its measure)
   --text-page: clamp(2.5rem, 2.0714rem + 2.1429vw, 4rem); // every other h1
   --text-title: clamp(2rem, 1.7143rem + 1.4286vw, 3rem); // section headings
   --text-name: clamp(1.625rem, 1.4464rem + 0.8929vw, 2.25rem); // product names
@@ -189,10 +193,18 @@
     1.2857rem + 1.0714vw,
     2.25rem
   ); // running display lines: services, statements
-  --text-card: clamp(1.25rem, 1.2143rem + 0.1786vw, 1.375rem); // card titles, the menu panel
+  --text-card: clamp(
+    1.25rem,
+    1.2143rem + 0.1786vw,
+    1.375rem
+  ); // card titles, the menu panel
   --text-lead: clamp(1.125rem, 1.02rem + 0.28vw, 1.25rem); // ledes
   --text-sub: 1.125rem; // h5, h6
-  --text-body: clamp(1rem,.96rem + .18vw,1.125rem); // running text, larger buttons
+  --text-body: clamp(
+    1rem,
+    0.96rem + 0.18vw,
+    1.125rem
+  ); // running text, larger buttons
   --text-ui: 1rem; // navigation, smaller buttons, labels
   --text-small: 0.875rem;
   --text-caption: 0.75rem; // window title bars
@@ -374,20 +386,84 @@ a {
 }
 
 /* Workline layout primitives, using the existing Codel tokens. */
-.workline-shell{width:100%;max-inline-size:var(--container-max);padding-inline:var(--page-gutter);margin-inline:auto}
-.workline-button{display:inline-flex;align-items:center;justify-content:center;min-block-size:var(--touch-target);padding:8px 13px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:transparent;color:inherit;font-size:var(--text-small);cursor:pointer;transform:skewX(calc(-1 * var(--slant-angle)));transition:background-color var(--duration-base) var(--ease-out),color var(--duration-base) var(--ease-out);>span{display:inline-block;transform:skewX(var(--slant-angle))}&:hover,&[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}&--icon{inline-size:44px;padding:0;font-size:1.4rem}}
+.workline-shell {
+  width: 100%;
+  max-inline-size: var(--container-max);
+  padding-inline: var(--page-gutter);
+  margin-inline: auto;
+}
+.workline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--touch-target);
+  padding: 8px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font-size: var(--text-small);
+  cursor: pointer;
+  transform: skewX(calc(-1 * var(--slant-angle)));
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+  > span {
+    display: inline-block;
+    transform: skewX(var(--slant-angle));
+  }
+  &:hover,
+  &[aria-pressed="true"] {
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
+  }
+  &--icon {
+    inline-size: 44px;
+    padding: 0;
+    font-size: 1.4rem;
+  }
+}
 
-@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) and (forced-colors:none) {
-  html.workline-cursor-active,html.workline-cursor-active body,html.workline-cursor-active a,html.workline-cursor-active button,html.workline-cursor-active summary {cursor:none}
-  html.workline-cursor-active input,html.workline-cursor-active textarea,html.workline-cursor-active select,html.workline-cursor-active dialog,html.workline-cursor-active dialog * {cursor:auto}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  html.workline-cursor-active,
+  html.workline-cursor-active body,
+  html.workline-cursor-active a,
+  html.workline-cursor-active button,
+  html.workline-cursor-active summary {
+    cursor: none;
+  }
+  html.workline-cursor-active input,
+  html.workline-cursor-active textarea,
+  html.workline-cursor-active select,
+  html.workline-cursor-active dialog,
+  html.workline-cursor-active dialog * {
+    cursor: auto;
+  }
 }
 
 /* Native, progressively enhanced motion. Never replace normal browser scrolling. */
-@media (prefers-reduced-motion:no-preference){
-  .workline-button{transition:background-color .22s var(--ease-out),color .22s var(--ease-out),border-color .22s var(--ease-out),translate .22s var(--ease-out)}
-  @media (hover:hover){.workline-button:hover{translate:0 -2px}}
-  .workline-button:active{translate:0 1px}
+@media (prefers-reduced-motion: no-preference) {
+  .workline-button {
+    transition:
+      background-color 0.22s var(--ease-out),
+      color 0.22s var(--ease-out),
+      border-color 0.22s var(--ease-out),
+      translate 0.22s var(--ease-out);
+  }
+  @media (hover: hover) {
+    .workline-button:hover {
+      translate: 0 -2px;
+    }
+  }
+  .workline-button:active {
+    translate: 0 1px;
+  }
   // Headings remain at full contrast even in full-page screenshots and before intersection.
 }
 
-@media (max-width:959px){:root{--header-height:72px}}
+@media (max-width: 959px) {
+  :root {
+    --header-height: 72px;
+  }
+}

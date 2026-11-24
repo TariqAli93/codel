@@ -4,10 +4,10 @@
 // shapes. The spaces stay real text between the masks, so the words read and wrap as one sentence.
 // Without motion every word simply shows.
 const props = defineProps<{
-  text: string
-}>()
+  text: string;
+}>();
 
-const words = computed(() => props.text.split(/\s+/).filter(Boolean))
+const words = computed(() => props.text.split(/\s+/).filter(Boolean));
 </script>
 
 <template>

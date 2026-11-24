@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { company, services } from '~/data/company'
-import { solutions } from '~/data/solutions'
+import { company, services } from "~/data/company";
+import { solutions } from "~/data/solutions";
 
-const title = 'الأسئلة الشائعة / FAQ'
-const description = 'أسئلة شائعة عن كودل: ما نقدّمه، البرامج الجاهزة وأسعارها، ساعات الدوام، ومكان الشركة.'
+const title = "الأسئلة الشائعة / FAQ";
+const description =
+  "أسئلة شائعة عن كودل: ما نقدّمه، البرامج الجاهزة وأسعارها، ساعات الدوام، ومكان الشركة.";
 
-useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
+useSeoMeta({ title, description, ogTitle: title, ogDescription: description });
 </script>
 
 <template>
   <div class="faq">
     <div class="faq__columns">
       <div class="faq__head">
-        <PageHead title="الأسئلة الشائعة" lede="إجابات عن خدماتنا وبرامجنا وأسعارها ودوامنا." />
+        <PageHead
+          title="الأسئلة الشائعة"
+          lede="إجابات عن خدماتنا وبرامجنا وأسعارها ودوامنا."
+        />
       </div>
 
       <div class="faq__list">
@@ -23,10 +27,13 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
           </summary>
           <div class="faq__answer">
             <ul class="faq__rows">
-              <li v-for="service in services" :key="service.title">{{ service.title }}</li>
+              <li v-for="service in services" :key="service.title">
+                {{ service.title }}
+              </li>
             </ul>
             <p class="faq__after">
-              نقدّم خمس خدمات برمجية، تجدها مفصّلة في صفحة <NuxtLink to="/services">خدماتنا</NuxtLink>.
+              نقدّم خمس خدمات برمجية، تجدها مفصّلة في صفحة
+              <NuxtLink to="/services">خدماتنا</NuxtLink>.
             </p>
           </div>
         </details>
@@ -37,7 +44,8 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
             <span class="faq__marker" aria-hidden="true" />
           </summary>
           <p class="faq__answer">
-            الاثنين معاً. لدينا برامج جاهزة، ونبرمج حلولاً حسب طلب العميل عندما لا يكفيه البرنامج الجاهز.
+            الاثنين معاً. لدينا برامج جاهزة، ونبرمج حلولاً حسب طلب العميل عندما لا
+            يكفيه البرنامج الجاهز.
           </p>
         </details>
 
@@ -48,7 +56,11 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
           </summary>
           <ul class="faq__answer faq__rows">
             <li v-for="solution in solutions" :key="solution.slug">
-              <ActionLink look="text" :to="`/solutions/${solution.slug}`" :label="solution.nameAr" />: {{ solution.tagline }}
+              <ActionLink
+                look="text"
+                :to="`/solutions/${solution.slug}`"
+                :label="solution.nameAr"
+              />: {{ solution.tagline }}
             </li>
           </ul>
         </details>
@@ -60,7 +72,8 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
           </summary>
           <ul class="faq__answer faq__rows">
             <li v-for="solution in solutions" :key="solution.slug">
-              {{ solution.nameAr }}: <ProductPrice :amount="solution.priceIqd" size="inline" />
+              {{ solution.nameAr }}:
+              <ProductPrice :amount="solution.priceIqd" size="inline" />
             </li>
           </ul>
         </details>
@@ -82,7 +95,9 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
             ما ساعات الدوام؟
             <span class="faq__marker" aria-hidden="true" />
           </summary>
-          <p class="faq__answer">{{ company.hours.days }}، {{ company.hours.time }}.</p>
+          <p class="faq__answer">
+            {{ company.hours.days }}، {{ company.hours.time }}.
+          </p>
         </details>
 
         <details class="faq__item">
@@ -101,12 +116,27 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
           <div class="faq__answer">
             <p>عبر الهاتف أو واتساب أو البريد الإلكتروني.</p>
             <ul role="list" class="faq__links">
-              <li><ActionLink look="text" :to="company.phones.main.tel" :label="company.phones.main.display" dir="ltr" /></li>
+              <li>
+                <ActionLink
+                  look="text"
+                  :to="company.phones.main.tel"
+                  :label="company.phones.main.display"
+                  dir="ltr"
+                />
+              </li>
               <li><WhatsAppCall look="text" label="واتساب" /></li>
-              <li><ActionLink look="text" :to="`mailto:${company.email}`" :label="company.email" dir="ltr" /></li>
+              <li>
+                <ActionLink
+                  look="text"
+                  :to="`mailto:${company.email}`"
+                  :label="company.email"
+                  dir="ltr"
+                />
+              </li>
             </ul>
             <p class="faq__after">
-              الأرقام والبريد في صفحة <NuxtLink to="/contact">تواصل معنا</NuxtLink>.
+              الأرقام والبريد في صفحة
+              <NuxtLink to="/contact">تواصل معنا</NuxtLink>.
             </p>
           </div>
         </details>
@@ -185,7 +215,7 @@ $wide: 64em;
 
     &::before,
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       margin: auto;

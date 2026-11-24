@@ -1,66 +1,80 @@
 <script setup lang="ts">
-import { company } from '~/data/company'
-import { solutions } from '~/data/solutions'
+import { company } from "~/data/company";
+import { solutions } from "~/data/solutions";
 
-definePageMeta({ key: route => route.path })
-const route = useRoute()
+definePageMeta({ key: (route) => route.path });
+const route = useRoute();
 
 // A route param can be string | string[]: normalise it before the lookup.
-const slug = Array.isArray(route.params.slug) ? route.params.slug[0] : route.params.slug
-const solution = solutions.find((item) => item.slug === slug)
+const slug = Array.isArray(route.params.slug)
+  ? route.params.slug[0]
+  : route.params.slug;
+const solution = solutions.find((item) => item.slug === slug);
 
 if (!solution) {
   // statusText goes into the HTTP status line, which only carries plain ASCII.
   // app/error.vue shows the Arabic message.
-  throw createError({ status: 404, statusText: 'Page Not Found', fatal: true })
+  throw createError({ status: 404, statusText: "Page Not Found", fatal: true });
 }
 
-const title = `${solution.nameAr} / ${solution.nameEn}`
-const description = `${solution.nameAr} من كودل: ${solution.tagline}. ${solution.description}`
+const title = `${solution.nameAr} / ${solution.nameEn}`;
+const description = `${solution.nameAr} من كودل: ${solution.tagline}. ${solution.description}`;
 
-useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
+useSeoMeta({ title, description, ogTitle: title, ogDescription: description });
 
 // Structured data for search engines: name and price only, nothing else is known yet.
 const product = {
-  '@context': 'https://schema.org',
-  '@type': 'Product',
+  "@context": "https://schema.org",
+  "@type": "Product",
   name: solution.nameAr,
   alternateName: solution.nameEn,
   offers: {
-    '@type': 'Offer',
+    "@type": "Offer",
     price: String(solution.priceIqd),
-    priceCurrency: 'IQD'
-  }
-}
+    priceCurrency: "IQD",
+  },
+};
 
 useHead({
-  script: [{ type: 'application/ld+json', innerHTML: JSON.stringify(product) }]
-})
+  script: [{ type: "application/ld+json", innerHTML: JSON.stringify(product) }],
+});
 
-const closingText = `تواصل معنا وسنوضّح لك التفاصيل. الدوام ${company.hours.days}، ${company.hours.time}.`
+const closingText = `تواصل معنا وسنوضّح لك التفاصيل. الدوام ${company.hours.days}، ${company.hours.time}.`;
 
 // The screenshot viewer: one screen at a time, chosen from the thumbnails. A screenshot's short
 // label is its alt text up to the colon ("شاشة نقطة البيع في نقطة بلس: …").
-const images = solution.images
+const images = solution.images;
 
 // The first screen is the page's largest paint on wide screens: ask for it early, at high priority.
-const firstImage = images[0]
+const firstImage = images[0];
 if (firstImage) {
   useHead({
-    link: [{ rel: 'preload', as: 'image', href: firstImage.src, fetchpriority: 'high' }]
-  })
+    link: [
+      {
+        rel: "preload",
+        as: "image",
+        href: firstImage.src,
+        fetchpriority: "high",
+      },
+    ],
+  });
 }
 
-const label = (alt: string) => alt.split(':')[0]?.trim() ?? alt
-const active = ref(0)
-const activeImage = computed(() => images[active.value] ?? images[0])
+const label = (alt: string) => alt.split(":")[0]?.trim() ?? alt;
+const active = ref(0);
+const activeImage = computed(() => images[active.value] ?? images[0]);
 </script>
 
 <template>
   <article v-if="solution" class="product" :class="`product--${solution.look}`">
-    <p class="product__back"><ActionLink look="text" to="/solutions" label="كل الحلول" /></p>
+    <p class="product__back">
+      <ActionLink look="text" to="/solutions" label="كل الحلول" />
+    </p>
 
-    <div class="product__hero" :data-theme="solution.look === 'sand' ? 'light' : undefined">
+    <div
+      class="product__hero"
+      :data-theme="solution.look === 'sand' ? 'light' : undefined"
+    >
       <div class="product__intro">
         <LeanTag :label="`يعمل على ${solution.platform}`" />
         <h1 class="product__name">{{ solution.nameAr }}</h1>
@@ -71,7 +85,10 @@ const activeImage = computed(() => images[active.value] ?? images[0])
         <div class="product__buy">
           <ProductPrice :amount="solution.priceIqd" />
           <div class="product__actions">
-            <WhatsAppCall :subject="solution.nameAr" label="اسأل عنه على واتساب" />
+            <WhatsAppCall
+              :subject="solution.nameAr"
+              label="اسأل عنه على واتساب"
+            />
             <!-- Kept on one line (and out of the formatter's reach): the space keeps the words and
                  the number apart. -->
             <!-- prettier-ignore -->
@@ -82,22 +99,46 @@ const activeImage = computed(() => images[active.value] ?? images[0])
 
       <!-- The first two screens, layered; decorative here, every screen is described in the viewer below. -->
       <div v-if="images.length" class="product__visual" aria-hidden="true">
-        <ProductWindow v-if="images[0]" v-bind="images[0]" alt="" eager class="product__shot product__shot--main" />
-        <ProductWindow v-if="images[1]" v-bind="images[1]" alt="" eager class="product__shot product__shot--second" />
+        <ProductWindow
+          v-if="images[0]"
+          v-bind="images[0]"
+          alt=""
+          eager
+          class="product__shot product__shot--main"
+        />
+        <ProductWindow
+          v-if="images[1]"
+          v-bind="images[1]"
+          alt=""
+          eager
+          class="product__shot product__shot--second"
+        />
       </div>
     </div>
 
     <section class="product__features" aria-labelledby="features-title">
       <h2 id="features-title" class="product__heading">ماذا يقدّم؟</h2>
       <ul role="list" class="product__feature-list">
-        <li v-for="feature in solution.features" :key="feature" class="product__feature">{{ feature }}</li>
+        <li
+          v-for="feature in solution.features"
+          :key="feature"
+          class="product__feature"
+        >
+          {{ feature }}
+        </li>
       </ul>
     </section>
 
-    <section v-if="images.length && activeImage" class="product__gallery" aria-labelledby="gallery-title">
+    <section
+      v-if="images.length && activeImage"
+      class="product__gallery"
+      aria-labelledby="gallery-title"
+    >
       <div class="product__gallery-head">
         <h2 id="gallery-title" class="product__heading">صور من البرنامج</h2>
-        <p class="product__gallery-note">صور حقيقية من البرنامج، ببيانات تجريبية.</p>
+        <p class="product__gallery-note">
+          صور حقيقية من البرنامج، ببيانات تجريبية.
+        </p>
       </div>
 
       <!-- Without JavaScript every screen shows, one under another; with it, one at a time. -->
@@ -114,16 +155,26 @@ const activeImage = computed(() => images[active.value] ?? images[0])
             :height="image.height"
             :loading="index === 0 ? 'eager' : 'lazy'"
             decoding="async"
-          >
+          />
         </div>
         <div class="product__caption">
           <!-- The image's own alt text already says this to screen readers. -->
           <span aria-hidden="true">{{ activeImage.alt }}</span>
-          <ActionLink look="text" :to="activeImage.src" new-tab label="الصورة بحجمها الكامل" />
+          <ActionLink
+            look="text"
+            :to="activeImage.src"
+            new-tab
+            label="الصورة بحجمها الكامل"
+          />
         </div>
       </div>
 
-      <div v-if="images.length > 1" class="product__thumbs" role="group" aria-label="اختر شاشة">
+      <div
+        v-if="images.length > 1"
+        class="product__thumbs"
+        role="group"
+        aria-label="اختر شاشة"
+      >
         <button
           v-for="(image, index) in images"
           :key="image.src"
@@ -133,7 +184,18 @@ const activeImage = computed(() => images[active.value] ?? images[0])
           :aria-current="index === active ? 'true' : undefined"
           @click="active = index"
         >
-          <span class="product__thumb-inner"><img :src="image.src" alt="" :width="image.width" :height="image.height" loading="lazy" decoding="async"><span class="product__thumb-label">{{ label(image.alt) }}</span></span>
+          <span class="product__thumb-inner"
+            ><img
+              :src="image.src"
+              alt=""
+              :width="image.width"
+              :height="image.height"
+              loading="lazy"
+              decoding="async"
+            /><span class="product__thumb-label">{{
+              label(image.alt)
+            }}</span></span
+          >
         </button>
       </div>
     </section>
@@ -145,10 +207,18 @@ const activeImage = computed(() => images[active.value] ?? images[0])
     >
       <div class="product__closing-side">
         <ProductPrice :amount="solution.priceIqd" />
-        <WhatsAppCall :subject="solution.nameAr" label="اسأل عنه على واتساب" :glow="false" />
+        <WhatsAppCall
+          :subject="solution.nameAr"
+          label="اسأل عنه على واتساب"
+          :glow="false"
+        />
         <div class="product__closing-links">
           <ActionLink look="text" to="/contact" label="كل طرق التواصل" />
-          <ActionLink look="text" to="/services" label="خدمات برمجية حسب الطلب" />
+          <ActionLink
+            look="text"
+            to="/services"
+            label="خدمات برمجية حسب الطلب"
+          />
         </div>
       </div>
     </ClosingCall>
@@ -487,7 +557,6 @@ $wide: 64em;
   // ---------------------------------------------------------------------------
 
   &__closing {
-
     .product--sand & {
     }
   }
@@ -506,5 +575,15 @@ $wide: 64em;
     max-inline-size: 28rem;
   }
 }
-.product__thumb{transform:skewX(calc(-1 * var(--slant-angle)));border-radius:var(--radius-sm);margin-inline:4px;min-inline-size:0}.product__thumb-inner{display:block;transform:skewX(var(--slant-angle));min-inline-size:0}
+.product__thumb {
+  transform: skewX(calc(-1 * var(--slant-angle)));
+  border-radius: var(--radius-sm);
+  margin-inline: 4px;
+  min-inline-size: 0;
+}
+.product__thumb-inner {
+  display: block;
+  transform: skewX(var(--slant-angle));
+  min-inline-size: 0;
+}
 </style>

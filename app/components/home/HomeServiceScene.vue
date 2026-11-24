@@ -14,13 +14,9 @@ defineProps<{
 
 <template>
   <li class="home__scene">
-    <span
-      class="home__numeral"
-      dir="ltr"
-      aria-hidden="true"
-      data-sweep
-      >{{ number }}</span
-    >
+    <span class="home__numeral" dir="ltr" aria-hidden="true" data-sweep>{{
+      number
+    }}</span>
     <div class="home__scene-body">
       <h3 class="home__scene-title">
         <span class="home__scene-mask" data-mask

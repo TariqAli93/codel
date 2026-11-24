@@ -58,7 +58,7 @@ File-based routing under `app/pages/`. One file per route:
 | ------------------- | -------------------------------- |
 | `/`                 | `app/pages/index.vue`            |
 | `/about`            | `app/pages/about.vue`            |
-| `/services`         | `app/pages/services/index.vue`         |
+| `/services`         | `app/pages/services/index.vue`   |
 | `/solutions`        | `app/pages/solutions/index.vue`  |
 | `/solutions/[slug]` | `app/pages/solutions/[slug].vue` |
 | `/contact`          | `app/pages/contact.vue`          |
@@ -162,14 +162,14 @@ The repository is public. Never commit tool output, caches, credentials or media
 
 **Example routing (candidates, not a fixed pipeline):**
 
-| Task | Specialist agents to consider | Writer / gate |
-| --- | --- | --- |
-| Page layout, user journey, responsiveness | `ux-architect`, `ui-designer`, `design-brand-guardian` | `frontend-developer` / `ui-finish-gate-reviewer` |
-| Vue/Nuxt implementation or refactoring | `engineering-software-architect`, `engineering-code-reviewer`, `engineering-minimal-change-engineer` | `frontend-developer` / `engineering-code-reviewer` |
-| SEO and Arabic website copy | `marketing-seo-specialist`, `marketing-content-creator`, `engineering-i18n-engineer` | `frontend-developer` / targeted review |
-| Accessibility or RTL defects | `accessibility-auditor`, `engineering-i18n-engineer`, `testing-accessibility-auditor` (only for distinct audit scope) | `frontend-developer` / `accessibility-auditor` |
-| Security or dependency risk | `security-appsec-engineer`, `engineering-code-reviewer` | `frontend-developer` / `security-appsec-engineer` |
-| Web performance or regressions | `performance-benchmarker`, `engineering-frontend-developer` (advice only) | `frontend-developer` / `performance-benchmarker` |
+| Task                                      | Specialist agents to consider                                                                                         | Writer / gate                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Page layout, user journey, responsiveness | `ux-architect`, `ui-designer`, `design-brand-guardian`                                                                | `frontend-developer` / `ui-finish-gate-reviewer`   |
+| Vue/Nuxt implementation or refactoring    | `engineering-software-architect`, `engineering-code-reviewer`, `engineering-minimal-change-engineer`                  | `frontend-developer` / `engineering-code-reviewer` |
+| SEO and Arabic website copy               | `marketing-seo-specialist`, `marketing-content-creator`, `engineering-i18n-engineer`                                  | `frontend-developer` / targeted review             |
+| Accessibility or RTL defects              | `accessibility-auditor`, `engineering-i18n-engineer`, `testing-accessibility-auditor` (only for distinct audit scope) | `frontend-developer` / `accessibility-auditor`     |
+| Security or dependency risk               | `security-appsec-engineer`, `engineering-code-reviewer`                                                               | `frontend-developer` / `security-appsec-engineer`  |
+| Web performance or regressions            | `performance-benchmarker`, `engineering-frontend-developer` (advice only)                                             | `frontend-developer` / `performance-benchmarker`   |
 
 **Project guardrails (apply to all agents):** Nuxt 4.6.4, strict TypeScript, scoped SCSS and existing semantic tokens, Arabic-first RTL, dark theme, no invented owner facts, no unrequested dependencies or prohibited directories, and no gratuitous rewrites. Domain specialists cannot override a project rule with a generic example from their agent profile. Never add analytics, external services or marketing claims merely because an agent suggests them. Read-only roles must not edit files or run modifying commands. Keep design contracts and audit reports in the conversation, not new Markdown files.
 

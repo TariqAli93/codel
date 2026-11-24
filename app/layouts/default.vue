@@ -170,7 +170,6 @@ onBeforeUnmount(() => {
             </span>
           </button>
 
-
           <ul
             id="site-menu"
             role="list"
@@ -222,13 +221,22 @@ onBeforeUnmount(() => {
       <div class="layout__footer-frame">
         <div class="layout__footer-directory">
           <div class="layout__footer-group layout__footer-intro">
-            <p class="layout__footer-statement">برمجيات لأصحاب الأعمال في العراق.</p>
-            <p>{{ company.address }}<br>{{ company.hours.days }}، {{ company.hours.time }}</p>
+            <p class="layout__footer-statement">
+              برمجيات لأصحاب الأعمال في العراق.
+            </p>
+            <p>
+              {{ company.address }}<br />{{ company.hours.days }}،
+              {{ company.hours.time }}
+            </p>
           </div>
           <nav class="layout__footer-group" aria-label="روابط الموقع">
             <h2 class="layout__footer-heading">استكشف كودل</h2>
             <ul role="list" class="layout__footer-links">
-              <li v-for="link in links" :key="link.to"><NuxtLink class="layout__footer-link" :to="link.to">{{ link.label }}</NuxtLink></li>
+              <li v-for="link in links" :key="link.to">
+                <NuxtLink class="layout__footer-link" :to="link.to">{{
+                  link.label
+                }}</NuxtLink>
+              </li>
             </ul>
           </nav>
           <div class="layout__footer-group">
@@ -237,9 +245,20 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="layout__footer-brand">
-          <NuxtLink class="layout__footer-brand-link" to="/" aria-label="كودل — العودة للرئيسية"><FooterParticles /></NuxtLink>
+          <NuxtLink
+            class="layout__footer-brand-link"
+            to="/"
+            aria-label="كودل — العودة للرئيسية"
+            ><FooterParticles
+          /></NuxtLink>
         </div>
-        <div class="layout__footer-bottom"><span>كودل — بغداد، العراق</span><nav aria-label="روابط قانونية"><NuxtLink to="/privacy">الخصوصية</NuxtLink><NuxtLink to="/terms">الشروط</NuxtLink></nav></div>
+        <div class="layout__footer-bottom">
+          <span>كودل — بغداد، العراق</span>
+          <nav aria-label="روابط قانونية">
+            <NuxtLink to="/privacy">الخصوصية</NuxtLink
+            ><NuxtLink to="/terms">الشروط</NuxtLink>
+          </nav>
+        </div>
       </div>
     </footer>
 
@@ -813,30 +832,157 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     display: block;
     border-radius: var(--radius-sm);
   }
-
 }
 
 /* V8.4: editorial footer, with a reserved full-width brand signature. */
-.layout__header { padding:0;background:var(--bg);border-block-end:1px solid var(--border); }
-.layout__bar { padding-inline:var(--page-gutter);&::before{content:none} }
-.layout__logo { block-size:clamp(24px,1.75vw,32px);inline-size:auto; }
-@media(width >= 60em){
-  .layout__menu{gap:0 clamp(20px,2.3vw,38px);flex-wrap:nowrap}
-  .layout__link{font-size:1rem;text-decoration:none;min-block-size:48px;transition:color .22s var(--ease-out)}
-  .layout__link-label::after{content:'';position:absolute;inset-inline:0;inset-block-end:-8px;block-size:2px;background:var(--accent);transform:skewX(calc(-1 * var(--slant-angle))) scaleX(0);transform-origin:right;transition:transform .24s var(--ease-out)}
-  .layout__link[aria-current="page"] .layout__link-label::after,.layout__link--section .layout__link-label::after,.layout__link:hover .layout__link-label::after{transform:skewX(calc(-1 * var(--slant-angle))) scaleX(1)}
-  .layout__cta{min-block-size:52px;font-size:1rem;padding-inline:28px}
+.layout__header {
+  padding: 0;
+  background: var(--bg);
+  border-block-end: 1px solid var(--border);
+}
+.layout__bar {
+  padding-inline: var(--page-gutter);
+  &::before {
+    content: none;
+  }
+}
+.layout__logo {
+  block-size: clamp(24px, 1.75vw, 32px);
+  inline-size: auto;
+}
+@media (width >= 60em) {
+  .layout__menu {
+    gap: 0 clamp(20px, 2.3vw, 38px);
+    flex-wrap: nowrap;
+  }
+  .layout__link {
+    font-size: 1rem;
+    text-decoration: none;
+    min-block-size: 48px;
+    transition: color 0.22s var(--ease-out);
+  }
+  .layout__link-label::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: -8px;
+    block-size: 2px;
+    background: var(--accent);
+    transform: skewX(calc(-1 * var(--slant-angle))) scaleX(0);
+    transform-origin: right;
+    transition: transform 0.24s var(--ease-out);
+  }
+  .layout__link[aria-current="page"] .layout__link-label::after,
+  .layout__link--section .layout__link-label::after,
+  .layout__link:hover .layout__link-label::after {
+    transform: skewX(calc(-1 * var(--slant-angle))) scaleX(1);
+  }
+  .layout__cta {
+    min-block-size: 52px;
+    font-size: 1rem;
+    padding-inline: 28px;
+  }
 }
 
-.layout__footer-directory { grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);padding-block:clamp(40px,6vw,80px); }
-.layout__footer-intro { p{font-size:var(--text-body);color:var(--text-muted);max-width:34ch;margin-block-start:14px} .layout__footer-statement{font-family:var(--font-display);color:var(--text);font-size:clamp(1.55rem,2.4vw,2.2rem);line-height:1.4;margin:0;font-weight:700;max-width:22ch} }
-.layout__footer-heading { font-size:clamp(1.125rem,1.25vw,1.4rem);margin-block-end:16px; }
-.layout__footer-links { grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 20px; }
-.layout__footer-link { font-size:clamp(1rem,1.06vw,1.125rem);min-block-size:44px; }
-.layout__contact :deep(.contact-list__row) { dt{font-size:var(--text-small)} dd{font-size:clamp(1rem,1.06vw,1.125rem);overflow-wrap:anywhere} }
-.layout__footer-brand { padding-block:clamp(24px,4vw,48px);border-block-start:1px solid var(--border); }
-.layout__footer-brand-link { display:block;inline-size:100%;aspect-ratio:672/117; }
-.layout__footer-bottom { display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-block-start:1px solid var(--border);padding-block:16px;color:var(--text-muted);font-size:var(--text-small);nav{display:flex;gap:var(--space-4);a{display:inline-flex;align-items:center;min-height:44px}} }
-@media(width < 60em){.js .layout__menu{background:var(--bg);border-radius:var(--radius-md);backdrop-filter:none;-webkit-backdrop-filter:none}.js .layout__menu-button{border-radius:var(--radius-sm)}.layout__footer-directory{grid-template-columns:repeat(2,minmax(0,1fr))}.layout__footer-intro{grid-column:1/-1}}
-@media(max-width:580px){.layout__footer-directory{grid-template-columns:1fr;gap:32px}.layout__footer-intro{grid-column:auto}.layout__footer-brand{padding-block:24px}}
+.layout__footer-directory {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: clamp(24px, 5vw, 80px);
+  padding-block: clamp(40px, 6vw, 80px);
+}
+.layout__footer-intro {
+  p {
+    font-size: var(--text-body);
+    color: var(--text-muted);
+    max-width: 34ch;
+    margin-block-start: 14px;
+  }
+  .layout__footer-statement {
+    font-family: var(--font-display);
+    color: var(--text);
+    font-size: clamp(1.55rem, 2.4vw, 2.2rem);
+    line-height: 1.4;
+    margin: 0;
+    font-weight: 700;
+    max-width: 22ch;
+  }
+}
+.layout__footer-heading {
+  font-size: clamp(1.125rem, 1.25vw, 1.4rem);
+  margin-block-end: 16px;
+}
+.layout__footer-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 20px;
+}
+.layout__footer-link {
+  font-size: clamp(1rem, 1.06vw, 1.125rem);
+  min-block-size: 44px;
+}
+.layout__contact :deep(.contact-list__row) {
+  dt {
+    font-size: var(--text-small);
+  }
+  dd {
+    font-size: clamp(1rem, 1.06vw, 1.125rem);
+    overflow-wrap: anywhere;
+  }
+}
+.layout__footer-brand {
+  padding-block: clamp(24px, 4vw, 48px);
+  border-block-start: 1px solid var(--border);
+}
+.layout__footer-brand-link {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 672/117;
+}
+.layout__footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-block-start: 1px solid var(--border);
+  padding-block: 16px;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  nav {
+    display: flex;
+    gap: var(--space-4);
+    a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
+  }
+}
+@media (width < 60em) {
+  .js .layout__menu {
+    background: var(--bg);
+    border-radius: var(--radius-md);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .js .layout__menu-button {
+    border-radius: var(--radius-sm);
+  }
+  .layout__footer-directory {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .layout__footer-intro {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 580px) {
+  .layout__footer-directory {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .layout__footer-intro {
+    grid-column: auto;
+  }
+  .layout__footer-brand {
+    padding-block: 24px;
+  }
+}
 </style>

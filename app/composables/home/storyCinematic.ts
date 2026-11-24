@@ -34,7 +34,9 @@ export function cinematicFits(story: HTMLElement): boolean {
   story.classList.add("story--cinematic");
   try {
     const tour = story.querySelector<HTMLElement>("[data-tour]");
-    const overview = tour?.querySelector<HTMLElement>('[data-scene="overview"]');
+    const overview = tour?.querySelector<HTMLElement>(
+      '[data-scene="overview"]',
+    );
     const tourFits =
       !tour || !overview || overview.offsetHeight <= tour.clientHeight + 1;
 
@@ -91,7 +93,10 @@ export function playCinematic(
   const listingImage = listing?.querySelector("img") ?? null;
   const rail = one("[data-rail]");
   const fills = new Map(
-    all("[data-rail-fill]").map((element) => [element.dataset.railFill ?? "", element]),
+    all("[data-rail-fill]").map((element) => [
+      element.dataset.railFill ?? "",
+      element,
+    ]),
   );
 
   // Chapter 05's scenes in reading order, each with its beat (see tour). The overview has two

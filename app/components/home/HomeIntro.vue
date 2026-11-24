@@ -231,8 +231,7 @@ onBeforeUnmount(() => {
         <div class="hero__actions" data-reveal>
           <ActionLink look="solid" :to="primary.to">
             <span class="hero__call"
-              >{{ primary.label
-              }}<span class="hero__glyph" aria-hidden="true"
+              >{{ primary.label }}<span class="hero__glyph" aria-hidden="true"
             /></span>
           </ActionLink>
           <ActionLink class="hero__more" look="text" :to="secondary.to">

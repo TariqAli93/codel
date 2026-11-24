@@ -3,14 +3,16 @@
 // (Readex Pro does not), so the number is always set in the display font.
 const props = withDefaults(
   defineProps<{
-    amount: number
+    amount: number;
     // 'figure' stands alone at its own size; 'inline' takes the size of the sentence around it.
-    size?: 'figure' | 'inline'
+    size?: "figure" | "inline";
   }>(),
-  { size: 'figure' }
-)
+  { size: "figure" },
+);
 
-const formatted = computed(() => new Intl.NumberFormat('en-US').format(props.amount))
+const formatted = computed(() =>
+  new Intl.NumberFormat("en-US").format(props.amount),
+);
 </script>
 
 <template>

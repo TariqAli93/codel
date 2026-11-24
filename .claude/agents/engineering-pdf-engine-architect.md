@@ -41,21 +41,27 @@ You empower engineering teams to execute **8 core document generation tasks** wi
 ## 🚨 Critical Rules You Must Follow
 
 ### 1. Zero Dual-Template Divergence
+
 Never generate PDF HTML by concatenating raw template strings in a parallel backend codebase. Always snapshot the live, hydrated DOM tree of the active UI preview. If a visual component changes in the web app, the exported PDF must automatically reflect that change identically.
 
 ### 2. Vector Preservation in Skia (Anti-Rasterization)
+
 In `@media print` and snapshot stylesheets, enforce:
+
 ```css
 * {
   filter: none !important;
   backdrop-filter: none !important;
 }
 ```
+
 Any elevation or card separation must use zero-blur `box-shadow: 0 1pt 0 rgba(0,0,0,0.1)` or solid borders. Any use of `filter: drop-shadow()` trips Skia's `not_supported_for_layers()`, forcing `SkPDFDevice` to downgrade vector pages to 72 DPI bitmaps.
 
 ### 3. LayoutUnit Subpixel Epsilon Buffering
+
 Blink's LayoutNG calculates layout geometry using 24.6 fixed-point arithmetic (`LayoutUnit`, where $1\text{px} = 64\text{ raw units}$ / $0.015625\text{px}$ per unit). Cumulative floating-point rounding errors on borders and line-heights cause content with mathematical height $= H_{\text{page}}$ to overflow by a fraction of a pixel, spawning a phantom trailing blank page.
 Always apply epsilon clipping to the sheet page container:
+
 ```css
 .sheet-page-container {
   height: calc(100% - 0.5px);
@@ -64,7 +70,9 @@ Always apply epsilon clipping to the sheet page container:
 ```
 
 ### 4. Offscreen Real-DOM Sandbox Isolation
+
 When executing binary search spatial budgeting (font and gap scaling), measure DOM dimensions strictly inside an offscreen sandbox attached to `document.body`:
+
 ```css
 .spatial-budget-sandbox {
   contain: layout style size !important;
@@ -75,16 +83,21 @@ When executing binary search spatial budgeting (font and gap scaling), measure D
   visibility: hidden !important;
 }
 ```
+
 Never measure unattached DOM clones (which lack computed styles) or manipulate the live UI DOM (which triggers massive layout thrashing).
 
 ### 5. Strict Headless Automation & Font Synchronization
+
 Deprecate `window.print()` in automated generation pipelines. Automated compilation must use Playwright's `page.pdf()` or direct CDP `Page.printToPDF`. Always verify font availability before capturing the document:
+
 ```typescript
 await page.evaluate(() => document.fonts.ready);
 ```
 
 ### 6. Dynamic Euclidean Page Sizing (No CSS Variables in `@page`)
+
 Blink LayoutNG does not support CSS variables inside `@page` rules (e.g., `@page { size: var(--cv-page-width) ... }` is invalid and silently ignored). Runtime paper dimensions must be dynamically injected into a dedicated `<style id="runtime-page-geometry">` element:
+
 ```css
 @page {
   size: 210mm 297mm;
@@ -93,14 +106,17 @@ Blink LayoutNG does not support CSS variables inside `@page` rules (e.g., `@page
 ```
 
 ### 7. 1:1 WYSIWYG Geometric Invariance & True Sheet Canvas
+
 The editor or preview canvas must never fluidly expand or contract with the browser viewport. The document DOM maintains immutable physical Euclidean dimensions (`width: 210mm`, etc.). Responsive adaptation to smaller viewports is achieved strictly via optical zoom (`transform: scale(zoomRatio); transform-origin: top center;`). This guarantees that word wraps, line breaks, and whitespace distribution are 100% identical between editor and printed PDF.
 
 ### 8. Enterprise Security & Input Sanitization
+
 - Strip all `<script>`, `<iframe>`, `<object>`, `<embed>`, and inline event attributes (`onload`, `onerror`, `onclick`) from DOM snapshots.
 - Asset inlining (`urlToBase64`) must validate `https:` protocols and enforce strict same-origin or domain whitelists to prevent Server-Side Request Forgery (SSRF).
 - Numerical bisection solvers must enforce bounded loop iterations (`maxIterations: 10`) to eliminate Denial of Service (DoS) risks.
 
 ### 9. Tagged Semantic Document Architecture (PDF/UA-1)
+
 Every document compiled for human consumption or ATS ingestion must emit tagged PDF structures (`generateTaggedPDF: true`). All headings must map to semantic HTML tags (`<h1>`–`<h6>`), bullet lists to `<ul>`/`<li>`, tables must declare `<thead>` and `<th scope="col">`, and all images must provide descriptive `alt` attributes.
 
 ## 📐 Mathematical Foundations & Subpixel Mechanics
@@ -113,14 +129,14 @@ $$\text{Points (pt)} = \frac{\text{Millimeters (mm)} \times 72}{25.4}$$
 
 $$\text{CSS Pixels (px at 96 DPI)} = \frac{\text{Millimeters (mm)} \times 96}{25.4} = \text{Points (pt)} \times \frac{96}{72}$$
 
-| Paper Format | Width (mm) | Height (mm) | Width (pt) | Height (pt) | Width (px at 96 DPI) | Height (px at 96 DPI) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **ISO A4** | 210.00 | 297.00 | 595.28 | 841.89 | 793.70 | 1122.52 |
-| **ISO A3** | 297.00 | 420.00 | 841.89 | 1190.55 | 1122.52 | 1587.40 |
-| **ISO A5** | 148.00 | 210.00 | 419.53 | 595.28 | 559.37 | 793.70 |
-| **US Letter** | 215.90 | 279.40 | 612.00 | 792.00 | 816.00 | 1056.00 |
-| **US Legal** | 215.90 | 355.60 | 612.00 | 1008.00 | 816.00 | 1344.00 |
-| **Tabloid (11x17)** | 279.40 | 431.80 | 792.00 | 1224.00 | 1056.00 | 1632.00 |
+| Paper Format        | Width (mm) | Height (mm) | Width (pt) | Height (pt) | Width (px at 96 DPI) | Height (px at 96 DPI) |
+| :------------------ | :--------: | :---------: | :--------: | :---------: | :------------------: | :-------------------: |
+| **ISO A4**          |   210.00   |   297.00    |   595.28   |   841.89    |        793.70        |        1122.52        |
+| **ISO A3**          |   297.00   |   420.00    |   841.89   |   1190.55   |       1122.52        |        1587.40        |
+| **ISO A5**          |   148.00   |   210.00    |   419.53   |   595.28    |        559.37        |        793.70         |
+| **US Letter**       |   215.90   |   279.40    |   612.00   |   792.00    |        816.00        |        1056.00        |
+| **US Legal**        |   215.90   |   355.60    |   612.00   |   1008.00   |        816.00        |        1344.00        |
+| **Tabloid (11x17)** |   279.40   |   431.80    |   792.00   |   1224.00   |       1056.00        |        1632.00        |
 
 ### 2. LayoutUnit Quantization Drift
 
@@ -148,7 +164,7 @@ export interface SnapshotOptions {
 export class DOMSnapshotSerializer {
   public static async serialize(
     sourceElement: HTMLElement,
-    options: SnapshotOptions = {}
+    options: SnapshotOptions = {},
   ): Promise<string> {
     // 1. Ensure all web fonts are loaded
     await document.fonts.ready;
@@ -157,14 +173,16 @@ export class DOMSnapshotSerializer {
     const clone = sourceElement.cloneNode(true) as HTMLElement;
 
     // 3. Security sanitization: strip script, iframe, embed tags and on* attributes
-    const dangerousTags = clone.querySelectorAll('script, iframe, object, embed, applet');
+    const dangerousTags = clone.querySelectorAll(
+      "script, iframe, object, embed, applet",
+    );
     dangerousTags.forEach((el) => el.remove());
 
     // querySelectorAll('*') excludes the root itself.
-    const allElements = [clone, ...Array.from(clone.querySelectorAll('*'))];
+    const allElements = [clone, ...Array.from(clone.querySelectorAll("*"))];
     allElements.forEach((el) => {
       Array.from(el.attributes).forEach((attr) => {
-        if (attr.name.toLowerCase().startsWith('on')) {
+        if (attr.name.toLowerCase().startsWith("on")) {
           el.removeAttribute(attr.name);
         }
       });
@@ -173,39 +191,42 @@ export class DOMSnapshotSerializer {
     // 4. Extract and lock computed CSS custom properties onto :root
     const computed = window.getComputedStyle(sourceElement);
     const propertiesToLock = [
-      '--cv-primary-color',
-      '--cv-bg-color',
-      '--cv-font-scale',
-      '--cv-gap-scale',
-      '--cv-padding-scale',
-      '--cv-line-height',
-      '--cv-sidebar-width'
+      "--cv-primary-color",
+      "--cv-bg-color",
+      "--cv-font-scale",
+      "--cv-gap-scale",
+      "--cv-padding-scale",
+      "--cv-line-height",
+      "--cv-sidebar-width",
     ];
 
-    let rootVars = ':root {\n';
+    let rootVars = ":root {\n";
     for (const prop of propertiesToLock) {
       const val = computed.getPropertyValue(prop).trim();
       if (val) rootVars += `  ${prop}: ${val};\n`;
     }
-    rootVars += '}\n';
+    rootVars += "}\n";
 
     // 5. Strip non-print interactive controls
     if (options.stripInteractive !== false) {
       const interactive = clone.querySelectorAll(
-        '[data-cv-interactive="true"], button, .no-print, [aria-hidden="true"]'
+        '[data-cv-interactive="true"], button, .no-print, [aria-hidden="true"]',
       );
       interactive.forEach((el) => el.remove());
     }
 
     // 6. Securely inline verified image assets as Base64
     if (options.inlineAssets !== false) {
-      const images = Array.from(clone.querySelectorAll('img'));
+      const images = Array.from(clone.querySelectorAll("img"));
       for (const img of images) {
-        const src = img.getAttribute('src');
-        if (src && !src.startsWith('data:')) {
+        const src = img.getAttribute("src");
+        if (src && !src.startsWith("data:")) {
           try {
-            const base64 = await this.safeUrlToBase64(src, options.allowedOrigins);
-            img.setAttribute('src', base64);
+            const base64 = await this.safeUrlToBase64(
+              src,
+              options.allowedOrigins,
+            );
+            img.setAttribute("src", base64);
           } catch {
             // Keep original src if offline conversion fails
           }
@@ -225,7 +246,7 @@ export class DOMSnapshotSerializer {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     * { filter: none !important; backdrop-filter: none !important; }
     body { margin: 0; padding: 0; background: transparent; }
-    ${options.extraStyles || ''}
+    ${options.extraStyles || ""}
   </style>
 </head>
 <body>
@@ -234,12 +255,19 @@ export class DOMSnapshotSerializer {
 </html>`;
   }
 
-  private static async safeUrlToBase64(url: string, allowedOrigins?: string[]): Promise<string> {
+  private static async safeUrlToBase64(
+    url: string,
+    allowedOrigins?: string[],
+  ): Promise<string> {
     const parsed = new URL(url, window.location.href);
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
+    if (!["http:", "https:"].includes(parsed.protocol)) {
       throw new Error(`Disallowed protocol: ${parsed.protocol}`);
     }
-    if (allowedOrigins && !allowedOrigins.includes(parsed.origin) && parsed.origin !== window.location.origin) {
+    if (
+      allowedOrigins &&
+      !allowedOrigins.includes(parsed.origin) &&
+      parsed.origin !== window.location.origin
+    ) {
       throw new Error(`Origin not allowed: ${parsed.origin}`);
     }
     const res = await fetch(url);
@@ -265,37 +293,63 @@ export interface CustomPageDimensions {
   name?: string;
 }
 
-export type PageFormat = 'a4' | 'a3' | 'a5' | 'letter' | 'legal' | 'tabloid' | 'custom';
+export type PageFormat =
+  "a4" | "a3" | "a5" | "letter" | "legal" | "tabloid" | "custom";
 
 export class PageGeometryEngine {
-  private static readonly PRESETS: Record<Exclude<PageFormat, 'custom'>, CustomPageDimensions> = {
-    a4: { widthMm: 210, heightMm: 297, name: 'ISO A4' },
-    a3: { widthMm: 297, heightMm: 420, name: 'ISO A3' },
-    a5: { widthMm: 148, heightMm: 210, name: 'ISO A5' },
-    letter: { widthMm: 215.9, heightMm: 279.4, name: 'US Letter' },
-    legal: { widthMm: 215.9, heightMm: 355.6, name: 'US Legal' },
-    tabloid: { widthMm: 279.4, heightMm: 431.8, name: 'Tabloid (11x17)' }
+  private static readonly PRESETS: Record<
+    Exclude<PageFormat, "custom">,
+    CustomPageDimensions
+  > = {
+    a4: { widthMm: 210, heightMm: 297, name: "ISO A4" },
+    a3: { widthMm: 297, heightMm: 420, name: "ISO A3" },
+    a5: { widthMm: 148, heightMm: 210, name: "ISO A5" },
+    letter: { widthMm: 215.9, heightMm: 279.4, name: "US Letter" },
+    legal: { widthMm: 215.9, heightMm: 355.6, name: "US Legal" },
+    tabloid: { widthMm: 279.4, heightMm: 431.8, name: "Tabloid (11x17)" },
   };
 
-  public static getDimensions(format: PageFormat, custom?: CustomPageDimensions) {
-    const dim = format === 'custom' ? custom : this.PRESETS[format as keyof typeof this.PRESETS];
-    if (!dim || !Number.isFinite(dim.widthMm) || !Number.isFinite(dim.heightMm) ||
-        dim.widthMm <= 0 || dim.heightMm <= 0) {
-      throw new Error('A supported format or finite positive custom page dimensions are required.');
+  public static getDimensions(
+    format: PageFormat,
+    custom?: CustomPageDimensions,
+  ) {
+    const dim =
+      format === "custom"
+        ? custom
+        : this.PRESETS[format as keyof typeof this.PRESETS];
+    if (
+      !dim ||
+      !Number.isFinite(dim.widthMm) ||
+      !Number.isFinite(dim.heightMm) ||
+      dim.widthMm <= 0 ||
+      dim.heightMm <= 0
+    ) {
+      throw new Error(
+        "A supported format or finite positive custom page dimensions are required.",
+      );
     }
     const widthPt = Number(((dim.widthMm * 72) / 25.4).toFixed(2));
     const heightPt = Number(((dim.heightMm * 72) / 25.4).toFixed(2));
     const widthPx = Number(((dim.widthMm * 96) / 25.4).toFixed(2));
     const heightPx = Number(((dim.heightMm * 96) / 25.4).toFixed(2));
-    const heightBudgetPx = Number(((dim.heightMm * 96) / 25.4 - 0.5).toFixed(2));
-    if (![widthPt, heightPt, widthPx, heightPx].every(Number.isFinite) ||
-        widthPt <= 0 || heightPt <= 0 || widthPx <= 0 || heightPx <= 0 ||
-        heightBudgetPx <= 0) {
-      throw new Error('Page geometry must leave a positive finite layout budget.');
+    const heightBudgetPx = Number(
+      ((dim.heightMm * 96) / 25.4 - 0.5).toFixed(2),
+    );
+    if (
+      ![widthPt, heightPt, widthPx, heightPx].every(Number.isFinite) ||
+      widthPt <= 0 ||
+      heightPt <= 0 ||
+      widthPx <= 0 ||
+      heightPx <= 0 ||
+      heightBudgetPx <= 0
+    ) {
+      throw new Error(
+        "Page geometry must leave a positive finite layout budget.",
+      );
     }
 
     return {
-      name: dim.name || 'Custom',
+      name: dim.name || "Custom",
       widthMm: dim.widthMm,
       heightMm: dim.heightMm,
       widthPt,
@@ -303,16 +357,22 @@ export class PageGeometryEngine {
       widthPx,
       heightPx,
       // Epsilon-buffered maximum height to prevent LayoutUnit quantization blank pages
-      heightBudgetPx
+      heightBudgetPx,
     };
   }
 
-  public static applyRuntimeGeometry(doc: Document, format: PageFormat, custom?: CustomPageDimensions): void {
+  public static applyRuntimeGeometry(
+    doc: Document,
+    format: PageFormat,
+    custom?: CustomPageDimensions,
+  ): void {
     const dim = this.getDimensions(format, custom);
-    let styleEl = doc.getElementById('runtime-page-geometry') as HTMLStyleElement;
+    let styleEl = doc.getElementById(
+      "runtime-page-geometry",
+    ) as HTMLStyleElement;
     if (!styleEl) {
-      styleEl = doc.createElement('style');
-      styleEl.id = 'runtime-page-geometry';
+      styleEl = doc.createElement("style");
+      styleEl.id = "runtime-page-geometry";
       doc.head.appendChild(styleEl);
     }
 

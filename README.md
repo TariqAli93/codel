@@ -33,20 +33,20 @@ npm run generate
 
 ## Routes
 
-| Route                | Page                       | File                              |
-| -------------------- | -------------------------- | --------------------------------- |
-| `/`                  | Home                       | `app/pages/index.vue`             |
-| `/about`             | About                      | `app/pages/about.vue`             |
-| `/services`          | Services                   | `app/pages/services/index.vue`          |
-| `/services/[id]`     | Service detail (dynamic)   | `app/pages/services/[id].vue`     |
-| `/solutions`         | Solutions (listing)        | `app/pages/solutions/index.vue`   |
-| `/solutions/[slug]`  | Solution detail (dynamic)  | `app/pages/solutions/[slug].vue`  |
-| `/contact`           | Contact                    | `app/pages/contact.vue`           |
-| `/faq`               | FAQ                        | `app/pages/faq.vue`               |
-| `/careers`           | Careers (additional)       | `app/pages/careers.vue`           |
-| `/blog`              | Blog (additional)          | `app/pages/blog.vue`              |
-| `/privacy`           | Privacy Policy (additional)| `app/pages/privacy.vue`           |
-| `/terms`             | Terms & Conditions (additional) | `app/pages/terms.vue`        |
+| Route               | Page                            | File                             |
+| ------------------- | ------------------------------- | -------------------------------- |
+| `/`                 | Home                            | `app/pages/index.vue`            |
+| `/about`            | About                           | `app/pages/about.vue`            |
+| `/services`         | Services                        | `app/pages/services/index.vue`   |
+| `/services/[id]`    | Service detail (dynamic)        | `app/pages/services/[id].vue`    |
+| `/solutions`        | Solutions (listing)             | `app/pages/solutions/index.vue`  |
+| `/solutions/[slug]` | Solution detail (dynamic)       | `app/pages/solutions/[slug].vue` |
+| `/contact`          | Contact                         | `app/pages/contact.vue`          |
+| `/faq`              | FAQ                             | `app/pages/faq.vue`              |
+| `/careers`          | Careers (additional)            | `app/pages/careers.vue`          |
+| `/blog`             | Blog (additional)               | `app/pages/blog.vue`             |
+| `/privacy`          | Privacy Policy (additional)     | `app/pages/privacy.vue`          |
+| `/terms`            | Terms & Conditions (additional) | `app/pages/terms.vue`            |
 
 Notes:
 
@@ -110,13 +110,13 @@ tsconfig.json
 
 ### 2. تغيير معلومات الشركة: الملف `app/data/company.ts`
 
-| ماذا تريد أن تغيّر | السطر |
-| --- | --- |
-| الرقم الأساسي (هاتف وواتساب) | 23 إلى 25 |
-| رقم الواتساب الثاني | 29 و 30 |
-| البريد الإلكتروني | 33 |
-| العنوان | 34، ونفس العنوان مقسّماً في السطر 36 (غيّر الاثنين معاً) |
-| ساعات الدوام | 37 (النص الذي يظهر للزائر)، ونفس الساعات بنظام 24 ساعة في السطر 39 (غيّر الاثنين معاً) |
+| ماذا تريد أن تغيّر            | السطر                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| الرقم الأساسي (هاتف وواتساب) | 23 إلى 25                                                                            |
+| رقم الواتساب الثاني          | 29 و 30                                                                              |
+| البريد الإلكتروني            | 33                                                                                   |
+| العنوان                      | 34، ونفس العنوان مقسّماً في السطر 36 (غيّر الاثنين معاً)                                 |
+| ساعات الدوام                 | 37 (النص الذي يظهر للزائر)، ونفس الساعات بنظام 24 ساعة في السطر 39 (غيّر الاثنين معاً) |
 
 - كل رقم يُكتب بثلاث صيغ. مثال للرقم 07824082356: الصيغة الظاهرة `'0782 408 2356'`، ورابط الاتصال `'tel:+9647824082356'`، ورابط واتساب `'https://wa.me/9647824082356'` (احذف الصفر الأول وضع 964 قبله).
 - غيّر الكلام بين علامتي `' '` فقط، ولا تحذف الفواصل أو الأقواس.
@@ -137,8 +137,13 @@ tsconfig.json
 
 ```ts
 images: [
-  { src: '/images/solutions/nuqta-plus/sales-screen.png', alt: 'شاشة البيع في نقطة بلس', width: 1280, height: 800 }
-]
+  {
+    src: "/images/solutions/nuqta-plus/sales-screen.png",
+    alt: "شاشة البيع في نقطة بلس",
+    width: 1280,
+    height: 800,
+  },
+];
 ```
 
 - `alt` وصف قصير بالعربي لما يظهر في الصورة فقط.

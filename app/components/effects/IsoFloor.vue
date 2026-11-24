@@ -94,7 +94,8 @@ function gridLines() {
   for (const lean of [slope, -slope]) {
     for (let k = -reach; k <= reach; k += 1) {
       const y = (x: number) => origin.y + lean * (x - origin.x) + k * cellBox.h;
-      const x = (at: number) => origin.x + (at - origin.y - k * cellBox.h) / lean;
+      const x = (at: number) =>
+        origin.x + (at - origin.y - k * cellBox.h) / lean;
       const from = Math.max(0, Math.min(x(0), x(HEIGHT)));
       const to = Math.min(WIDTH, Math.max(x(0), x(HEIGHT)));
       if (to - from < 1) continue;
@@ -109,11 +110,23 @@ function gridLines() {
 // The crossings the patch lights, each a dot (a line of next to no length with round ends): every
 // crossing within the bell's reach of the patch's centre.
 function patchNodes() {
-  const [centreX, centreY] = toGround(PATCH.x * UNIT, PATCH.y * UNIT, CELL * UNIT);
+  const [centreX, centreY] = toGround(
+    PATCH.x * UNIT,
+    PATCH.y * UNIT,
+    CELL * UNIT,
+  );
   const reach = CUT * look.litSigma;
   const dots: string[] = [];
-  for (let i = Math.floor(centreX - reach); i <= Math.ceil(centreX + reach); i += 1) {
-    for (let j = Math.floor(centreY - reach); j <= Math.ceil(centreY + reach); j += 1) {
+  for (
+    let i = Math.floor(centreX - reach);
+    i <= Math.ceil(centreX + reach);
+    i += 1
+  ) {
+    for (
+      let j = Math.floor(centreY - reach);
+      j <= Math.ceil(centreY + reach);
+      j += 1
+    ) {
       if (Math.hypot(i - centreX, j - centreY) > reach) continue;
       const x = origin.x + ((i - j) * cellBox.w) / 2;
       const y = origin.y + ((i + j) * cellBox.h) / 2;
@@ -206,7 +219,14 @@ interface Mesh {
 // One context on one canvas. It is made only once the page has loaded and the browser is idle, its
 // program linked without holding up the page; it draws only while something changes and only while
 // the box is on screen in a visible tab; and `stop` gives everything back.
-function startMesh({ surface, box, line, accent, astir, drawn }: MeshOptions): Mesh {
+function startMesh({
+  surface,
+  box,
+  line,
+  accent,
+  astir,
+  drawn,
+}: MeshOptions): Mesh {
   let disposed = false;
   let lost = false;
   // The context this canvas was given, and (once its program is ready) the context to draw with.
@@ -687,7 +707,8 @@ let mountedAt = 0;
 function astir() {
   if (props.live === true) return true;
   const painted = hydrating
-    ? (performance.getEntriesByName("first-contentful-paint")[0]?.startTime ?? 0)
+    ? (performance.getEntriesByName("first-contentful-paint")[0]?.startTime ??
+      0)
     : mountedAt;
   return performance.now() < painted + (AUTO_S - GAIN_S) * 1000;
 }
@@ -832,7 +853,11 @@ onBeforeUnmount(() => {
         </defs>
         <!-- The patch: its haze, then the grid's lines turning from grey to lime toward its centre
              (the grey ones fade out as the lime ones come in), then the crossings it lights. -->
-        <rect :width="round(WIDTH)" :height="HEIGHT" :fill="`url(#${hazeId})`" />
+        <rect
+          :width="round(WIDTH)"
+          :height="HEIGHT"
+          :fill="`url(#${hazeId})`"
+        />
         <path
           class="iso-floor__lines"
           :d="lines"
@@ -857,7 +882,10 @@ onBeforeUnmount(() => {
          Only where the mesh's query matches, and only after mount. -->
     <template v-if="wanted">
       <canvas ref="canvas" class="iso-floor__canvas" />
-      <span ref="lineSwatch" class="iso-floor__swatch iso-floor__swatch--line" />
+      <span
+        ref="lineSwatch"
+        class="iso-floor__swatch iso-floor__swatch--line"
+      />
       <span
         ref="accentSwatch"
         class="iso-floor__swatch iso-floor__swatch--accent"

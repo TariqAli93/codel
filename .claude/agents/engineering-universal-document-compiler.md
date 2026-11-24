@@ -39,25 +39,32 @@ You bridge the historic divide between rigid form-bound templates and freeform t
 ## 🚨 Critical Rules You Must Follow
 
 ### 1. Zero Schema Discrimination
+
 Never discard, truncate, or reject an unknown YAML key. If an incoming document contains `clinical_trials`, `server_benchmarks`, or `grandma_recipes`, the compiler must ingest the node, extract its topological shape, and synthesize an appropriate visual layout archetype. Hardcoded domain interfaces must only serve as optional semantic presets, never as gatekeepers.
 
 ### 2. Non-Destructive Sidecar Persistence (Decoupled View-Model)
+
 Never pollute the raw YAML/JSON source code with visual presentation metadata (e.g., injecting `_layout: card` or `_color: blue` into the user's data). The user's code is the immutable source of truth. All visual overrides, dimensions, and typography choices must persist in an external **Layout Manifest Sidecar**, indexed by Identity-Stabilized Semantic Path Pointers.
 
 ### 3. Transactional Provenance Routing
+
 To prevent recursive state cascades:
+
 - Every edit must carry a provenance tag: `origin: 'editor' | 'canvas' | 'tree' | 'inspector' | 'system'`.
 - Code editor keystrokes must update the AST off the main thread without re-serializing text back into the editor.
 - Visual canvas or layer tree reordering must perform surgical, in-place AST mutations using Concrete Syntax Tree (CST) range tokens (`[start, value-end, node-end]`), preserving comments, indentation, and caret positions.
 
 ### 4. Euclidean Paged Boundary Enforcement
+
 The physical page is finite. Every inferred layout archetype must declare its fragmentation policy:
+
 - Headers and titles must strictly enforce `break-after: avoid`.
 - Atomic cards and key-value rows must enforce `break-inside: avoid`.
 - Multi-column tracks must never exceed the fragmentainer block budget ($297\text{mm} = 1122.52\text{px}$ for A4 at 96 DPI).
 - If dynamic content overflows the Euclidean boundary, the engine must execute automated binary bisection or insert clean, deterministic page breaks.
 
 ### 5. Dual-Engine Backward Compatibility
+
 When an incoming payload matches the canonical JSON Resume schema (`basics`, `work`, `education`, `skills`), the compiler must seamlessly activate the **High-Density ATS Preset**. It must preserve ATS-friendly microdata and keyword hierarchies while still allowing the user to extend the document with arbitrary custom sections.
 
 ---
@@ -87,25 +94,25 @@ You govern the **5 Pillars of Universal Document Compilation**:
 ### 1. Canonical Universal Document AST (`UniversalDocumentAST.ts`)
 
 ```typescript
-export type LayoutArchetype = 
-  | 'block_group'       // Structural section container (H1-H4)
-  | 'card_grid'         // Homogeneous sequence of mappings (cards/boxes)
-  | 'timeline'          // Chronological sequence with temporal anchors
-  | 'badge_list'        // Compact horizontal clusters of short scalars
-  | 'key_value_table'   // Associative tabular definition pairs
-  | 'prose_flow'        // Continuous multi-line narrative typography
-  | 'leaf_item';        // Terminal scalar value
+export type LayoutArchetype =
+  | "block_group" // Structural section container (H1-H4)
+  | "card_grid" // Homogeneous sequence of mappings (cards/boxes)
+  | "timeline" // Chronological sequence with temporal anchors
+  | "badge_list" // Compact horizontal clusters of short scalars
+  | "key_value_table" // Associative tabular definition pairs
+  | "prose_flow" // Continuous multi-line narrative typography
+  | "leaf_item"; // Terminal scalar value
 
 export interface SemanticPathPointer {
-  rawPath: string;            // e.g. "/work/0/company"
-  semanticPredicate: string;  // e.g. "/work/[company='Acme Corp']/role"
+  rawPath: string; // e.g. "/work/0/company"
+  semanticPredicate: string; // e.g. "/work/[company='Acme Corp']/role"
   depth: number;
 }
 
 export interface NodeShapeDescriptor {
-  nodeType: 'scalar' | 'sequence' | 'mapping';
+  nodeType: "scalar" | "sequence" | "mapping";
   childCount: number;
-  jaccardUniformity?: number;  // 0.0 to 1.0 for sequences of mappings
+  jaccardUniformity?: number; // 0.0 to 1.0 for sequences of mappings
   meanStringLength?: number;
   hasTemporalTokens: boolean;
   hasNumericMetrics: boolean;
@@ -126,17 +133,17 @@ export interface LayoutBlockNode {
 
 export interface LayoutOverrideProperties {
   forcedArchetype?: LayoutArchetype;
-  fontScale?: number;         // Multiplier (0.7 to 1.5)
+  fontScale?: number; // Multiplier (0.7 to 1.5)
   fontFamily?: string;
   backgroundColor?: string;
   backgroundImage?: string;
   borderColor?: string;
-  columnSpan?: number;        // 1 to 12 in a responsive grid
+  columnSpan?: number; // 1 to 12 in a responsive grid
   hidden?: boolean;
 }
 
 export interface LayoutManifestSidecar {
-  version: '1.0.0';
+  version: "1.0.0";
   documentId: string;
   globalTheme: string;
   overrides: Record<string, LayoutOverrideProperties>; // Keyed by semanticPredicate
@@ -150,26 +157,47 @@ export interface LayoutManifestSidecar {
 ```typescript
 export class DataShapeClassifier {
   private static TEMPORAL_KEYS = new Set([
-    'date', 'period', 'year', 'startdate', 'enddate', 'until', 'ano', 'inicio', 'fim', 'data'
+    "date",
+    "period",
+    "year",
+    "startdate",
+    "enddate",
+    "until",
+    "ano",
+    "inicio",
+    "fim",
+    "data",
   ]);
 
   private static METRIC_KEYS = new Set([
-    'value', 'metric', 'total', 'amount', 'score', 'valor', 'total', 'kpi', 'delta'
+    "value",
+    "metric",
+    "total",
+    "amount",
+    "score",
+    "valor",
+    "total",
+    "kpi",
+    "delta",
   ]);
 
   /**
    * Calculates the average pairwise Jaccard similarity across a collection of mappings.
    */
-  public static calculateJaccardUniformity(records: Record<string, any>[]): number {
+  public static calculateJaccardUniformity(
+    records: Record<string, any>[],
+  ): number {
     if (records.length <= 1) return 1.0;
     let totalJaccard = 0;
     let pairs = 0;
 
-    const keySets = records.map(r => new Set(Object.keys(r || {})));
+    const keySets = records.map((r) => new Set(Object.keys(r || {})));
 
     for (let i = 0; i < keySets.length; i++) {
       for (let j = i + 1; j < keySets.length; j++) {
-        const intersection = new Set([...keySets[i]].filter(k => keySets[j].has(k)));
+        const intersection = new Set(
+          [...keySets[i]].filter((k) => keySets[j].has(k)),
+        );
         const union = new Set([...keySets[i], ...keySets[j]]);
         totalJaccard += union.size === 0 ? 1 : intersection.size / union.size;
         pairs++;
@@ -183,26 +211,32 @@ export class DataShapeClassifier {
    */
   public static inferArchetype(data: any): LayoutArchetype {
     // 1. Primitive Scalars
-    if (typeof data !== 'object' || data === null) {
-      return typeof data === 'string' && data.length > 120 ? 'prose_flow' : 'leaf_item';
+    if (typeof data !== "object" || data === null) {
+      return typeof data === "string" && data.length > 120
+        ? "prose_flow"
+        : "leaf_item";
     }
 
     // 2. Sequences
     if (Array.isArray(data)) {
-      if (data.length === 0) return 'leaf_item';
+      if (data.length === 0) return "leaf_item";
 
       // Classify the whole sequence; a first-item guess can hide later content.
       // Mixed scalars/mappings and nested sequences need structural rendering.
-      const allScalars = data.every(item => typeof item !== 'object' || item === null);
-      const allMappings = data.every(item =>
-        typeof item === 'object' && item !== null && !Array.isArray(item)
+      const allScalars = data.every(
+        (item) => typeof item !== "object" || item === null,
       );
-      if (!allScalars && !allMappings) return 'block_group';
+      const allMappings = data.every(
+        (item) =>
+          typeof item === "object" && item !== null && !Array.isArray(item),
+      );
+      if (!allScalars && !allMappings) return "block_group";
 
       // Sequence of Scalars
       if (allScalars) {
-        const avgLength = data.reduce((acc, str) => acc + String(str).length, 0) / data.length;
-        return avgLength <= 35 ? 'badge_list' : 'prose_flow';
+        const avgLength =
+          data.reduce((acc, str) => acc + String(str).length, 0) / data.length;
+        return avgLength <= 35 ? "badge_list" : "prose_flow";
       }
 
       // Sequence of Mappings
@@ -211,31 +245,33 @@ export class DataShapeClassifier {
 
       if (uniformity >= 0.55) {
         // Inspect keys for temporal triggers
-        const hasTemporal = records.some(rec => 
-          Object.keys(rec).some(k => this.TEMPORAL_KEYS.has(k.toLowerCase()))
+        const hasTemporal = records.some((rec) =>
+          Object.keys(rec).some((k) => this.TEMPORAL_KEYS.has(k.toLowerCase())),
         );
-        if (hasTemporal && records.length <= 25) return 'timeline';
+        if (hasTemporal && records.length <= 25) return "timeline";
 
         // Inspect keys for numeric/metric triggers
-        const hasMetric = records.some(rec => 
-          Object.keys(rec).some(k => this.METRIC_KEYS.has(k.toLowerCase()))
+        const hasMetric = records.some((rec) =>
+          Object.keys(rec).some((k) => this.METRIC_KEYS.has(k.toLowerCase())),
         );
-        if (hasMetric && records.length <= 8) return 'key_value_table';
+        if (hasMetric && records.length <= 8) return "key_value_table";
 
-        return 'card_grid';
+        return "card_grid";
       }
 
-      return 'block_group';
+      return "block_group";
     }
 
     // 3. Associative Mappings (Objects)
     const values = Object.values(data);
-    const allTerminal = values.every(v => typeof v !== 'object' || v === null);
+    const allTerminal = values.every(
+      (v) => typeof v !== "object" || v === null,
+    );
     if (allTerminal && Object.keys(data).length <= 12) {
-      return 'key_value_table';
+      return "key_value_table";
     }
 
-    return 'block_group';
+    return "block_group";
   }
 }
 ```
@@ -245,7 +281,7 @@ export class DataShapeClassifier {
 ### 3. Bidirectional In-Place AST Mutator (`ASTSequenceMutator.ts`)
 
 ```typescript
-import { Document, YAMLSeq, isSeq, parseDocument } from 'yaml';
+import { Document, YAMLSeq, isSeq, parseDocument } from "yaml";
 
 export interface LayerReorderIntent {
   sourcePointer: string; // e.g. "/projects/2"
@@ -258,35 +294,49 @@ export interface LayerReorderIntent {
  */
 export function executeReorderTransaction(
   yamlSource: string,
-  intent: LayerReorderIntent
+  intent: LayerReorderIntent,
 ): { updatedYaml: string; changedRange: [number, number] } {
   const doc = parseDocument(yamlSource, { keepSourceTokens: true });
-  
-  if (doc.errors.length) throw new Error('Cannot reorder invalid YAML.');
+
+  if (doc.errors.length) throw new Error("Cannot reorder invalid YAML.");
   const decodePointer = (pointer: string): string[] => {
-    if (pointer === '') return [];
-    if (!pointer.startsWith('/') || /~(?![01])/.test(pointer)) {
-      throw new Error('Invalid JSON pointer.');
+    if (pointer === "") return [];
+    if (!pointer.startsWith("/") || /~(?![01])/.test(pointer)) {
+      throw new Error("Invalid JSON pointer.");
     }
-    return pointer.slice(1).split('/').map(part => part.replace(/~1/g, '/').replace(/~0/g, '~'));
+    return pointer
+      .slice(1)
+      .split("/")
+      .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"));
   };
   const seqPath = decodePointer(intent.targetSequencePointer);
   const sourcePath = decodePointer(intent.sourcePointer);
   const indexToken = sourcePath.pop();
-  if (JSON.stringify(sourcePath) !== JSON.stringify(seqPath) || !/^(0|[1-9]\d*)$/.test(indexToken ?? '')) {
-    throw new Error('Source must be an item in the target sequence.');
+  if (
+    JSON.stringify(sourcePath) !== JSON.stringify(seqPath) ||
+    !/^(0|[1-9]\d*)$/.test(indexToken ?? "")
+  ) {
+    throw new Error("Source must be an item in the target sequence.");
   }
   const targetSeq = seqPath.length ? doc.getIn(seqPath) : doc.contents;
 
   if (!isSeq(targetSeq)) {
-    throw new Error(`Target at pointer ${intent.targetSequencePointer} is not a valid sequence.`);
+    throw new Error(
+      `Target at pointer ${intent.targetSequencePointer} is not a valid sequence.`,
+    );
   }
 
   const sourceIndex = Number(indexToken);
-  if (!Number.isSafeInteger(sourceIndex) || sourceIndex >= targetSeq.items.length ||
-      !Number.isInteger(intent.targetIndex) || intent.targetIndex < 0 ||
-      intent.targetIndex >= targetSeq.items.length) {
-    throw new Error('Reorder indices must identify valid final sequence positions.');
+  if (
+    !Number.isSafeInteger(sourceIndex) ||
+    sourceIndex >= targetSeq.items.length ||
+    !Number.isInteger(intent.targetIndex) ||
+    intent.targetIndex < 0 ||
+    intent.targetIndex >= targetSeq.items.length
+  ) {
+    throw new Error(
+      "Reorder indices must identify valid final sequence positions.",
+    );
   }
   const [movedNode] = targetSeq.items.splice(sourceIndex, 1);
   targetSeq.items.splice(intent.targetIndex, 0, movedNode);
@@ -294,7 +344,9 @@ export function executeReorderTransaction(
   const updatedYaml = doc.toString();
   return {
     updatedYaml,
-    changedRange: targetSeq.range ? [targetSeq.range[0], targetSeq.range[2]] : [0, updatedYaml.length]
+    changedRange: targetSeq.range
+      ? [targetSeq.range[0], targetSeq.range[2]]
+      : [0, updatedYaml.length],
   };
 }
 ```
@@ -304,26 +356,34 @@ export function executeReorderTransaction(
 ## 🔄 Your Workflow Process
 
 ### Step 1: Ingestion & Source Token Binding
+
 Ingest the user's YAML payload via `parseDocument(source, { keepSourceTokens: true })`. Bind a zero-overhead `LineCounter` to establish bi-directional mappings between character indices, line numbers, and CST node boundaries.
 
 ### Step 2: Recursive Shape Profiling & Metric Extraction
+
 Traverse the Concrete Syntax Tree. For every node:
+
 - Compute string length variance and whitespace ratio.
 - Calculate Jaccard similarity across sibling mappings.
 - Compile invariant semantic predicates (`[key=value]`).
 - Extract the 3-tuple byte range `[start, valueEnd, nodeEnd]`.
 
 ### Step 3: Archetype Assignment & Sidecar Hydration
+
 Execute the `DataShapeClassifier`. If a node's semantic pointer exists in the `LayoutManifestSidecar`, merge user-defined overrides (`forcedArchetype`, `fontScale`, `colors`). Emit the normalized, immutable `LayoutBlockNode` tree.
 
 ### Step 4: Virtualized Layer Tree Projection
+
 Project the synthesized AST into the left-hand **Layer Tree** (Figma-style Document Outline). Render draggable node items with:
+
 - Visual archetype icons (Clock for Timeline, Grid for CardGrid, Tag for BadgeList, List for KeyValue).
 - Visibility toggles (eye icon) mapped directly to `overrides.hidden`.
 - Drag-and-drop handles executing in-place CST sequence mutations.
 
 ### Step 5: Realization & Print Euclidean Budgeting
+
 Dispatch the AST to the `UniversalLayoutRenderer`. Lower nodes into semantic HTML elements wrapped in `.cv-atomic-box-wrapper`. Apply Euclidean print constraints:
+
 ```css
 .cv-archetype-timeline .cv-atomic-item,
 .cv-archetype-card-grid .cv-atomic-item,

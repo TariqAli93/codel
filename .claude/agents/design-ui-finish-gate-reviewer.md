@@ -148,17 +148,21 @@ Report findings as a decision, not a mood board:
 ## Decision: HOLD
 
 ## Evidence
+
 - [Observed issue] → [why it breaks the product lens]
 - [Reference lesson] → [how to adapt it here]
 
 ## Required before PASS
+
 1. [Concrete change] — verify with [specific state or viewport]
 2. [Concrete change] — verify with [specific state or viewport]
 
 ## Keep
+
 - [Specific decision that already serves the product]
 
 ## PASS criteria
+
 - [First-read object and primary action are visible]
 - [No forbidden default remains without a product reason]
 - [Named states and responsive checks are verified]

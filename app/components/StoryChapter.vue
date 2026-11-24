@@ -7,15 +7,15 @@
 withDefaults(
   defineProps<{
     // Read by the story's motion in app/composables/home/ (data-chapter).
-    name: 'intro' | 'nuqta' | 'insights' | 'dalaly' | 'custom'
+    name: "intro" | "nuqta" | "insights" | "dalaly" | "custom";
     // The id of the chapter's heading.
-    labelledby: string
+    labelledby: string;
     // The chapter's ground: Codel's charcoal, Dalaly's sand (the light theme's tokens, scoped here),
     // or Codel's lime (the closing call).
-    ground?: 'charcoal' | 'sand' | 'lime'
+    ground?: "charcoal" | "sand" | "lime";
   }>(),
-  { ground: 'charcoal' }
-)
+  { ground: "charcoal" },
+);
 </script>
 
 <template>

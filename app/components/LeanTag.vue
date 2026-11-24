@@ -2,12 +2,14 @@
 // A small category label that leans like a button, with its text turned back upright.
 // Not interactive: use ActionLink for anything you can press.
 defineProps<{
-  label: string
-}>()
+  label: string;
+}>();
 </script>
 
 <template>
-  <span class="tag"><span class="tag__label">{{ label }}</span></span>
+  <span class="tag"
+    ><span class="tag__label">{{ label }}</span></span
+  >
 </template>
 
 <style scoped lang="scss">

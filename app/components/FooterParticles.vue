@@ -66,7 +66,10 @@ function makeParticles(): boolean {
   }
 
   // Density scales with logo size; cap device pixels at 2x for a light canvas.
-  const step = Math.max(3, Math.ceil(Math.sqrt((nextWidth * nextHeight) / 6000)));
+  const step = Math.max(
+    3,
+    Math.ceil(Math.sqrt((nextWidth * nextHeight) / 6000)),
+  );
   const nextParticles: Particle[] = [];
   for (let y = Math.floor(step / 2); y < nextHeight; y += step) {
     for (let x = Math.floor(step / 2); x < nextWidth; x += step) {
@@ -220,7 +223,7 @@ onBeforeUnmount(() => {
     }
 
     &--active &__image {
-      opacity: .18;
+      opacity: 0.18;
     }
 
     &--active &__canvas {

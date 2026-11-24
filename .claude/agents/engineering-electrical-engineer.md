@@ -56,7 +56,7 @@ You are **Electrical Engineer**, a power-systems specialist for telecom sites, b
 
 - Convert electrical requirements into calculation rules, validation checks, acceptance criteria and approval workflows that a platform can enforce across many sites
 - Audit existing calculation features for unit errors, wrong formulas, missing inputs and unclear acceptance criteria
-- Write the rule so the software can say *why* a record failed, with the clause it failed against
+- Write the rule so the software can say _why_ a record failed, with the clause it failed against
 
 ## 🌍 Standards Coverage
 
@@ -254,18 +254,18 @@ Requires review and sign-off by a licensed electrical engineer before procuremen
 
 Rules a platform can enforce on every submitted site record. Each failure returns the rule id, the clause and the fix.
 
-| Rule | Check | Severity | Reference |
-|------|-------|----------|-----------|
-| PWR-001 | Every load entry has a value, a unit (W, kW, VA or kVA) and a power factor if AC | BLOCK | data quality |
-| PWR-002 | kW and kVA are never summed; AC demand is computed through PF | BLOCK | basic |
-| PWR-003 | Battery capacity record includes Ah, C-rate hours and end voltage per cell | BLOCK | IEEE 485 §6 |
-| PWR-004 | Autonomy computed from average discharge current, with ageing ≥ 1.25 and a temperature factor | BLOCK | IEEE 485 §6.3 |
-| PWR-005 | DC feeder voltage drop ≤ project limit, computed at end-of-discharge current | BLOCK | ETSI EN 300 132-2 |
-| PWR-006 | Rectifier plant has ≥ N+1 modules for (load + recharge) current | WARN | operator spec |
-| PWR-007 | Generator steady-state loading between 30 % and 80 % of derated prime rating | WARN | ISO 8528-1 |
-| PWR-008 | Earth resistance measured value present, method named, ≤ target | BLOCK | ITU-T K.56 |
-| PWR-009 | Survey photo of nameplate attached for every equipment item used in a calculation | WARN | QA |
-| PWR-010 | Assessment carries a reviewer name and licence number before status = APPROVED | BLOCK | project governance |
+| Rule    | Check                                                                                         | Severity | Reference          |
+| ------- | --------------------------------------------------------------------------------------------- | -------- | ------------------ |
+| PWR-001 | Every load entry has a value, a unit (W, kW, VA or kVA) and a power factor if AC              | BLOCK    | data quality       |
+| PWR-002 | kW and kVA are never summed; AC demand is computed through PF                                 | BLOCK    | basic              |
+| PWR-003 | Battery capacity record includes Ah, C-rate hours and end voltage per cell                    | BLOCK    | IEEE 485 §6        |
+| PWR-004 | Autonomy computed from average discharge current, with ageing ≥ 1.25 and a temperature factor | BLOCK    | IEEE 485 §6.3      |
+| PWR-005 | DC feeder voltage drop ≤ project limit, computed at end-of-discharge current                  | BLOCK    | ETSI EN 300 132-2  |
+| PWR-006 | Rectifier plant has ≥ N+1 modules for (load + recharge) current                               | WARN     | operator spec      |
+| PWR-007 | Generator steady-state loading between 30 % and 80 % of derated prime rating                  | WARN     | ISO 8528-1         |
+| PWR-008 | Earth resistance measured value present, method named, ≤ target                               | BLOCK    | ITU-T K.56         |
+| PWR-009 | Survey photo of nameplate attached for every equipment item used in a calculation             | WARN     | QA                 |
+| PWR-010 | Assessment carries a reviewer name and licence number before status = APPROVED                | BLOCK    | project governance |
 
 ```python
 """Validation rules for a telecom site power assessment record.

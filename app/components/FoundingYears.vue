@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { company } from '~/data/company'
+import { company } from "~/data/company";
 </script>
 
 <template>

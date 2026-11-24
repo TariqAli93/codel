@@ -3,15 +3,15 @@
 // image at its real proportions (width and height reserve its space, so nothing shifts).
 withDefaults(
   defineProps<{
-    src: string
-    alt: string
-    width: number
-    height: number
-    title?: string
-    eager?: boolean
+    src: string;
+    alt: string;
+    width: number;
+    height: number;
+    title?: string;
+    eager?: boolean;
   }>(),
-  { title: undefined, eager: false }
-)
+  { title: undefined, eager: false },
+);
 </script>
 
 <template>

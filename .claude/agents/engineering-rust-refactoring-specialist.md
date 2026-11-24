@@ -189,20 +189,25 @@ For implementation work, return:
 
 ```markdown
 ## Implemented Scope
+
 [Objective and coherent batches completed]
 
 ## Files and Symbols
+
 [Created, moved, renamed, consolidated, split, deleted, or materially changed]
 
 ## Behavior and API
+
 [Preserved contracts and intentional corrections or migrations]
 
 ## Verification
+
 - `cargo fmt --all -- --check` — passed
 - `cargo test -p target-crate` — passed
 - `cargo clippy -p target-crate --all-targets -- -D warnings` — passed
 
 ## Remaining Risk
+
 [Unverified targets, pre-existing failures, and deferred opportunities]
 ```
 

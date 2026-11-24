@@ -1,33 +1,39 @@
 <script setup lang="ts">
-import { company } from '~/data/company'
+import { company } from "~/data/company";
 
-const title = 'من نحن / About'
-const description = 'بدأت كودل فكرةً في سنة 2020 وانطلقت في سنة 2024 من بغداد. شركة برمجيات عراقية ناشئة تقدّم برامج جاهزة وتطوّر برمجيات حسب الطلب.'
+const title = "من نحن / About";
+const description =
+  "بدأت كودل فكرةً في سنة 2020 وانطلقت في سنة 2024 من بغداد. شركة برمجيات عراقية ناشئة تقدّم برامج جاهزة وتطوّر برمجيات حسب الطلب.";
 
-useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
+useSeoMeta({ title, description, ogTitle: title, ogDescription: description });
 </script>
 
 <template>
   <div class="about">
-    <PageHead title="من نحن" lede="كودل شركة برمجيات عراقية ناشئة، مقرّها بغداد." />
+    <PageHead
+      title="من نحن"
+      lede="كودل شركة برمجيات عراقية ناشئة، مقرّها بغداد."
+    />
 
     <section class="about__section" aria-labelledby="about-story">
       <h2 id="about-story" class="about__heading">قصتنا</h2>
       <div class="about__prose">
         <p class="about__first">
-          بدأت كودل فكرةً في سنة {{ company.founded.idea }}، هدفها أن نبني برمجيات تخدم الأعمال في العراق.
+          بدأت كودل فكرةً في سنة {{ company.founded.idea }}، هدفها أن نبني
+          برمجيات تخدم الأعمال في العراق.
         </p>
         <p>
-          احتاجت الفكرة وقتاً لتتحول إلى عمل حقيقي، وانطلقت الشركة في سنة {{ company.founded.launch }} من بغداد.
+          احتاجت الفكرة وقتاً لتتحول إلى عمل حقيقي، وانطلقت الشركة في سنة
+          {{ company.founded.launch }} من بغداد.
         </p>
         <p>
-          اليوم نقدّم برامج جاهزة، منها <NuxtLink to="/solutions/nuqta-plus">نقطة بلس</NuxtLink> لإدارة نقاط البيع والمخازن
-          و<NuxtLink to="/solutions/dalaly">دلالي</NuxtLink> لإدارة مكاتب العقارات. ونطوّر برمجيات حسب طلب العميل،
-          ونصمّم المواقع والتطبيقات، ونتولى إدارة السيرفرات.
+          اليوم نقدّم برامج جاهزة، منها
+          <NuxtLink to="/solutions/nuqta-plus">نقطة بلس</NuxtLink> لإدارة نقاط
+          البيع والمخازن و<NuxtLink to="/solutions/dalaly">دلالي</NuxtLink>
+          لإدارة مكاتب العقارات. ونطوّر برمجيات حسب طلب العميل، ونصمّم المواقع
+          والتطبيقات، ونتولى إدارة السيرفرات.
         </p>
-        <p>
-          نحن شركة ناشئة، ونتعامل مع كل مشروع على أنه خطوة في هذا الطريق.
-        </p>
+        <p>نحن شركة ناشئة، ونتعامل مع كل مشروع على أنه خطوة في هذا الطريق.</p>
       </div>
     </section>
 
@@ -47,7 +53,10 @@ useSeoMeta({ title, description, ogTitle: title, ogDescription: description })
       </div>
     </section>
 
-    <ClosingCall heading="لديك مشروع أو فكرة؟" text="أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني.">
+    <ClosingCall
+      heading="لديك مشروع أو فكرة؟"
+      text="أخبرنا بما تحتاجه على واتساب أو بالبريد الإلكتروني."
+    >
       <WhatsAppCall :glow="false" />
     </ClosingCall>
   </div>

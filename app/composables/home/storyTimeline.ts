@@ -97,7 +97,10 @@ export function timelineTools(tl: gsap.core.Timeline, slant: number) {
   // A chapter's (or a scene's) text arrives the same way from below: the headline rises into its
   // masks word by word, then the rest follows. Set to its starting state now (immediateRender), so it
   // waits hidden.
-  const arrive = (scope: HTMLElement | null | undefined, { at, span }: Span) => {
+  const arrive = (
+    scope: HTMLElement | null | undefined,
+    { at, span }: Span,
+  ) => {
     if (!scope) return;
     play(
       own("[data-mask-inner]", scope),

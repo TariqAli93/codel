@@ -305,7 +305,8 @@ $tile: 2.5rem;
     }
 
     &__item {
-      animation: pillars-rise var(--duration-slow) var(--ease-out) 460ms backwards;
+      animation: pillars-rise var(--duration-slow) var(--ease-out) 460ms
+        backwards;
 
       &:nth-child(2) {
         animation-delay: calc(460ms + var(--stagger));

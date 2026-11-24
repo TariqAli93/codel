@@ -6,40 +6,44 @@
 // --link-rule-hover and --link-active, so a lime ground can set its own.
 const props = withDefaults(
   defineProps<{
-    to: string
-    look?: 'solid' | 'ink' | 'outline' | 'text'
+    to: string;
+    look?: "solid" | "ink" | "outline" | "text";
     // Buttons only. Without it solid and ink are lg, outline is md.
-    size?: 'md' | 'lg'
-    newTab?: boolean
+    size?: "md" | "lg";
+    newTab?: boolean;
     // The default slot replaces it when the label needs markup.
-    label?: string
+    label?: string;
     // Shown after the label, left to right (the phone number).
-    detail?: string
+    detail?: string;
     // Read by screen readers only, after the label (e.g. the product a shared label is about).
-    hiddenSuffix?: string
+    hiddenSuffix?: string;
     // The solid look's lime glow.
-    glow?: boolean
+    glow?: boolean;
   }>(),
   {
-    look: 'outline',
+    look: "outline",
     size: undefined,
     newTab: false,
     label: undefined,
     detail: undefined,
     hiddenSuffix: undefined,
-    glow: false
-  }
-)
+    glow: false,
+  },
+);
 
 const classes = computed(() => [
   `action--${props.look}`,
-  props.look === 'text' ? undefined : `action--${props.size ?? (props.look === 'outline' ? 'md' : 'lg')}`,
-  { 'action--glow': props.look === 'solid' && props.glow }
-])
+  props.look === "text"
+    ? undefined
+    : `action--${props.size ?? (props.look === "outline" ? "md" : "lg")}`,
+  { "action--glow": props.look === "solid" && props.glow },
+]);
 
 const hiddenText = computed(() =>
-  [props.hiddenSuffix, props.newTab ? '(يفتح في نافذة جديدة)' : undefined].filter(Boolean).join(' ')
-)
+  [props.hiddenSuffix, props.newTab ? "(يفتح في نافذة جديدة)" : undefined]
+    .filter(Boolean)
+    .join(" "),
+);
 </script>
 
 <template>
@@ -90,7 +94,10 @@ $upright: skewX(var(--slant-angle));
     line-height: 1.4;
     text-decoration: none;
     transform: $lean;
-    transition: background-color .22s var(--ease-out), color .22s var(--ease-out), translate .22s var(--ease-out);
+    transition:
+      background-color 0.22s var(--ease-out),
+      color 0.22s var(--ease-out),
+      translate 0.22s var(--ease-out);
 
     .action__content {
       justify-content: center;
@@ -129,7 +136,7 @@ $upright: skewX(var(--slant-angle));
 
     // On its own page (the header button on /contact) it goes quiet: there is nowhere to go. A real
     // border, like the outline look: forced-colours mode would remove a shadow ring.
-    &[aria-current='page'] {
+    &[aria-current="page"] {
       border: 1.5px solid var(--border-strong);
       background-color: transparent;
       color: var(--text);
@@ -139,7 +146,7 @@ $upright: skewX(var(--slant-angle));
   // The glow on its own layer, so hover only changes its opacity. It leans with the button.
   &--glow {
     &::after {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       border-radius: inherit;
@@ -155,7 +162,7 @@ $upright: skewX(var(--slant-angle));
       }
     }
 
-    &[aria-current='page']::after {
+    &[aria-current="page"]::after {
       content: none;
     }
   }
@@ -233,12 +240,30 @@ $upright: skewX(var(--slant-angle));
     white-space: nowrap;
   }
 }
-@media (hover:hover) and (prefers-reduced-motion:no-preference) {
-  .action--solid:hover,.action--ink:hover,.action--outline:hover { translate:0 -2px; }
-  .action--solid:active,.action--ink:active,.action--outline:active { translate:0 1px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .action--solid:hover,
+  .action--ink:hover,
+  .action--outline:hover {
+    translate: 0 -2px;
+  }
+  .action--solid:active,
+  .action--ink:active,
+  .action--outline:active {
+    translate: 0 1px;
+  }
 }
-@media (prefers-reduced-motion:no-preference) {
-  .action--solid,.action--ink,.action--outline{transition:background-color .22s var(--ease-out),color .22s var(--ease-out),translate .22s var(--ease-out),border-color .22s var(--ease-out)}
+@media (prefers-reduced-motion: no-preference) {
+  .action--solid,
+  .action--ink,
+  .action--outline {
+    transition:
+      background-color 0.22s var(--ease-out),
+      color 0.22s var(--ease-out),
+      translate 0.22s var(--ease-out),
+      border-color 0.22s var(--ease-out);
+  }
 }
-.action:focus-visible{outline-offset:5px}
+.action:focus-visible {
+  outline-offset: 5px;
+}
 </style>

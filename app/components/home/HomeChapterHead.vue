@@ -40,7 +40,9 @@ defineSlots<{
   <div class="home__head">
     <div class="home__head-main">
       <p class="home__kicker" data-reveal>
-        <span class="home__index" dir="ltr" aria-hidden="true">{{ index }}</span>
+        <span class="home__index" dir="ltr" aria-hidden="true">{{
+          index
+        }}</span>
         {{ kicker }}
       </p>
       <template v-if="product">
