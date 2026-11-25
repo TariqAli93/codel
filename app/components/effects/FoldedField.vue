@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { foldedFieldFragment } from "./foldedFieldShader";
+const props = defineProps<{ fragment?: string; settleAfter?: number; scrollMotion?: boolean; maxResolution?: number; vertex?: string; points?: boolean }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const ready = ref(false);
 let dispose: (() => void) | undefined;
@@ -39,9 +40,9 @@ onMounted(() => {
     }
     const vertex = compile(
       ctx.VERTEX_SHADER,
-      "#version 300 es\nvoid main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}",
+      props.vertex ?? "#version 300 es\nvoid main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}",
     );
-    const fragment = compile(ctx.FRAGMENT_SHADER, foldedFieldFragment);
+    const fragment = compile(ctx.FRAGMENT_SHADER, props.fragment ?? foldedFieldFragment);
     if (!vertex || !fragment) {
       if (vertex) ctx.deleteShader(vertex);
       if (fragment) ctx.deleteShader(fragment);
@@ -63,11 +64,18 @@ onMounted(() => {
       return;
     }
     const vao = ctx.createVertexArray();
+    if (!vao) { ctx.deleteProgram(program); return; }
     ctx.bindVertexArray(vao);
     ctx.useProgram(program);
+    if (props.points) { ctx.enable(ctx.BLEND); ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA); ctx.clearColor(16/255,20/255,17/255,1); }
     const resolution = ctx.getUniformLocation(program, "u_resolution");
     const pointer = ctx.getUniformLocation(program, "u_pointer");
     const time = ctx.getUniformLocation(program, "u_time");
+    const scrollUniform = ctx.getUniformLocation(program, "u_scroll");
+    const countUniform = ctx.getUniformLocation(program, "u_count");
+    const presenceUniform = ctx.getUniformLocation(program, "u_presence");
+    let count = 40000, presence = 0, targetPresence = 0;
+    let scroll = 0, targetScroll = 0;
     let frame = 0,
       visible = false,
       disposed = false,
@@ -87,15 +95,28 @@ onMounted(() => {
       frame = 0;
       if (disposed || lost || !visible || document.hidden || reduced.matches)
         return;
-      elapsed += last ? Math.min((now - last) / 1000, 0.06) : 0;
+      const dt = last ? Math.min((now - last) / 1000, 0.06) : 1 / 60;
+      elapsed += dt;
+      if (props.settleAfter !== undefined) elapsed = Math.min(elapsed, props.settleAfter);
       last = now;
-      px += (tx - px) * 0.08;
-      py += (ty - py) * 0.08;
+      const ease = 1-Math.exp(-dt*10);
+      px += (tx - px) * ease;
+      py += (ty - py) * ease;
+      scroll += (targetScroll-scroll)*ease;
+      presence += (targetPresence-presence)*ease;
       ctx.uniform2f(pointer, px, py);
       ctx.uniform1f(time, elapsed);
-      ctx.drawArrays(ctx.TRIANGLES, 0, 3);
+      ctx.uniform1f(scrollUniform, scroll);
+      if (props.points) {
+        ctx.uniform1f(countUniform, count);
+        ctx.uniform1f(presenceUniform, presence);
+        ctx.clear(ctx.COLOR_BUFFER_BIT);
+        ctx.drawArrays(ctx.POINTS, 0, count);
+      } else ctx.drawArrays(ctx.TRIANGLES, 0, 3);
       if (!ready.value) ready.value = true;
-      frame = requestAnimationFrame(draw);
+      const moving = Math.abs(tx-px)+Math.abs(ty-py)+Math.abs(targetScroll-scroll)+Math.abs(targetPresence-presence) > .0005;
+      if (props.settleAfter === undefined || elapsed < props.settleAfter || moving) frame = requestAnimationFrame(draw);
+      else last=0;
     }
     function resume() {
       if (
@@ -111,11 +132,12 @@ onMounted(() => {
     function size() {
       if (!el || !host || lost) return;
       const r = host.getBoundingClientRect();
+      count = r.width/r.height < 1 ? 24000 : 40000;
       const scale = Math.min(
         devicePixelRatio || 1,
         1.25,
-        1600 / Math.max(r.width, 1),
-        1600 / Math.max(r.height, 1),
+        (props.maxResolution ?? 1600) / Math.max(r.width, 1),
+        (props.maxResolution ?? 1600) / Math.max(r.height, 1),
       );
       el.width = Math.max(1, Math.round(r.width * scale));
       el.height = Math.max(1, Math.round(r.height * scale));
@@ -127,9 +149,19 @@ onMounted(() => {
       const r = host.getBoundingClientRect();
       tx = (e.clientX - r.left) / Math.max(r.width, 1) - 0.5;
       ty = (e.clientY - r.top) / Math.max(r.height, 1) - 0.5;
+      targetPresence = 1;
+      resume();
     }
     function reset() {
-      tx = ty = 0;
+      targetPresence = 0;
+      if (!props.points) tx = ty = 0;
+      resume();
+    }
+    function onScroll() {
+      if (!host || !props.scrollMotion || !visible) return;
+      const r=host.getBoundingClientRect();
+      targetScroll=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height)));
+      resume();
     }
     function visibility() {
       document.hidden ? pause() : resume();
@@ -145,20 +177,25 @@ onMounted(() => {
     }
     const ro = new ResizeObserver(() => {
       size();
+      onScroll();
       resume();
     });
     const io = new IntersectionObserver((entries) => {
       visible = entries.some((e) => e.isIntersecting);
+      if (visible) onScroll();
       visible ? resume() : pause();
     });
     ro.observe(host);
     io.observe(host);
     host.addEventListener("pointermove", move);
     host.addEventListener("pointerleave", reset);
+    host.addEventListener("pointercancel", reset);
     document.addEventListener("visibilitychange", visibility);
+    if (props.scrollMotion) window.addEventListener("scroll", onScroll, { passive: true });
     el.addEventListener("webglcontextlost", contextLost);
     el.addEventListener("webglcontextrestored", contextRestored);
     size();
+    onScroll();
     cleanup = () => {
       disposed = true;
       pause();
@@ -166,7 +203,9 @@ onMounted(() => {
       io.disconnect();
       host.removeEventListener("pointermove", move);
       host.removeEventListener("pointerleave", reset);
+      host.removeEventListener("pointercancel", reset);
       document.removeEventListener("visibilitychange", visibility);
+      window.removeEventListener("scroll", onScroll);
       el.removeEventListener("webglcontextlost", contextLost);
       el.removeEventListener("webglcontextrestored", contextRestored);
       ctx.deleteVertexArray(vao);

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import FoldedField from "./effects/FoldedField.vue";
+import { liquidLoomVertex, liquidLoomFragment } from "./effects/liquidLoomShader";
 </script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
     <div class="material-still" aria-hidden="true" />
-    <FoldedField />
+    <FoldedField :vertex="liquidLoomVertex" :fragment="liquidLoomFragment" points :settle-after="2.4" scroll-motion :max-resolution="1440" />
     <div class="workline-shell cover-inner">
       <div class="cover-main">
         <div class="material-copy">
@@ -28,7 +29,7 @@ import FoldedField from "./effects/FoldedField.vue";
   </section>
 </template>
 <style scoped lang="scss">
-/* V9.5 — original directional material, generated locally. */
+/* V9.8 — Liquid Loom, a procedural particle sculpture. */
 .cover-hero {
   position: relative;
   isolation: isolate;
@@ -50,12 +51,13 @@ import FoldedField from "./effects/FoldedField.vue";
   z-index: -2;
 }
 .material-still {
-  background-image: url(/images/hero/folded-field-desktop.jpg);
+  background-image: url(/images/hero/liquid-loom-desktop.svg);
   background-position: center;
   background-size: 100% 100%;
 }
 :deep(.material-canvas) {
   opacity: 0;
+  transition: opacity .15s ease;
 }
 :deep(.material-canvas.ready) {
   opacity: 1;
@@ -66,7 +68,7 @@ import FoldedField from "./effects/FoldedField.vue";
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(270deg, #101411 4%, #101411f2 24%, #10141100 62%);
+  background: linear-gradient(270deg, #101411 0%, #101411 36%, #10141100 56%);
 }
 .cover-inner {
   display: grid;
@@ -169,17 +171,17 @@ import FoldedField from "./effects/FoldedField.vue";
 }
 @media (max-width: 560px) {
   .material-still {
-    background-image: url(/images/hero/folded-field-mobile.jpg);
+    background-image: url(/images/hero/liquid-loom-mobile.svg);
   }
   .cover-hero {
     min-height: calc(100svh - var(--header-height));
   }
   .cover-inner {
-    padding-block: clamp(160px, 31svh, 250px) 12px;
+    padding-block: clamp(190px, 35svh, 320px) 12px;
   }
   .cover-main {
-    align-items: end;
-    padding-block: 10px 24px;
+    align-items: center;
+    padding-block: 16px 34px;
   }
   .material-copy {
     width: 100%;
@@ -205,10 +207,10 @@ import FoldedField from "./effects/FoldedField.vue";
   .cover-hero::after {
     background: linear-gradient(
       0deg,
-      #101411 3%,
-      #101411f7 31%,
-      #10141180 53%,
-      transparent 77%
+      #101411 0%,
+      #101411 41%,
+      #10141100 61%,
+      transparent 100%
     );
   }
   .cover-bottom .material-index {
@@ -233,5 +235,24 @@ import FoldedField from "./effects/FoldedField.vue";
 }
 .cover-bottom .link:hover {
   text-decoration: underline;
+}
+/* A single entrance sequence. Text never follows the pointer or scrolls out independently. */
+@media (prefers-reduced-motion: no-preference) {
+  .material-copy h1 span { animation: loom-type-in .75s cubic-bezier(.2,.75,.2,1) both; }
+  .material-copy h1 span:nth-child(2) { animation-delay: .12s; }
+  .material-copy p { animation: loom-copy-in .6s .35s cubic-bezier(.2,.75,.2,1) both; }
+  .cover-actions { animation: loom-copy-in .6s .25s cubic-bezier(.2,.75,.2,1) both; }
+  .cover-hero:focus-within .material-copy h1 span,
+  .cover-hero:focus-within .material-copy p,
+  .cover-hero:focus-within .cover-actions { animation: none; }
+  @keyframes loom-type-in { from { transform: translateY(12px); } to { transform: none; } }
+  @keyframes loom-copy-in { from { transform: translateY(9px); } to { transform: none; } }
+}
+/* Match the portrait sculpture placement for tall tablet viewports. */
+@media (min-width: 561px) and (max-aspect-ratio: 4/5) {
+  .cover-inner { padding-block-start: 35svh; }
+  .material-copy { width: 100%; }
+  .cover-hero::after { background: linear-gradient(0deg,#101411 0%,#101411 40%,#10141100 63%); }
+  .material-still { background-image:url(/images/hero/liquid-loom-mobile.svg); }
 }
 </style>
