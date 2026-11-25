@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { foldedFieldFragment } from "./foldedFieldShader";
-const props = defineProps<{ fragment?: string; settleAfter?: number; scrollMotion?: boolean; maxResolution?: number; vertex?: string; points?: boolean }>();
+const props = defineProps<{ fragment?: string; settleAfter?: number; scrollMotion?: boolean; maxResolution?: number; vertex?: string; points?: boolean; ambient?: boolean; paused?: boolean }>();
+const emit = defineEmits<{ "motion-ready": [ready: boolean] }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const ready = ref(false);
+watch(ready, value => emit("motion-ready", value));
 let dispose: (() => void) | undefined;
 onMounted(() => {
   const el = canvas.value;
@@ -74,7 +76,11 @@ onMounted(() => {
     const scrollUniform = ctx.getUniformLocation(program, "u_scroll");
     const countUniform = ctx.getUniformLocation(program, "u_count");
     const presenceUniform = ctx.getUniformLocation(program, "u_presence");
+    const introUniform = ctx.getUniformLocation(program, "u_intro");
+    const velocityUniform = ctx.getUniformLocation(program, "u_velocity");
     let count = 40000, presence = 0, targetPresence = 0;
+    let vx = 0, vy = 0, tvx = 0, tvy = 0, lastPointer = 0;
+    let portrait = false;
     let scroll = 0, targetScroll = 0;
     let frame = 0,
       visible = false,
@@ -93,17 +99,25 @@ onMounted(() => {
     };
     function draw(now: number) {
       frame = 0;
-      if (disposed || lost || !visible || document.hidden || reduced.matches)
+      if (disposed || lost || !visible || document.hidden || reduced.matches || (props.paused && ready.value))
         return;
+      const interactive = Math.abs(tx-px)+Math.abs(ty-py)+Math.abs(targetScroll-scroll)+Math.abs(targetPresence-presence)+Math.abs(vx)+Math.abs(vy) > .002;
+      const fps = props.ambient && elapsed > 2.25 && !interactive ? (portrait ? 24 : 30) : 60;
+      if(last && now-last < 1000/fps-1.5) { frame=requestAnimationFrame(draw); return; }
       const dt = last ? Math.min((now - last) / 1000, 0.06) : 1 / 60;
       elapsed += dt;
-      if (props.settleAfter !== undefined) elapsed = Math.min(elapsed, props.settleAfter);
+      if (!props.ambient && props.settleAfter !== undefined) elapsed = Math.min(elapsed, props.settleAfter);
       last = now;
       const ease = 1-Math.exp(-dt*10);
       px += (tx - px) * ease;
       py += (ty - py) * ease;
       scroll += (targetScroll-scroll)*ease;
       presence += (targetPresence-presence)*ease;
+      const viscous = 1-Math.exp(-dt*6);
+      vx += (tvx-vx)*viscous; vy += (tvy-vy)*viscous;
+      tvx *= Math.exp(-dt*5); tvy *= Math.exp(-dt*5);
+      ctx.uniform2f(velocityUniform,vx,vy);
+      ctx.uniform1f(introUniform, Math.min(elapsed,2.25));
       ctx.uniform2f(pointer, px, py);
       ctx.uniform1f(time, elapsed);
       ctx.uniform1f(scrollUniform, scroll);
@@ -115,7 +129,7 @@ onMounted(() => {
       } else ctx.drawArrays(ctx.TRIANGLES, 0, 3);
       if (!ready.value) ready.value = true;
       const moving = Math.abs(tx-px)+Math.abs(ty-py)+Math.abs(targetScroll-scroll)+Math.abs(targetPresence-presence) > .0005;
-      if (props.settleAfter === undefined || elapsed < props.settleAfter || moving) frame = requestAnimationFrame(draw);
+      if (!props.paused && (props.ambient || props.settleAfter === undefined || elapsed < props.settleAfter || moving)) frame = requestAnimationFrame(draw);
       else last=0;
     }
     function resume() {
@@ -125,14 +139,15 @@ onMounted(() => {
         !lost &&
         visible &&
         !document.hidden &&
-        !reduced.matches
+        !reduced.matches && (!props.paused || !ready.value)
       )
         frame = requestAnimationFrame(draw);
     }
     function size() {
       if (!el || !host || lost) return;
       const r = host.getBoundingClientRect();
-      count = r.width/r.height < 1 ? 24000 : 40000;
+      portrait = r.width/r.height < 1;
+      count = props.ambient ? (portrait ? 30000 : 52000) : (portrait ? 24000 : 40000);
       const scale = Math.min(
         devicePixelRatio || 1,
         1.25,
@@ -147,13 +162,17 @@ onMounted(() => {
     function move(e: PointerEvent) {
       if (!host || !fine.matches || e.pointerType !== "mouse") return;
       const r = host.getBoundingClientRect();
-      tx = (e.clientX - r.left) / Math.max(r.width, 1) - 0.5;
-      ty = (e.clientY - r.top) / Math.max(r.height, 1) - 0.5;
+      const nx = Math.max(-.5,Math.min(.5,(e.clientX-r.left)/Math.max(r.width,1)-.5));
+      const ny = Math.max(-.5,Math.min(.5,(e.clientY-r.top)/Math.max(r.height,1)-.5));
+      const dt = Math.max(.016,(e.timeStamp-lastPointer)/1000);
+      if(lastPointer && dt < .15){tvx=Math.max(-.8,Math.min(.8,(nx-tx)/dt*.22));tvy=Math.max(-.8,Math.min(.8,(ny-ty)/dt*.22));}
+      lastPointer=e.timeStamp;tx=nx;ty=ny;
       targetPresence = 1;
       resume();
     }
     function reset() {
       targetPresence = 0;
+      tvx=tvy=0;lastPointer=0;
       if (!props.points) tx = ty = 0;
       resume();
     }
@@ -177,6 +196,7 @@ onMounted(() => {
     }
     const ro = new ResizeObserver(() => {
       size();
+      if(props.paused) ready.value=false;
       onScroll();
       resume();
     });
@@ -194,10 +214,12 @@ onMounted(() => {
     if (props.scrollMotion) window.addEventListener("scroll", onScroll, { passive: true });
     el.addEventListener("webglcontextlost", contextLost);
     el.addEventListener("webglcontextrestored", contextRestored);
+    const stopPauseWatch=watch(()=>props.paused, value=>{if(value){pause();}else{resume();}});
     size();
     onScroll();
     cleanup = () => {
       disposed = true;
+      stopPauseWatch();
       pause();
       ro.disconnect();
       io.disconnect();
