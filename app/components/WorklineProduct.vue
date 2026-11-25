@@ -7,12 +7,18 @@ const props = withDefaults(
     number?: number;
     total?: number;
     level?: 2 | 3;
+    layout?: "showcase" | "condition";
   }>(),
-  { level: 3 },
+  { level: 3, layout: "showcase" },
 );
 const active = ref(0);
 const direction = ref(1);
 const shot = computed(() => props.solution.images[active.value]);
+const positionLabel = computed(() =>
+  props.number !== undefined && props.total !== undefined
+    ? `${String(props.number).padStart(2, "0")} / ${String(props.total).padStart(2, "0")}`
+    : "",
+);
 const gallery = ref<HTMLDialogElement | null>(null);
 const opener = ref<HTMLButtonElement | null>(null);
 const galleryOpen = ref(false);
@@ -21,10 +27,6 @@ const hasInteracted = ref(false);
 const retryKey = ref(0);
 const stageImage = ref<HTMLImageElement | null>(null);
 const thumbnailFailures = reactive(new Set<string>());
-const stageRatio = computed(() => {
-  const first = props.solution.images[0];
-  return first ? `${first.width} / ${first.height}` : "16 / 9";
-});
 onMounted(() => {
   const image = stageImage.value;
   if (image?.complete && image.naturalWidth === 0 && shot.value)
@@ -91,14 +93,20 @@ function onGalleryKey(event: KeyboardEvent) {
 <template>
   <article
     class="app-panel"
-    :class="{ 'app-panel--sand': solution.look === 'sand' }"
+    :class="{
+      'app-panel--sand': solution.look === 'sand',
+      'app-panel--condition': layout === 'condition',
+    }"
     :data-theme="solution.look === 'sand' ? 'light' : undefined"
     :aria-labelledby="`app-${solution.slug}`"
   >
     <header class="app-panel__head">
       <div>
         <p class="app-panel__platform">
-          <bdi>{{ solution.nameEn }}</bdi> · {{ solution.platform }}
+          <span><bdi>{{ solution.nameEn }}</bdi> · {{ solution.platform }}</span>
+          <bdi v-if="positionLabel" class="app-panel__index" dir="ltr">{{
+            positionLabel
+          }}</bdi>
         </p>
         <component
           :is="level === 2 ? 'h2' : 'h3'"
@@ -113,7 +121,6 @@ function onGalleryKey(event: KeyboardEvent) {
       <figure>
         <div
           class="app-panel__stage"
-          :style="{ aspectRatio: stageRatio }"
           :class="{ 'app-panel__stage--back': direction < 0 }"
         >
           <img
@@ -168,7 +175,6 @@ function onGalleryKey(event: KeyboardEvent) {
         class="app-panel__controls"
         role="group"
         :aria-label="`واجهات ${solution.nameAr}`"
-        :style="{ '--shot-count': solution.images.length }"
       >
         <button
           v-for="(item, i) in solution.images"
@@ -292,6 +298,11 @@ function onGalleryKey(event: KeyboardEvent) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr);
     grid-template-areas: "head head" "aside screen";
   }
+  &--condition {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "head" "screen" "aside";
+    gap: clamp(16px, 2vw, 24px);
+  }
 }
 .app-panel__head {
   grid-area: head;
@@ -308,9 +319,17 @@ function onGalleryKey(event: KeyboardEvent) {
   }
 }
 .app-panel__platform {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   font-size: var(--text-small);
   color: var(--text-muted);
   margin-block-end: 5px;
+}
+.app-panel__index {
+  flex: none;
+  font: 600 var(--text-caption) / 1.4 var(--font-sans);
 }
 .app-panel__tagline {
   max-width: 28ch;
@@ -361,7 +380,7 @@ function onGalleryKey(event: KeyboardEvent) {
 }
 .app-panel__controls {
   display: grid;
-  grid-template-columns: repeat(var(--shot-count), minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(96px, 100%), 1fr));
   gap: clamp(10px, 1.2vw, 18px);
   padding-inline: 4px;
 }
@@ -394,7 +413,7 @@ function onGalleryKey(event: KeyboardEvent) {
     position: absolute;
     inset: 0;
     z-index: -1;
-    transform: skewX(calc(-1 * var(--slant-angle)));
+    transform: skewX(calc(var(--slant-angle) * -1));
     border-radius: var(--radius-sm);
     border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
     transition:
@@ -526,8 +545,43 @@ function onGalleryKey(event: KeyboardEvent) {
       width: 6px;
       height: 6px;
       background: currentColor;
-      transform: skewX(-10deg);
+      transform: skewX(calc(var(--slant-angle) * -1));
     }
+  }
+}
+.app-panel--condition {
+  .app-panel__head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .app-panel__tagline {
+    max-width: 40ch;
+    text-align: start;
+  }
+  .app-panel__benefits ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(14px, 2vw, 24px);
+    border-block-start: 1px solid
+      color-mix(in srgb, currentColor 20%, transparent);
+  }
+  .app-panel__benefits li {
+    min-width: 0;
+    padding-block: 12px;
+    border-block-end: 1px solid
+      color-mix(in srgb, currentColor 20%, transparent);
+    &:nth-child(even) {
+      border-inline-start: 1px solid
+        color-mix(in srgb, currentColor 20%, transparent);
+      padding-inline-start: 18px;
+    }
+  }
+  .app-panel__purchase {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px 20px;
   }
 }
 .app-panel__purchase {

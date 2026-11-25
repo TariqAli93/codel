@@ -130,7 +130,7 @@ function serviceKey(e: KeyboardEvent, i: number) {
         >
       </div>
     </section>
-    <section aria-labelledby="solutions-title">
+    <section class="home-solutions" aria-labelledby="solutions-title">
       <div class="workline-shell section-intro">
         <h2 id="solutions-title">برامج جاهزة.<br />لشغلك اليومي.</h2>
         <div>
@@ -138,11 +138,13 @@ function serviceKey(e: KeyboardEvent, i: number) {
           <ActionLink look="text" to="/solutions" label="كل البرامج ↖" />
         </div>
       </div>
-      <VisualProductStory
-        v-for="solution in solutions"
-        :key="solution.slug"
-        :solution="solution"
-      />
+      <div class="workline-shell home-solutions__stack">
+        <HomeStackingCard
+          v-for="solution in solutions"
+          :key="solution.slug"
+          :solution="solution"
+        />
+      </div>
     </section>
     <section
       class="services workline-shell"

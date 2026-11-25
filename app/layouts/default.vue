@@ -195,6 +195,41 @@ function rebuildScrollMotion() {
         });
       });
 
+    const productStack = page.querySelector<HTMLElement>(
+      ".home-solutions__stack",
+    );
+    const productCards = productStack
+      ? Array.from(
+          productStack.querySelectorAll<HTMLElement>(
+            "[data-home-product-card]",
+          ),
+        )
+      : [];
+    productCards.slice(0, -1).forEach((card, index) => {
+      const nextCard = productCards[index + 1];
+      const surface = card.querySelector<HTMLElement>(
+        "[data-home-product-surface]",
+      );
+      if (!nextCard || !surface) return;
+
+      gsap?.to(surface, {
+        scale: 0.965,
+        y: -16,
+        ease: "none",
+        scrollTrigger: {
+          trigger: nextCard,
+          start: "top bottom",
+          end: () => {
+            const stickyOffset = Number.parseFloat(
+              window.getComputedStyle(nextCard).insetBlockStart,
+            );
+            return `top top+=${Number.isFinite(stickyOffset) ? stickyOffset : 0}`;
+          },
+          scrub: 0.6,
+        },
+      });
+    });
+
     const serviceWall = page.querySelector<HTMLElement>(".service-wall");
     const serviceTabs = serviceWall
       ? Array.from(serviceWall.querySelectorAll<HTMLElement>(".service-tab"))
