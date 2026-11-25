@@ -353,7 +353,6 @@ $footer-three: 64em;
         position: relative;
       }
     }
-
   }
 
   // Full-width editorial rail: brand at inline-start, navigation and contact action opposite.
@@ -373,7 +372,7 @@ $footer-three: 64em;
     margin-inline: auto;
     padding-inline: clamp(var(--space-3), 1.5vw, var(--space-5));
     border: 1px solid transparent;
-    border-radius: 0;
+    border-radius: var(--radius-lg);
     background-color: transparent;
     transition:
       background-color var(--duration-base) var(--ease-out),
@@ -383,7 +382,7 @@ $footer-three: 64em;
 
   &__header--scrolled &__bar {
     border-color: color-mix(in srgb, var(--border) 78%, var(--accent) 22%);
-    border-radius: var(--radius-lg);
+
     background-color: var(--surface-raised);
   }
 
@@ -623,7 +622,6 @@ $footer-three: 64em;
         inset-block-end: calc(var(--space-2) * -1);
       }
     }
-
   }
 
   @media (width >= $nav-wide) {
