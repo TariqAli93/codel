@@ -7,7 +7,11 @@ import {
 </script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
-    <div class="material-still" aria-hidden="true" />
+    <div
+      class="material-still"
+      data-scroll-depth="hero-still"
+      aria-hidden="true"
+    />
     <FoldedField
       :fragment="infiniteWeaveFragment"
       :vertex="infiniteWeaveVertex"
@@ -15,12 +19,13 @@ import {
       :max-dpr="5"
       :particle-count="52000 / 2"
       :idle-fps="60"
+      data-scroll-depth="hero-field"
       ambient
       points
     />
     <div class="workline-shell cover-inner">
       <div class="cover-main">
-        <div class="material-copy">
+        <div class="material-copy" data-scroll-depth="hero-copy">
           <h1 id="hero-title"><span>شغلك يصير</span><span>أوضح.</span></h1>
           <p>برامج جاهزة لإدارة أعمالك، وبرمجيات خاصة تنبني على احتياجاتك.</p>
           <div class="cover-actions">
@@ -46,7 +51,6 @@ import {
   color: var(--text);
   display: grid;
   align-items: stretch;
-  border-bottom: 1px solid var(--border);
 }
 .material-still,
 :deep(.material-canvas) {

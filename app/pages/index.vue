@@ -78,6 +78,28 @@ const labels = [
   "برمجيات خاصة",
 ];
 const words = ["مواقع.", "تطبيقات.", "حسابات.", "سيرفرات.", "حسب الطلب."];
+// Keep noscript's HTML as one raw-content binding: browsers parse noscript children differently
+// when scripting is enabled, so Vue must not hydrate those children as element nodes.
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[character] ?? character;
+  });
+const serviceFallbackMarkup = computed(
+  () =>
+    `<ul>${services
+      .map(
+        (item) =>
+          `<li><a href="/services/${escapeHtml(encodeURIComponent(item.id))}">${escapeHtml(item.title)}</a></li>`,
+      )
+      .join("")}</ul>`,
+);
 const activeService = ref(0);
 const service = computed(() => services[activeService.value]);
 const tablist = ref<HTMLElement | null>(null);
@@ -169,6 +191,7 @@ function serviceKey(e: KeyboardEvent, i: number) {
           <div
             :key="service.id"
             class="service-graphic"
+            data-scroll-depth="service-art"
             :data-variant="activeService"
             aria-hidden="true"
           >
@@ -188,13 +211,7 @@ function serviceKey(e: KeyboardEvent, i: number) {
           </div>
         </article>
       </div>
-      <noscript
-        ><ul>
-          <li v-for="item in services" :key="item.id">
-            <NuxtLink :to="'/services/' + item.id">{{ item.title }}</NuxtLink>
-          </li>
-        </ul></noscript
-      >
+      <noscript v-html="serviceFallbackMarkup"></noscript>
     </section>
     <section class="proof workline-shell">
       <div class="proof-layout">
@@ -256,7 +273,7 @@ function serviceKey(e: KeyboardEvent, i: number) {
       </div>
     </section>
     <section class="contact-poster" data-theme="light">
-      <div class="workline-shell">
+      <div class="workline-shell" data-scroll-depth="contact-band">
         <h2>خلّينا<br />نرتّبها.</h2>
         <div class="contact-actions">
           <p>احچيلنا عن شغلك. نناقش وياك البرنامج أو الحل المناسب.</p>

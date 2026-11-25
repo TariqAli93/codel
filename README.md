@@ -67,6 +67,8 @@ The root Nuxt route now renders the full-viewport Workline hero, business discov
 ## Dependencies
 
 - `nuxt` (pinned to exactly `4.6.4`), `vue`, `vue-router`: same as the official Nuxt 4 starter.
+- `lenis`: installed through the official `lenis/nuxt` module as one root wheel smoother; touch scrolling, anchors and reduced-motion behavior remain native.
+- `gsap`: drives restrained homepage depth and the service entrance; ScrollTrigger is synchronized to Lenis and torn down when routes change.
 - `sass` (dev): required for Nuxt/Vite to compile SCSS.
 - `knip` (dev): reports unused files and dependencies.
 
@@ -228,6 +230,10 @@ The shader is optional: static artwork is always present, motion is paused offsc
 Independent alternative to Lightfall and Obsidian Cut, based on merged V9.5. Inspired by Forma Liquid Particle Studio's published description of cursor-reactive particle sculpture and scroll morphing, plus Shader Studio's procedural WebGL approach. Live reference/editor not accessible in this session; original GLSL rather than template code or Studio export. A stratified 40,000-point desktop / 24,000-point portrait mesh forms a twisted ribbon, gathers over 2.15 seconds, deforms locally under pointer movement, then unfolds into a diagonal sheet on native scroll. No perpetual idle loop. Existing renderer extended for point primitives; responsive static SVG approximations and reduced-motion fallback. Original copy, brand, product scrollytelling and routes unchanged. Zero new dependencies.
 
 GLSL vertex/fragment pair compiled, linked and rendered using local OpenGL ES 3 software rendering at 1440×820 and 390×780; pointer and scroll states also rendered. Nuxt build, browser integration, hardware GPU performance and accessibility remain unverified. No Claude subagent execution.
+
+## V9.9 — Smooth scroll and depth
+
+Adds the official Lenis Nuxt integration for fine-pointer wheel scrolling, coordinated with GSAP ScrollTrigger. Touch input, reduced motion, native anchors and route scroll restoration keep browser behavior. The shared navigation gains a restrained frosted surface after scrolling; homepage parallax is limited to the hero, product previews, service artwork, contact band and footer wordmark. No page structure or brand tokens changed.
 
 ## V9.8.1 — Liquid Loom / Infinite Weave
 

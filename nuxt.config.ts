@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
+  modules: ["lenis/nuxt"],
 
   // Generates `strict: true` in the .nuxt/tsconfig.*.json files
   // that the root tsconfig.json references.
@@ -9,7 +10,7 @@ export default defineNuxtConfig({
     strict: true,
   },
 
-  css: ["~/assets/scss/main.scss"],
+  css: ["lenis/dist/lenis.css", "~/assets/scss/main.scss"],
 
   app: {
     head: {

@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import { shallowRef } from "vue";
+import { VueLenis } from "lenis/vue";
 import { company } from "~/data/company";
+
+type Gsap = typeof import("gsap").gsap;
+type ScrollTriggerPlugin = typeof import("gsap/ScrollTrigger").ScrollTrigger;
 
 interface NavLink {
   to: string;
@@ -72,9 +77,264 @@ const menuOpen = ref(false);
 const header = ref<HTMLElement | null>(null);
 const menuButton = ref<HTMLButtonElement | null>(null);
 const scrolled = ref(false);
+const smoothScroll = shallowRef(false);
+const lenisOptions = {
+  autoRaf: false,
+  smoothWheel: true,
+  syncTouch: false,
+  anchors: false,
+  lerp: 0.1,
+};
+// Read the instance exposed by the conditional root component; useLenis warns before that root exists.
+const lenisRoot = shallowRef<InstanceType<typeof VueLenis> | null>(null);
+const lenis = computed(() => lenisRoot.value?.lenis);
+
+let gsap: Gsap | undefined;
+let ScrollTrigger: ScrollTriggerPlugin | undefined;
+let motionContext: ReturnType<Gsap["matchMedia"]> | undefined;
+let loadMotionPromise: Promise<void> | undefined;
+let motionMedia: MediaQueryList | undefined;
+let smoothScrollMedia: MediaQueryList | undefined;
+let clientReady = false;
+let cleanupLenisSync = () => {};
+
+function syncLenisWithScrollTrigger() {
+  cleanupLenisSync();
+  cleanupLenisSync = () => {};
+
+  const instance = lenis.value;
+  if (!instance || !gsap || !ScrollTrigger) return;
+
+  const updateScrollTrigger = () => ScrollTrigger?.update();
+  const updateLenis = (time: number) => instance.raf(time * 1000);
+  instance.on("scroll", updateScrollTrigger);
+  gsap.ticker.add(updateLenis);
+  gsap.ticker.lagSmoothing(0);
+
+  cleanupLenisSync = () => {
+    instance.off("scroll", updateScrollTrigger);
+    gsap?.ticker.remove(updateLenis);
+    gsap?.ticker.lagSmoothing(500, 33);
+  };
+}
+
+function rebuildScrollMotion() {
+  if (!clientReady || !gsap || !ScrollTrigger || !motionMedia?.matches) return;
+
+  const page = document.querySelector<HTMLElement>(".layout");
+  if (!page) return;
+
+  motionContext?.revert();
+  motionContext = gsap.matchMedia();
+  motionContext.add("(prefers-reduced-motion: no-preference)", () => {
+    const hero = page.querySelector<HTMLElement>(".cover-hero");
+    const heroField = hero?.querySelector<HTMLElement>(
+      '[data-scroll-depth="hero-field"]',
+    );
+    const heroStill = hero?.querySelector<HTMLElement>(
+      '[data-scroll-depth="hero-still"]',
+    );
+    const heroCopy = hero?.querySelector<HTMLElement>(
+      '[data-scroll-depth="hero-copy"]',
+    );
+
+    if (hero && heroField) {
+      gsap?.to(heroField, {
+        yPercent: 7,
+        ease: "none",
+        scrollTrigger: {
+          trigger: hero,
+          start: "top top",
+          end: "bottom top",
+          scrub: 0.6,
+        },
+      });
+    }
+
+    if (hero && heroStill) {
+      gsap?.to(heroStill, {
+        yPercent: 3,
+        ease: "none",
+        scrollTrigger: {
+          trigger: hero,
+          start: "top top",
+          end: "bottom top",
+          scrub: 0.6,
+        },
+      });
+    }
+
+    if (hero && heroCopy) {
+      gsap?.to(heroCopy, {
+        yPercent: -4,
+        ease: "none",
+        scrollTrigger: {
+          trigger: hero,
+          start: "top top",
+          end: "bottom top",
+          scrub: 0.6,
+        },
+      });
+    }
+
+    gsap?.utils
+      .toArray<HTMLElement>('[data-scroll-depth="program-preview"]')
+      .forEach((preview) => {
+        const chapter = preview.closest<HTMLElement>(".story-chapter");
+        if (!chapter) return;
+
+        gsap?.to(preview, {
+          yPercent: 1.5,
+          ease: "none",
+          scrollTrigger: {
+            trigger: chapter,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 0.6,
+          },
+        });
+      });
+
+    const serviceWall = page.querySelector<HTMLElement>(".service-wall");
+    const serviceTabs = serviceWall
+      ? Array.from(serviceWall.querySelectorAll<HTMLElement>(".service-tab"))
+      : [];
+
+    if (serviceWall && serviceTabs.length) {
+      gsap?.fromTo(
+        serviceTabs,
+        { y: 12, opacity: 0.9 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.42,
+          stagger: 0.045,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: serviceWall,
+            start: "top 82%",
+            once: true,
+          },
+        },
+      );
+    }
+
+    const serviceArt = serviceWall?.querySelector<HTMLElement>(
+      '[data-scroll-depth="service-art"]',
+    );
+    if (serviceWall && serviceArt) {
+      gsap?.to(serviceArt, {
+        yPercent: 2,
+        ease: "none",
+        scrollTrigger: {
+          trigger: serviceWall,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 0.6,
+        },
+      });
+    }
+
+    const contactBand = page.querySelector<HTMLElement>(
+      '[data-scroll-depth="contact-band"]',
+    );
+    if (contactBand) {
+      gsap?.to(contactBand, {
+        yPercent: -2,
+        ease: "none",
+        scrollTrigger: {
+          trigger: contactBand.closest(".contact-poster") ?? contactBand,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 0.6,
+        },
+      });
+    }
+
+    const footerBrand = page.querySelector<HTMLElement>(
+      '[data-scroll-depth="footer-brand"]',
+    );
+    if (footerBrand) {
+      gsap?.fromTo(
+        footerBrand,
+        { yPercent: 2, opacity: 0.94 },
+        {
+          yPercent: -1,
+          opacity: 1,
+          ease: "none",
+          scrollTrigger: {
+            trigger: footerBrand,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 0.6,
+          },
+        },
+      );
+    }
+  });
+
+  ScrollTrigger.refresh();
+}
+
+function updateMotionPreference() {
+  if (!motionMedia?.matches) {
+    smoothScroll.value = false;
+    cleanupLenisSync();
+    cleanupLenisSync = () => {};
+    motionContext?.revert();
+    motionContext = undefined;
+    return;
+  }
+
+  if (gsap && ScrollTrigger) {
+    smoothScroll.value = smoothScrollMedia?.matches ?? false;
+    syncLenisWithScrollTrigger();
+    rebuildScrollMotion();
+    return;
+  }
+
+  smoothScroll.value = false;
+  void loadScrollMotion();
+}
+
+function updateSmoothScrollPreference() {
+  smoothScroll.value = Boolean(
+    motionMedia?.matches && smoothScrollMedia?.matches && gsap,
+  );
+}
+
+function loadScrollMotion() {
+  if (loadMotionPromise) return loadMotionPromise;
+
+  loadMotionPromise = (async () => {
+    try {
+      const [gsapModule, scrollTriggerModule] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+      gsap = gsapModule.gsap;
+      ScrollTrigger = scrollTriggerModule.ScrollTrigger;
+      gsap.registerPlugin(ScrollTrigger);
+
+      if (!clientReady || !motionMedia?.matches) return;
+      updateSmoothScrollPreference();
+      syncLenisWithScrollTrigger();
+      rebuildScrollMotion();
+    } catch (error) {
+      console.error(
+        "[Codel] Scroll motion could not load; native scrolling remains enabled.",
+        error,
+      );
+    }
+  })();
+
+  return loadMotionPromise;
+}
+
+watch(lenis, syncLenisWithScrollTrigger, { immediate: true });
 
 function updateScrollState() {
-  scrolled.value = window.scrollY >= 250;
+  scrolled.value = window.scrollY >= 24;
 }
 
 function closeMenu(restoreFocus = false) {
@@ -122,7 +382,11 @@ watch(menuOpen, (open) => {
 
 watch(
   () => route.fullPath,
-  () => closeMenu(),
+  async () => {
+    closeMenu();
+    await nextTick();
+    rebuildScrollMotion();
+  },
 );
 
 // After a page change, keyboard and screen-reader users carry on from the new page's content.
@@ -135,20 +399,42 @@ watch(
 let wideMedia: MediaQueryList | undefined;
 
 onMounted(() => {
+  clientReady = true;
   wideMedia = window.matchMedia(wideQuery);
+  motionMedia = window.matchMedia("(prefers-reduced-motion: no-preference)");
+  smoothScrollMedia = window.matchMedia(
+    "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
+  );
   wideMedia.addEventListener("change", onWideChange);
+  motionMedia.addEventListener("change", updateMotionPreference);
+  smoothScrollMedia.addEventListener("change", updateSmoothScrollPreference);
+  updateMotionPreference();
   updateScrollState();
   window.addEventListener("scroll", updateScrollState, { passive: true });
 });
 
 onBeforeUnmount(() => {
+  clientReady = false;
   wideMedia?.removeEventListener("change", onWideChange);
+  motionMedia?.removeEventListener("change", updateMotionPreference);
+  smoothScrollMedia?.removeEventListener(
+    "change",
+    updateSmoothScrollPreference,
+  );
   window.removeEventListener("scroll", updateScrollState);
   stopListening();
+  cleanupLenisSync();
+  motionContext?.revert();
 });
 </script>
 
 <template>
+  <VueLenis
+    v-if="smoothScroll"
+    ref="lenisRoot"
+    root
+    :options="lenisOptions"
+  />
   <div class="layout">
     <a class="layout__skip" href="#main">تخطَّ إلى المحتوى</a>
 
@@ -187,6 +473,7 @@ onBeforeUnmount(() => {
             role="list"
             class="layout__menu"
             :class="{ 'layout__menu--open': menuOpen }"
+            :data-lenis-prevent="menuOpen ? '' : undefined"
           >
             <li
               v-for="link in headerLinks"
@@ -263,7 +550,7 @@ onBeforeUnmount(() => {
             <address class="layout__contact"><ContactList compact /></address>
           </div>
         </div>
-        <div class="layout__footer-brand">
+        <div class="layout__footer-brand" data-scroll-depth="footer-brand">
           <NuxtLink
             class="layout__footer-brand-link"
             to="/"
@@ -377,13 +664,21 @@ $footer-three: 64em;
     transition:
       background-color var(--duration-base) var(--ease-out),
       border-color var(--duration-base) var(--ease-out),
-      border-radius var(--duration-base) var(--ease-out);
+      border-radius var(--duration-base) var(--ease-out),
+      backdrop-filter var(--duration-base) var(--ease-out);
   }
 
   &__header--scrolled &__bar {
-    border-color: color-mix(in srgb, var(--border) 78%, var(--accent) 22%);
-
+    border-color: var(--border);
+    border-radius: var(--radius-md);
     background-color: var(--surface-raised);
+
+    @supports (backdrop-filter: blur(1px)) or
+      (-webkit-backdrop-filter: blur(1px)) {
+      background-color: color-mix(in srgb, var(--bg) 84%, transparent);
+      -webkit-backdrop-filter: blur(16px) saturate(130%);
+      backdrop-filter: blur(16px) saturate(130%);
+    }
   }
 
   &__brand {
@@ -417,6 +712,11 @@ $footer-three: 64em;
     margin: 0;
     padding: 0;
     list-style: none;
+    transition: gap var(--duration-base) var(--ease-out);
+  }
+
+  &__header--scrolled &__menu {
+    gap: 0 clamp(var(--space-2), 1.1vw, var(--space-4));
   }
 
   &__menu-item--cta {
