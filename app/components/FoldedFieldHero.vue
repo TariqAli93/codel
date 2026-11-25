@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import FoldedField from "./effects/FoldedField.vue";
-import { liquidLoomVertex, liquidLoomFragment } from "./effects/liquidLoomShader";
+import { infiniteWeaveVertex, infiniteWeaveFragment } from "./effects/infiniteWeaveShader";
+const paused = ref(false);
+const motionReady = ref(false);
 </script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
     <div class="material-still" aria-hidden="true" />
-    <FoldedField :vertex="liquidLoomVertex" :fragment="liquidLoomFragment" points :settle-after="2.4" scroll-motion :max-resolution="1440" />
+    <FoldedField :vertex="infiniteWeaveVertex" :fragment="infiniteWeaveFragment" points ambient :paused="paused" scroll-motion :max-resolution="1440" @motion-ready="motionReady = $event" />
     <div class="workline-shell cover-inner">
       <div class="cover-main">
         <div class="material-copy">
@@ -23,13 +25,13 @@ import { liquidLoomVertex, liquidLoomFragment } from "./effects/liquidLoomShader
       <div class="cover-bottom">
         <a class="link" href="#discover"
           >اكتشف ما يناسب شغلك <span aria-hidden="true">↓</span></a
-        ><span class="material-index" dir="ltr">CODEL / IRAQ</span>
+        ><div class="material-controls"><button v-if="motionReady || paused" type="button" class="motion-control" :aria-pressed="paused" @click="paused = !paused"><span aria-hidden="true">{{ paused ? "▶" : "Ⅱ" }}</span> {{ paused ? "تشغيل الحركة" : "إيقاف الحركة" }}</button><span class="material-index" dir="ltr">CODEL / IRAQ</span></div>
       </div>
     </div>
   </section>
 </template>
 <style scoped lang="scss">
-/* V9.8 — Liquid Loom, a procedural particle sculpture. */
+/* V9.8.1 — Infinite Weave, a periodic particle surface. */
 .cover-hero {
   position: relative;
   isolation: isolate;
@@ -51,7 +53,7 @@ import { liquidLoomVertex, liquidLoomFragment } from "./effects/liquidLoomShader
   z-index: -2;
 }
 .material-still {
-  background-image: url(/images/hero/liquid-loom-desktop.svg);
+  background-image: url(/images/hero/infinite-weave-desktop.svg);
   background-position: center;
   background-size: 100% 100%;
 }
@@ -68,7 +70,7 @@ import { liquidLoomVertex, liquidLoomFragment } from "./effects/liquidLoomShader
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(270deg, #101411 0%, #101411 36%, #10141100 56%);
+  background: linear-gradient(270deg, #101411 0%, #101411 34%, #101411e6 40%, #10141100 58%);
 }
 .cover-inner {
   display: grid;
@@ -171,7 +173,7 @@ import { liquidLoomVertex, liquidLoomFragment } from "./effects/liquidLoomShader
 }
 @media (max-width: 560px) {
   .material-still {
-    background-image: url(/images/hero/liquid-loom-mobile.svg);
+    background-image: url(/images/hero/infinite-weave-mobile.svg);
   }
   .cover-hero {
     min-height: calc(100svh - var(--header-height));
@@ -253,6 +255,12 @@ import { liquidLoomVertex, liquidLoomFragment } from "./effects/liquidLoomShader
   .cover-inner { padding-block-start: 35svh; }
   .material-copy { width: 100%; }
   .cover-hero::after { background: linear-gradient(0deg,#101411 0%,#101411 40%,#10141100 63%); }
-  .material-still { background-image:url(/images/hero/liquid-loom-mobile.svg); }
+  .material-still { background-image:url(/images/hero/infinite-weave-mobile.svg); }
 }
+.material-controls{display:flex;align-items:center;gap:clamp(12px,2vw,24px)}
+.motion-control{display:inline-flex;align-items:center;gap:9px;min-height:44px;color:var(--text-muted);font-size:14px;border:0;background:transparent;padding:0 4px;cursor:pointer;white-space:nowrap}
+.motion-control:hover,.motion-control:focus-visible{color:var(--text)}
+.motion-control:focus-visible{outline-offset:4px}
+@media(max-width:560px){.cover-bottom{flex-wrap:wrap;gap:0 12px}.motion-control{font-size:13px}.cover-inner{padding-block-start:clamp(155px,32svh,290px)}}
+@media(prefers-reduced-motion:reduce){.motion-control{display:none}}
 </style>
