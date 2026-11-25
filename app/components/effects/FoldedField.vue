@@ -119,8 +119,8 @@ function createRenderer(gl: WebGL2RenderingContext) {
     program,
     vao,
     uniforms,
-    maxWidth: Math.min(limits[0], maxRenderbuffer),
-    maxHeight: Math.min(limits[1], maxRenderbuffer),
+    maxWidth: Math.min(limits[0] ?? maxRenderbuffer, maxRenderbuffer),
+    maxHeight: Math.min(limits[1] ?? maxRenderbuffer, maxRenderbuffer),
     dispose() {
       gl.bindVertexArray(null);
       gl.useProgram(null);
