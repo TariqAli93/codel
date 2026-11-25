@@ -1,248 +1,565 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { foldedFieldFragment } from "./foldedFieldShader";
-const props = defineProps<{ fragment?: string; settleAfter?: number; scrollMotion?: boolean; maxResolution?: number; vertex?: string; points?: boolean; ambient?: boolean; paused?: boolean }>();
+
+const props = defineProps<{
+  fragment?: string;
+  settleAfter?: number;
+  scrollMotion?: boolean;
+  maxResolution?: number;
+  vertex?: string;
+  points?: boolean;
+  ambient?: boolean;
+  paused?: boolean;
+  // Optional quality controls; existing consumers need no changes.
+  maxDpr?: number;
+  particleCount?: number;
+  idleFps?: number;
+}>();
 const emit = defineEmits<{ "motion-ready": [ready: boolean] }>();
 const canvas = ref<HTMLCanvasElement | null>(null);
 const ready = ref(false);
-watch(ready, value => emit("motion-ready", value));
+watch(ready, (value) => emit("motion-ready", value));
+
+const DEFAULT_VERTEX = `#version 300 es
+void main() {
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`;
+const INTRO_SECONDS = 2.25;
+const MAX_DT = 0.1;
+const EPSILON = 0.0005;
+const clamp = (n: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, n));
+const finite = (n: number | undefined, fallback: number) =>
+  n !== undefined && Number.isFinite(n) ? n : fallback;
+const damp = (value: number, target: number, rate: number, dt: number) => {
+  const next = value + (target - value) * -Math.expm1(-rate * dt);
+  return Math.abs(next - target) < EPSILON / 4 ? target : next;
+};
+
+function compile(gl: WebGL2RenderingContext, type: number, source: string) {
+  const shader = gl.createShader(type);
+  if (!shader) return null;
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return shader;
+  console.warn(
+    "[MaterialCanvas] Shader compilation failed:",
+    gl.getShaderInfoLog(shader),
+  );
+  gl.deleteShader(shader);
+  return null;
+}
+
+function createRenderer(gl: WebGL2RenderingContext) {
+  const vertex = compile(gl, gl.VERTEX_SHADER, props.vertex ?? DEFAULT_VERTEX);
+  if (!vertex) return null;
+  const fragment = compile(
+    gl,
+    gl.FRAGMENT_SHADER,
+    props.fragment ?? foldedFieldFragment,
+  );
+  if (!fragment) {
+    gl.deleteShader(vertex);
+    return null;
+  }
+  const program = gl.createProgram();
+  if (!program) {
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
+    return null;
+  }
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  gl.detachShader(program, vertex);
+  gl.detachShader(program, fragment);
+  gl.deleteShader(vertex);
+  gl.deleteShader(fragment);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.warn(
+      "[MaterialCanvas] Program linking failed:",
+      gl.getProgramInfoLog(program),
+    );
+    gl.deleteProgram(program);
+    return null;
+  }
+  const vao = gl.createVertexArray();
+  if (!vao) {
+    gl.deleteProgram(program);
+    return null;
+  }
+  gl.useProgram(program);
+  gl.bindVertexArray(vao);
+  gl.disable(gl.DEPTH_TEST);
+  gl.disable(gl.CULL_FACE);
+  gl.disable(gl.SCISSOR_TEST);
+  if (props.points) {
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.clearColor(16 / 255, 20 / 255, 17 / 255, 1);
+  } else {
+    gl.disable(gl.BLEND);
+  }
+  const uniform = (name: string) => gl.getUniformLocation(program, name);
+  const uniforms = {
+    resolution: uniform("u_resolution"),
+    pointer: uniform("u_pointer"),
+    time: uniform("u_time"),
+    scroll: uniform("u_scroll"),
+    count: uniform("u_count"),
+    presence: uniform("u_presence"),
+    intro: uniform("u_intro"),
+    velocity: uniform("u_velocity"),
+  };
+  const limits = gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array;
+  const maxRenderbuffer = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number;
+  return {
+    program,
+    vao,
+    uniforms,
+    maxWidth: Math.min(limits[0], maxRenderbuffer),
+    maxHeight: Math.min(limits[1], maxRenderbuffer),
+    dispose() {
+      gl.bindVertexArray(null);
+      gl.useProgram(null);
+      gl.deleteVertexArray(vao);
+      gl.deleteProgram(program);
+    },
+  };
+}
+
 let dispose: (() => void) | undefined;
+
 onMounted(() => {
-  const el = canvas.value;
-  const host = el?.parentElement;
-  if (!el || !host) return;
+  const element = canvas.value;
+  const parent = element?.parentElement;
+  if (!element || !parent) return;
+  const el: HTMLCanvasElement = element;
+  const host: HTMLElement = parent;
+
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-  const fine = matchMedia("(hover:hover) and (pointer:fine)");
-  let cleanup: (() => void) | undefined;
-  function start() {
-    cleanup?.();
+  const fine = matchMedia("(hover: hover) and (pointer: fine)");
+  let gl: WebGL2RenderingContext | null = null;
+  let renderer: ReturnType<typeof createRenderer> = null;
+  let disposed = false;
+  let lost = false;
+  let visible = false;
+  let hasSize = false;
+  let portrait = false;
+  let count = 40000;
+  let frame: number | null = null;
+  let lastDraw: number | null = null;
+  let nextDraw: number | null = null;
+  let lastFps = 60;
+  let elapsed = 0;
+  let needsDraw = true;
+  let sizeDirty = true;
+  let scrollDirty = true;
+  let lastDpr = 0;
+  let px = 0,
+    py = 0,
+    tx = 0,
+    ty = 0;
+  let vx = 0,
+    vy = 0,
+    tvx = 0,
+    tvy = 0;
+  let presence = 0,
+    targetPresence = 0;
+  let scroll = 0,
+    targetScroll = 0;
+  let lastPointer: number | null = null;
+  let pendingPointer: { x: number; y: number; time: number } | null = null;
+
+  function stop() {
+    if (frame !== null) cancelAnimationFrame(frame);
+    frame = null;
+    lastDraw = nextDraw = null;
+  }
+
+  function canDraw() {
+    return (
+      !disposed &&
+      !lost &&
+      !!renderer &&
+      visible &&
+      !document.hidden &&
+      !reduced.matches
+    );
+  }
+
+  function schedule() {
+    if (
+      frame === null &&
+      canDraw() &&
+      (!props.paused || needsDraw || sizeDirty || !ready.value)
+    ) {
+      frame = requestAnimationFrame(draw);
+    }
+  }
+
+  function release() {
+    stop();
+    if (!lost && gl && !gl.isContextLost()) renderer?.dispose();
+    renderer = null;
     ready.value = false;
-    if (reduced.matches || !el || !host) return;
-    let gl: WebGL2RenderingContext | null;
+  }
+
+  function resetMotion() {
+    elapsed = 0;
+    px = py = tx = ty = vx = vy = tvx = tvy = 0;
+    presence = targetPresence = scroll = targetScroll = 0;
+    lastPointer = null;
+    pendingPointer = null;
+    needsDraw = sizeDirty = scrollDirty = true;
+  }
+
+  function start() {
+    release();
+    if (disposed || lost || reduced.matches) return;
     try {
-      gl = el.getContext("webgl2", {
+      gl ??= el.getContext("webgl2", {
         alpha: false,
         antialias: false,
+        depth: false,
+        stencil: false,
+        preserveDrawingBuffer: false,
         powerPreference: "low-power",
       });
-    } catch {
+    } catch (error) {
+      console.warn("[MaterialCanvas] WebGL2 initialization failed:", error);
       return;
     }
-    if (!gl) return;
-    const ctx = gl;
-    function compile(kind: number, source: string) {
-      const shader = ctx.createShader(kind);
-      if (!shader) return null;
-      ctx.shaderSource(shader, source);
-      ctx.compileShader(shader);
-      if (!ctx.getShaderParameter(shader, ctx.COMPILE_STATUS)) {
-        ctx.deleteShader(shader);
-        return null;
-      }
-      return shader;
-    }
-    const vertex = compile(
-      ctx.VERTEX_SHADER,
-      props.vertex ?? "#version 300 es\nvoid main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.-1.,0.,1.);}",
-    );
-    const fragment = compile(ctx.FRAGMENT_SHADER, props.fragment ?? foldedFieldFragment);
-    if (!vertex || !fragment) {
-      if (vertex) ctx.deleteShader(vertex);
-      if (fragment) ctx.deleteShader(fragment);
-      return;
-    }
-    const program = ctx.createProgram();
-    if (!program) {
-      ctx.deleteShader(vertex);
-      ctx.deleteShader(fragment);
-      return;
-    }
-    ctx.attachShader(program, vertex);
-    ctx.attachShader(program, fragment);
-    ctx.linkProgram(program);
-    ctx.deleteShader(vertex);
-    ctx.deleteShader(fragment);
-    if (!ctx.getProgramParameter(program, ctx.LINK_STATUS)) {
-      ctx.deleteProgram(program);
-      return;
-    }
-    const vao = ctx.createVertexArray();
-    if (!vao) { ctx.deleteProgram(program); return; }
-    ctx.bindVertexArray(vao);
-    ctx.useProgram(program);
-    if (props.points) { ctx.enable(ctx.BLEND); ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA); ctx.clearColor(16/255,20/255,17/255,1); }
-    const resolution = ctx.getUniformLocation(program, "u_resolution");
-    const pointer = ctx.getUniformLocation(program, "u_pointer");
-    const time = ctx.getUniformLocation(program, "u_time");
-    const scrollUniform = ctx.getUniformLocation(program, "u_scroll");
-    const countUniform = ctx.getUniformLocation(program, "u_count");
-    const presenceUniform = ctx.getUniformLocation(program, "u_presence");
-    const introUniform = ctx.getUniformLocation(program, "u_intro");
-    const velocityUniform = ctx.getUniformLocation(program, "u_velocity");
-    let count = 40000, presence = 0, targetPresence = 0;
-    let vx = 0, vy = 0, tvx = 0, tvy = 0, lastPointer = 0;
-    let portrait = false;
-    let scroll = 0, targetScroll = 0;
-    let frame = 0,
-      visible = false,
-      disposed = false,
-      lost = false,
-      px = 0,
-      py = 0,
-      tx = 0,
-      ty = 0,
-      last = 0,
-      elapsed = 0;
-    const pause = () => {
-      if (frame) cancelAnimationFrame(frame);
-      frame = 0;
-      last = 0;
-    };
-    function draw(now: number) {
-      frame = 0;
-      if (disposed || lost || !visible || document.hidden || reduced.matches || (props.paused && ready.value))
-        return;
-      const interactive = Math.abs(tx-px)+Math.abs(ty-py)+Math.abs(targetScroll-scroll)+Math.abs(targetPresence-presence)+Math.abs(vx)+Math.abs(vy) > .002;
-      const fps = props.ambient && elapsed > 2.25 && !interactive ? (portrait ? 24 : 30) : 60;
-      if(last && now-last < 1000/fps-1.5) { frame=requestAnimationFrame(draw); return; }
-      const dt = last ? Math.min((now - last) / 1000, 0.06) : 1 / 60;
-      elapsed += dt;
-      if (!props.ambient && props.settleAfter !== undefined) elapsed = Math.min(elapsed, props.settleAfter);
-      last = now;
-      const ease = 1-Math.exp(-dt*10);
-      px += (tx - px) * ease;
-      py += (ty - py) * ease;
-      scroll += (targetScroll-scroll)*ease;
-      presence += (targetPresence-presence)*ease;
-      const viscous = 1-Math.exp(-dt*6);
-      vx += (tvx-vx)*viscous; vy += (tvy-vy)*viscous;
-      tvx *= Math.exp(-dt*5); tvy *= Math.exp(-dt*5);
-      ctx.uniform2f(velocityUniform,vx,vy);
-      ctx.uniform1f(introUniform, Math.min(elapsed,2.25));
-      ctx.uniform2f(pointer, px, py);
-      ctx.uniform1f(time, elapsed);
-      ctx.uniform1f(scrollUniform, scroll);
-      if (props.points) {
-        ctx.uniform1f(countUniform, count);
-        ctx.uniform1f(presenceUniform, presence);
-        ctx.clear(ctx.COLOR_BUFFER_BIT);
-        ctx.drawArrays(ctx.POINTS, 0, count);
-      } else ctx.drawArrays(ctx.TRIANGLES, 0, 3);
-      if (!ready.value) ready.value = true;
-      const moving = Math.abs(tx-px)+Math.abs(ty-py)+Math.abs(targetScroll-scroll)+Math.abs(targetPresence-presence) > .0005;
-      if (!props.paused && (props.ambient || props.settleAfter === undefined || elapsed < props.settleAfter || moving)) frame = requestAnimationFrame(draw);
-      else last=0;
-    }
-    function resume() {
-      if (
-        !frame &&
-        !disposed &&
-        !lost &&
-        visible &&
-        !document.hidden &&
-        !reduced.matches && (!props.paused || !ready.value)
-      )
-        frame = requestAnimationFrame(draw);
-    }
-    function size() {
-      if (!el || !host || lost) return;
-      const r = host.getBoundingClientRect();
-      portrait = r.width/r.height < 1;
-      count = props.ambient ? (portrait ? 30000 : 52000) : (portrait ? 24000 : 40000);
-      const scale = Math.min(
-        devicePixelRatio || 1,
-        1.25,
-        (props.maxResolution ?? 1600) / Math.max(r.width, 1),
-        (props.maxResolution ?? 1600) / Math.max(r.height, 1),
-      );
-      el.width = Math.max(1, Math.round(r.width * scale));
-      el.height = Math.max(1, Math.round(r.height * scale));
-      ctx.viewport(0, 0, el.width, el.height);
-      ctx.uniform2f(resolution, el.width, el.height);
-    }
-    function move(e: PointerEvent) {
-      if (!host || !fine.matches || e.pointerType !== "mouse") return;
-      const r = host.getBoundingClientRect();
-      const nx = Math.max(-.5,Math.min(.5,(e.clientX-r.left)/Math.max(r.width,1)-.5));
-      const ny = Math.max(-.5,Math.min(.5,(e.clientY-r.top)/Math.max(r.height,1)-.5));
-      const dt = Math.max(.016,(e.timeStamp-lastPointer)/1000);
-      if(lastPointer && dt < .15){tvx=Math.max(-.8,Math.min(.8,(nx-tx)/dt*.22));tvy=Math.max(-.8,Math.min(.8,(ny-ty)/dt*.22));}
-      lastPointer=e.timeStamp;tx=nx;ty=ny;
-      targetPresence = 1;
-      resume();
-    }
-    function reset() {
-      targetPresence = 0;
-      tvx=tvy=0;lastPointer=0;
-      if (!props.points) tx = ty = 0;
-      resume();
-    }
-    function onScroll() {
-      if (!host || !props.scrollMotion || !visible) return;
-      const r=host.getBoundingClientRect();
-      targetScroll=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height)));
-      resume();
-    }
-    function visibility() {
-      document.hidden ? pause() : resume();
-    }
-    function contextLost(e: Event) {
-      e.preventDefault();
-      lost = true;
-      pause();
-      ready.value = false;
-    }
-    function contextRestored() {
-      start();
-    }
-    const ro = new ResizeObserver(() => {
-      size();
-      if(props.paused) ready.value=false;
-      onScroll();
-      resume();
-    });
-    const io = new IntersectionObserver((entries) => {
-      visible = entries.some((e) => e.isIntersecting);
-      if (visible) onScroll();
-      visible ? resume() : pause();
-    });
-    ro.observe(host);
-    io.observe(host);
-    host.addEventListener("pointermove", move);
-    host.addEventListener("pointerleave", reset);
-    host.addEventListener("pointercancel", reset);
-    document.addEventListener("visibilitychange", visibility);
-    if (props.scrollMotion) window.addEventListener("scroll", onScroll, { passive: true });
-    el.addEventListener("webglcontextlost", contextLost);
-    el.addEventListener("webglcontextrestored", contextRestored);
-    const stopPauseWatch=watch(()=>props.paused, value=>{if(value){pause();}else{resume();}});
-    size();
-    onScroll();
-    cleanup = () => {
-      disposed = true;
-      stopPauseWatch();
-      pause();
-      ro.disconnect();
-      io.disconnect();
-      host.removeEventListener("pointermove", move);
-      host.removeEventListener("pointerleave", reset);
-      host.removeEventListener("pointercancel", reset);
-      document.removeEventListener("visibilitychange", visibility);
-      window.removeEventListener("scroll", onScroll);
-      el.removeEventListener("webglcontextlost", contextLost);
-      el.removeEventListener("webglcontextrestored", contextRestored);
-      ctx.deleteVertexArray(vao);
-      ctx.deleteProgram(program);
-    };
+    if (!gl || gl.isContextLost()) return;
+    renderer = createRenderer(gl);
+    if (!renderer) return;
+    resetMotion();
+    schedule();
   }
-  reduced.addEventListener("change", start);
+
+  function resize(rect: DOMRect, dpr: number) {
+    if (!gl || !renderer) return;
+    hasSize = rect.width > 0 && rect.height > 0;
+    if (!hasSize) return;
+    portrait = rect.width < rect.height;
+    const maxDimension = Math.max(
+      1,
+      Math.floor(finite(props.maxResolution, 1600)),
+    );
+    const scale = Math.min(
+      dpr,
+      clamp(finite(props.maxDpr, 1.25), 0.25, 3),
+      maxDimension / Math.max(rect.width, rect.height),
+      renderer.maxWidth / rect.width,
+      renderer.maxHeight / rect.height,
+    );
+    const width = Math.max(1, Math.floor(rect.width * scale));
+    const height = Math.max(1, Math.floor(rect.height * scale));
+    if (el.width !== width) el.width = width;
+    if (el.height !== height) el.height = height;
+    gl.viewport(0, 0, width, height);
+    gl.uniform2f(renderer.uniforms.resolution, width, height);
+    if (props.points) {
+      const cap = props.ambient
+        ? portrait
+          ? 30000
+          : 52000
+        : portrait
+          ? 24000
+          : 40000;
+      // CSS-pixel area, not DPR, keeps density consistent across high-DPI displays.
+      const referenceArea = portrait ? 390 * 844 : 1280 * 720;
+      const density = clamp(
+        Math.sqrt((rect.width * rect.height) / referenceArea),
+        0.35,
+        1,
+      );
+      count = Math.round(
+        clamp(finite(props.particleCount, cap * density), 1, 200000),
+      );
+    }
+    needsDraw = true;
+  }
+
+  function samplePointer(rect: DOMRect) {
+    const p = pendingPointer;
+    pendingPointer = null;
+    if (!p || !fine.matches) return;
+    const nx = clamp(
+      (p.x - rect.left) / Math.max(rect.width, 1) - 0.5,
+      -0.5,
+      0.5,
+    );
+    const ny = clamp(
+      (p.y - rect.top) / Math.max(rect.height, 1) - 0.5,
+      -0.5,
+      0.5,
+    );
+    const dt = lastPointer === null ? Infinity : (p.time - lastPointer) / 1000;
+    if (dt > 0 && dt < 0.15) {
+      tvx = clamp(((nx - tx) / Math.max(0.016, dt)) * 0.22, -0.8, 0.8);
+      tvy = clamp(((ny - ty) / Math.max(0.016, dt)) * 0.22, -0.8, 0.8);
+    } else {
+      tvx = tvy = 0;
+    }
+    lastPointer = p.time;
+    tx = nx;
+    ty = ny;
+    targetPresence = 1;
+  }
+
+  function motionError() {
+    return (
+      Math.abs(tx - px) +
+      Math.abs(ty - py) +
+      Math.abs(targetScroll - scroll) +
+      Math.abs(targetPresence - presence) +
+      Math.abs(vx) +
+      Math.abs(vy) +
+      Math.abs(tvx) +
+      Math.abs(tvy)
+    );
+  }
+
+  function draw(now: number) {
+    frame = null;
+    if (!canDraw() || !gl || !renderer) return;
+    const dpr = window.devicePixelRatio || 1;
+    const resizing = sizeDirty || dpr !== lastDpr;
+    const dirty = needsDraw || resizing;
+    const idle =
+      props.ambient &&
+      elapsed > INTRO_SECONDS &&
+      !pendingPointer &&
+      !scrollDirty &&
+      motionError() < 0.002;
+    const fps = idle
+      ? clamp(finite(props.idleFps, portrait ? 24 : 30), 15, 60)
+      : 60;
+    const interval = 1000 / fps;
+    if (fps !== lastFps)
+      nextDraw = lastDraw === null ? null : lastDraw + interval;
+    lastFps = fps;
+    if (!props.paused && !dirty && nextDraw !== null && now < nextDraw - 0.5) {
+      schedule();
+      return;
+    }
+    // Preserve cadence across refresh rates; reset after stalls or forced redraws.
+    nextDraw =
+      nextDraw === null || dirty || now - nextDraw > interval
+        ? now + interval
+        : nextDraw + interval;
+
+    // At most one layout read per rendered frame, even with multiple input events.
+    if (resizing || scrollDirty || pendingPointer) {
+      const rect = host.getBoundingClientRect();
+      if (resizing) {
+        sizeDirty = false;
+        lastDpr = dpr;
+        resize(rect, dpr);
+      }
+      if (scrollDirty) {
+        targetScroll = props.scrollMotion
+          ? clamp(-rect.top / Math.max(1, rect.height), 0, 1)
+          : 0;
+        scrollDirty = false;
+      }
+      if (!props.paused) samplePointer(rect);
+    }
+    if (!hasSize) {
+      lastDraw = nextDraw = null;
+      return;
+    }
+    const dt = props.paused
+      ? 0
+      : lastDraw === null
+        ? 1 / 60
+        : clamp((now - lastDraw) / 1000, 0, MAX_DT);
+    lastDraw = now;
+    const settle =
+      props.settleAfter === undefined
+        ? Infinity
+        : Math.max(0, finite(props.settleAfter, Infinity));
+    if (!props.paused) {
+      elapsed = props.ambient ? elapsed + dt : Math.min(elapsed + dt, settle);
+      px = damp(px, tx, 10, dt);
+      py = damp(py, ty, 10, dt);
+      scroll = damp(scroll, targetScroll, 10, dt);
+      presence = damp(presence, targetPresence, 10, dt);
+      vx = damp(vx, tvx, 6, dt);
+      vy = damp(vy, tvy, 6, dt);
+      tvx = damp(tvx, 0, 5, dt);
+      tvy = damp(tvy, 0, 5, dt);
+    }
+    const u = renderer.uniforms;
+    gl.uniform2f(u.pointer, px, py);
+    gl.uniform2f(u.velocity, vx, vy);
+    gl.uniform1f(u.time, elapsed);
+    gl.uniform1f(u.intro, Math.min(elapsed, INTRO_SECONDS));
+    gl.uniform1f(u.scroll, scroll);
+    gl.uniform1f(u.presence, presence);
+    if (props.points) {
+      gl.uniform1f(u.count, count);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.POINTS, 0, count);
+    } else {
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    needsDraw = false;
+    if (!ready.value) ready.value = true;
+    if (
+      !props.paused &&
+      (props.ambient || elapsed < settle || motionError() > EPSILON)
+    ) {
+      schedule();
+    } else {
+      lastDraw = nextDraw = null;
+    }
+  }
+
+  function pointerMove(e: PointerEvent) {
+    if (!fine.matches || e.pointerType !== "mouse" || props.paused) return;
+    pendingPointer = { x: e.clientX, y: e.clientY, time: e.timeStamp };
+    schedule();
+  }
+  function pointerReset() {
+    pendingPointer = null;
+    targetPresence = tvx = tvy = 0;
+    lastPointer = null;
+    // Point shaders retain the last position while presence fades out.
+    if (!props.points) tx = ty = 0;
+    schedule();
+  }
+  function onScroll() {
+    if (!props.scrollMotion) return;
+    scrollDirty = true;
+    schedule();
+  }
+  function onResize() {
+    sizeDirty = scrollDirty = needsDraw = true;
+    schedule();
+  }
+  function onVisibility() {
+    if (document.hidden) stop();
+    else {
+      scrollDirty = true;
+      schedule();
+    }
+  }
+  function contextLost(e: Event) {
+    e.preventDefault();
+    lost = true;
+    release();
+  }
+  function contextRestored() {
+    lost = false;
+    start();
+  }
+  function onFineChange() {
+    if (!fine.matches) pointerReset();
+  }
+  function onMotionChange() {
+    if (reduced.matches) release();
+    else start();
+  }
+
+  // Observe independently of the GPU resources, including after context loss.
+  const ro = new ResizeObserver(onResize);
+  const io = new IntersectionObserver((entries) => {
+    visible = entries.some((entry) => entry.isIntersecting);
+    if (!visible) stop();
+    else {
+      sizeDirty = scrollDirty = needsDraw = true;
+      schedule();
+    }
+  });
+  ro.observe(host);
+  io.observe(host);
+  host.addEventListener("pointermove", pointerMove, { passive: true });
+  host.addEventListener("pointerleave", pointerReset);
+  host.addEventListener("pointercancel", pointerReset);
+  window.addEventListener("resize", onResize, { passive: true });
+  window.addEventListener("scroll", onScroll, { passive: true });
+  document.addEventListener("visibilitychange", onVisibility);
+  el.addEventListener("webglcontextlost", contextLost);
+  el.addEventListener("webglcontextrestored", contextRestored);
+  reduced.addEventListener("change", onMotionChange);
+  fine.addEventListener("change", onFineChange);
+
+  const stopShaderWatch = watch(
+    () => [props.vertex, props.fragment, props.points] as const,
+    start,
+  );
+  const stopQualityWatch = watch(
+    () =>
+      [
+        props.maxResolution,
+        props.maxDpr,
+        props.particleCount,
+        props.ambient,
+      ] as const,
+    onResize,
+  );
+  const stopTimingWatch = watch(
+    () => [props.settleAfter, props.idleFps] as const,
+    () => {
+      needsDraw = true;
+      schedule();
+    },
+  );
+  const stopScrollWatch = watch(
+    () => props.scrollMotion,
+    () => {
+      scrollDirty = true;
+      needsDraw = true;
+      schedule();
+    },
+  );
+  const stopPauseWatch = watch(
+    () => props.paused,
+    (paused) => {
+      stop();
+      if (paused) {
+        pendingPointer = null;
+        lastPointer = null;
+      } else {
+        scrollDirty = true;
+      }
+      // Draw once if the paused canvas is new or has been invalidated.
+      schedule();
+    },
+  );
+
   start();
   dispose = () => {
-    reduced.removeEventListener("change", start);
-    cleanup?.();
+    disposed = true;
+    stopShaderWatch();
+    stopQualityWatch();
+    stopTimingWatch();
+    stopScrollWatch();
+    stopPauseWatch();
+    ro.disconnect();
+    io.disconnect();
+    host.removeEventListener("pointermove", pointerMove);
+    host.removeEventListener("pointerleave", pointerReset);
+    host.removeEventListener("pointercancel", pointerReset);
+    window.removeEventListener("resize", onResize);
+    window.removeEventListener("scroll", onScroll);
+    document.removeEventListener("visibilitychange", onVisibility);
+    el.removeEventListener("webglcontextlost", contextLost);
+    el.removeEventListener("webglcontextrestored", contextRestored);
+    reduced.removeEventListener("change", onMotionChange);
+    fine.removeEventListener("change", onFineChange);
+    release();
+    gl = null;
   };
 });
+
 onBeforeUnmount(() => dispose?.());
 </script>
+
 <template>
   <canvas
     ref="canvas"

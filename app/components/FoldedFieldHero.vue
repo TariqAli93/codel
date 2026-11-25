@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import FoldedField from "./effects/FoldedField.vue";
-import { infiniteWeaveVertex, infiniteWeaveFragment } from "./effects/infiniteWeaveShader";
-const paused = ref(false);
-const motionReady = ref(false);
+import {
+  infiniteWeaveVertex,
+  infiniteWeaveFragment,
+} from "./effects/infiniteWeaveShader";
 </script>
 <template>
   <section class="cover-hero" aria-labelledby="hero-title">
     <div class="material-still" aria-hidden="true" />
-    <FoldedField :vertex="infiniteWeaveVertex" :fragment="infiniteWeaveFragment" points ambient :paused="paused" scroll-motion :max-resolution="1440" @motion-ready="motionReady = $event" />
+    <FoldedField
+      :fragment="infiniteWeaveFragment"
+      :vertex="infiniteWeaveVertex"
+      :max-resolution="1440"
+      :max-dpr="5"
+      :particle-count="52000 / 2"
+      :idle-fps="60"
+      ambient
+      points
+    />
     <div class="workline-shell cover-inner">
       <div class="cover-main">
         <div class="material-copy">
@@ -21,11 +31,6 @@ const motionReady = ref(false);
             /><ActionLink look="text" to="/contact" label="ناقش مشروعك ↖" />
           </div>
         </div>
-      </div>
-      <div class="cover-bottom">
-        <a class="link" href="#discover"
-          >اكتشف ما يناسب شغلك <span aria-hidden="true">↓</span></a
-        ><div class="material-controls"><button v-if="motionReady || paused" type="button" class="motion-control" :aria-pressed="paused" @click="paused = !paused"><span aria-hidden="true">{{ paused ? "▶" : "Ⅱ" }}</span> {{ paused ? "تشغيل الحركة" : "إيقاف الحركة" }}</button><span class="material-index" dir="ltr">CODEL / IRAQ</span></div>
       </div>
     </div>
   </section>
@@ -59,7 +64,7 @@ const motionReady = ref(false);
 }
 :deep(.material-canvas) {
   opacity: 0;
-  transition: opacity .15s ease;
+  transition: opacity 0.15s ease;
 }
 :deep(.material-canvas.ready) {
   opacity: 1;
@@ -70,7 +75,13 @@ const motionReady = ref(false);
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(270deg, #101411 0%, #101411 34%, #101411e6 40%, #10141100 58%);
+  background: linear-gradient(
+    270deg,
+    #101411 0%,
+    #101411 34%,
+    #101411e6 40%,
+    #10141100 58%
+  );
 }
 .cover-inner {
   display: grid;
@@ -240,27 +251,95 @@ const motionReady = ref(false);
 }
 /* A single entrance sequence. Text never follows the pointer or scrolls out independently. */
 @media (prefers-reduced-motion: no-preference) {
-  .material-copy h1 span { animation: loom-type-in .75s cubic-bezier(.2,.75,.2,1) both; }
-  .material-copy h1 span:nth-child(2) { animation-delay: .12s; }
-  .material-copy p { animation: loom-copy-in .6s .35s cubic-bezier(.2,.75,.2,1) both; }
-  .cover-actions { animation: loom-copy-in .6s .25s cubic-bezier(.2,.75,.2,1) both; }
+  .material-copy h1 span {
+    animation: loom-type-in 0.75s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+  }
+  .material-copy h1 span:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+  .material-copy p {
+    animation: loom-copy-in 0.6s 0.35s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+  }
+  .cover-actions {
+    animation: loom-copy-in 0.6s 0.25s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+  }
   .cover-hero:focus-within .material-copy h1 span,
   .cover-hero:focus-within .material-copy p,
-  .cover-hero:focus-within .cover-actions { animation: none; }
-  @keyframes loom-type-in { from { transform: translateY(12px); } to { transform: none; } }
-  @keyframes loom-copy-in { from { transform: translateY(9px); } to { transform: none; } }
+  .cover-hero:focus-within .cover-actions {
+    animation: none;
+  }
+  @keyframes loom-type-in {
+    from {
+      transform: translateY(12px);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes loom-copy-in {
+    from {
+      transform: translateY(9px);
+    }
+    to {
+      transform: none;
+    }
+  }
 }
 /* Match the portrait sculpture placement for tall tablet viewports. */
 @media (min-width: 561px) and (max-aspect-ratio: 4/5) {
-  .cover-inner { padding-block-start: 35svh; }
-  .material-copy { width: 100%; }
-  .cover-hero::after { background: linear-gradient(0deg,#101411 0%,#101411 40%,#10141100 63%); }
-  .material-still { background-image:url(/images/hero/infinite-weave-mobile.svg); }
+  .cover-inner {
+    padding-block-start: 35svh;
+  }
+  .material-copy {
+    width: 100%;
+  }
+  .cover-hero::after {
+    background: linear-gradient(0deg, #101411 0%, #101411 40%, #10141100 63%);
+  }
+  .material-still {
+    background-image: url(/images/hero/infinite-weave-mobile.svg);
+  }
 }
-.material-controls{display:flex;align-items:center;gap:clamp(12px,2vw,24px)}
-.motion-control{display:inline-flex;align-items:center;gap:9px;min-height:44px;color:var(--text-muted);font-size:14px;border:0;background:transparent;padding:0 4px;cursor:pointer;white-space:nowrap}
-.motion-control:hover,.motion-control:focus-visible{color:var(--text)}
-.motion-control:focus-visible{outline-offset:4px}
-@media(max-width:560px){.cover-bottom{flex-wrap:wrap;gap:0 12px}.motion-control{font-size:13px}.cover-inner{padding-block-start:clamp(155px,32svh,290px)}}
-@media(prefers-reduced-motion:reduce){.motion-control{display:none}}
+.material-controls {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+}
+.motion-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  color: var(--text-muted);
+  font-size: 14px;
+  border: 0;
+  background: transparent;
+  padding: 0 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.motion-control:hover,
+.motion-control:focus-visible {
+  color: var(--text);
+}
+.motion-control:focus-visible {
+  outline-offset: 4px;
+}
+@media (max-width: 560px) {
+  .cover-bottom {
+    flex-wrap: wrap;
+    gap: 0 12px;
+  }
+  .motion-control {
+    font-size: 13px;
+  }
+  .cover-inner {
+    padding-block-start: clamp(155px, 32svh, 290px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-control {
+    display: none;
+  }
+}
 </style>
