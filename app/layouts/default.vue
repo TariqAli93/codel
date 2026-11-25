@@ -61,7 +61,7 @@ const fullWidth = computed(() => route.meta.fullWidth === true);
 // The path without a trailing slash: static hosts can redirect to one.
 const path = computed(() => route.path.replace(/\/+$/, "") || "/");
 
-// /solutions/<slug> keeps "حلولنا" marked: the link's section is current, not only its exact page.
+// Exact pages use aria-current="page"; solution details keep their section link current.
 const inSection = (to: string) => to !== "/" && path.value.startsWith(`${to}/`);
 
 // V8.4 uses native scrolling; no wheel interception.
@@ -71,6 +71,11 @@ const wideQuery = "(min-width: 60em)";
 const menuOpen = ref(false);
 const header = ref<HTMLElement | null>(null);
 const menuButton = ref<HTMLButtonElement | null>(null);
+const scrolled = ref(false);
+
+function updateScrollState() {
+  scrolled.value = window.scrollY >= 250;
+}
 
 function closeMenu(restoreFocus = false) {
   if (!menuOpen.value) return;
@@ -90,8 +95,9 @@ function onPointerDown(event: PointerEvent) {
 
 function onFocusOut(event: FocusEvent) {
   if (
-    event.relatedTarget instanceof Node &&
-    !header.value?.contains(event.relatedTarget)
+    event.relatedTarget === null ||
+    (event.relatedTarget instanceof Node &&
+      !header.value?.contains(event.relatedTarget))
   )
     closeMenu();
 }
@@ -131,10 +137,13 @@ let wideMedia: MediaQueryList | undefined;
 onMounted(() => {
   wideMedia = window.matchMedia(wideQuery);
   wideMedia.addEventListener("change", onWideChange);
+  updateScrollState();
+  window.addEventListener("scroll", updateScrollState, { passive: true });
 });
 
 onBeforeUnmount(() => {
   wideMedia?.removeEventListener("change", onWideChange);
+  window.removeEventListener("scroll", updateScrollState);
   stopListening();
 });
 </script>
@@ -143,7 +152,12 @@ onBeforeUnmount(() => {
   <div class="layout">
     <a class="layout__skip" href="#main">تخطَّ إلى المحتوى</a>
 
-    <header ref="header" class="layout__header" @focusout="onFocusOut">
+    <header
+      ref="header"
+      class="layout__header"
+      :class="{ 'layout__header--scrolled': scrolled }"
+      @focusout="onFocusOut"
+    >
       <div class="layout__bar">
         <NuxtLink class="layout__brand" to="/" aria-label="Codel - كودل">
           <img
@@ -160,14 +174,12 @@ onBeforeUnmount(() => {
             ref="menuButton"
             class="layout__menu-button"
             type="button"
+            aria-label="القائمة"
             aria-controls="site-menu"
             :aria-expanded="menuOpen"
             @click="menuOpen = !menuOpen"
           >
-            <span class="layout__menu-button-inner">
-              <span class="layout__menu-icon" aria-hidden="true" />
-              القائمة
-            </span>
+            <span class="layout__menu-icon" aria-hidden="true" />
           </button>
 
           <ul
@@ -189,6 +201,7 @@ onBeforeUnmount(() => {
                 size="md"
                 :to="link.to"
                 :label="link.label"
+                :aria-current="path === link.to ? 'page' : undefined"
                 @click="closeMenu(link.to === path)"
               />
               <NuxtLink
@@ -196,7 +209,13 @@ onBeforeUnmount(() => {
                 class="layout__link"
                 :class="{ 'layout__link--section': inSection(link.to) }"
                 :to="link.to"
-                v-bind="inSection(link.to) ? { 'aria-current': 'true' } : {}"
+                :aria-current="
+                  path === link.to
+                    ? 'page'
+                    : inSection(link.to)
+                      ? 'true'
+                      : undefined
+                "
                 @click="closeMenu(link.to === path)"
               >
                 <span class="layout__link-label">{{ link.label }}</span>
@@ -269,51 +288,9 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 // Below this width the links fold behind the menu button. Same value as wideQuery in the script.
 $nav-wide: 60em;
-// The bar's inner padding: the page gutter, less how far the bar sits inside the content column's
-// edge (0 on wide windows, up to space-3 as the header's inset takes over), so logo and links stay on
-// the page content's gutter. Percentages resolve against the header's content box (the window width
-// minus 2 x space-3). The space-4 minimum keeps logo and links off the glass edge on phones.
-$bar-pad: max(
-  var(--space-4),
-  calc(
-    var(--page-gutter) - clamp(
-        0px,
-        (var(--container-max) - 100%) / 2,
-        var(--space-3)
-      )
-  )
-);
-// The menu panel's padding. It exists only below $nav-wide, where the bar is always inset the full
-// space-3, and its percentages would be the bar's width, not the header's.
-$panel-pad: max(var(--space-4), calc(var(--page-gutter) - var(--space-3)));
-// The brand lean, and the counter-slant that turns a label back upright.
-$lean: skewX(calc(var(--slant-angle) * -1));
-$upright: skewX(var(--slant-angle));
 // Footer: stacked below the first, two columns between, three from the second.
 $footer-two: 48em;
 $footer-three: 64em;
-// Glassmorphism: frost that also dims what passes under it, a dark tint and a light film on top.
-// Together they keep white text readable when the glass is over the lime band or a sand panel.
-$glass-filter: blur(20px) saturate(1.6) brightness(0.65);
-
-@mixin glass {
-  border: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
-  border-radius: var(--radius-lg);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--text) 10%, transparent),
-      color-mix(in srgb, var(--text) 4%, transparent)
-    ),
-    color-mix(in srgb, var(--bg) 50%, transparent);
-  // box-shadow:
-  //   inset 0 1px 0 color-mix(in srgb, var(--text) 25%, transparent),
-  //   var(--shadow-md);
-  // Safari before 18 reads only the prefixed property; the default targets would strip it.
-  /* autoprefixer: ignore next */
-  -webkit-backdrop-filter: $glass-filter;
-  backdrop-filter: $glass-filter;
-}
 
 .layout {
   display: flex;
@@ -358,8 +335,6 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     position: relative;
     z-index: 20;
     background-color: transparent;
-    padding-block-start: var(--space-3);
-    padding-inline: var(--space-3);
 
     .js & {
       position: sticky;
@@ -379,53 +354,56 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       }
     }
 
-    // The bottom rule.
-    &::after {
-      content: "";
-      position: absolute;
-      inset-inline: 0;
-      inset-block-end: 0;
-      block-size: 1px;
-      background-color: transparent;
-      pointer-events: none;
-    }
   }
 
-  // The content column's width, kept space-3 clear of the window's sides by the header's padding;
-  // $bar-pad keeps logo and links on the page content's gutter. The glass is on a pseudo-element: a
-  // backdrop-filter on the bar itself would leave the menu panel inside it with nothing to blur.
+  // Full-width editorial rail: brand at inline-start, navigation and contact action opposite.
   &__bar {
     position: relative;
-    z-index: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0 var(--space-6);
+    gap: var(--space-2) clamp(var(--space-5), 3vw, var(--space-7));
+    inline-size: min(
+      calc(100% - var(--page-gutter) - var(--page-gutter)),
+      var(--container-max)
+    );
     max-inline-size: var(--container-max);
     min-block-size: var(--header-height);
     margin-inline: auto;
-    padding-inline: $bar-pad;
+    padding-inline: clamp(var(--space-3), 1.5vw, var(--space-5));
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    transition:
+      background-color var(--duration-base) var(--ease-out),
+      border-color var(--duration-base) var(--ease-out),
+      border-radius var(--duration-base) var(--ease-out);
+  }
 
-    &::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      @include glass;
-    }
+  &__header--scrolled &__bar {
+    border-color: color-mix(in srgb, var(--border) 78%, var(--accent) 22%);
+    border-radius: var(--radius-lg);
+    background-color: var(--surface-raised);
   }
 
   &__brand {
     display: flex;
     align-items: center;
     min-block-size: var(--touch-target);
+    flex: 0 0 auto;
   }
 
   &__logo {
-    block-size: 1.375rem;
+    block-size: clamp(24px, 1.75vw, 32px);
     inline-size: auto;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    margin-inline-start: auto;
+    min-inline-size: 0;
   }
 
   &__menu-button {
@@ -436,10 +414,16 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0 var(--space-6);
+    gap: 0 clamp(var(--space-3), 1.5vw, var(--space-5));
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  &__menu-item--cta {
+    margin-inline-start: var(--space-2);
+    padding-inline-start: clamp(var(--space-3), 1.5vw, var(--space-5));
+    border-inline-start: 1px solid var(--border);
   }
 
   &__link {
@@ -451,14 +435,13 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
     font-weight: 500;
     line-height: 1.4;
     color: var(--text);
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    transition: text-decoration-color var(--duration-fast) var(--ease-out);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out);
 
     // Hover styles only where a pointer can hover: on touch, :hover sticks after a tap.
     @media (hover: hover) {
       &:hover {
-        text-decoration-color: var(--accent-text);
+        color: var(--accent-text);
       }
     }
 
@@ -467,51 +450,66 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       border-radius: var(--radius-sm);
     }
 
-    // Current page or section: heavier, with the lime bar under the words so it is never colour
-    // alone. On the label, so the bar fits the words in the header and in the panel.
+    // Current page or section: a persistent marker and weight change, not colour alone.
     &[aria-current="page"],
     &--section {
       font-weight: 600;
-      text-decoration-line: none;
 
       .layout__link-label::after {
-        content: "";
-        position: absolute;
-        inset-inline: 0;
-        inset-block-end: calc(var(--space-2) * -1);
-        block-size: 3px;
-        border-radius: var(--radius-pill);
-        background-color: var(--accent-text);
-        transform: $lean;
+        inline-size: 1.125rem;
+        transform: scaleX(1);
       }
+    }
+
+    @media (hover: hover) {
+      &:hover .layout__link-label::after {
+        transform: scaleX(1);
+      }
+    }
+
+    &:focus-visible .layout__link-label::after {
+      transform: scaleX(1);
     }
   }
 
   &__link-label {
     position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block-end: calc(var(--space-2) * -1);
+      inline-size: 100%;
+      block-size: 2px;
+      background-color: var(--accent-text);
+      transform: scaleX(0);
+      transform-origin: 100% 50%;
+      transition: transform var(--duration-base) var(--ease-out);
+    }
   }
 
-  // Small screens, with JavaScript: the links fold into a panel under the header.
-  // Without JavaScript (no .js class) they stay a wrapping list and the button stays hidden.
+  // Small screens, with JavaScript: a square toggle opens a divided navigation sheet.
+  // Without JavaScript the links remain visible as a wrapping list.
   @media (width < $nav-wide) {
-    // Logo and menu button stay on one row down to 320px.
     .js &__bar {
+      flex-wrap: nowrap;
       column-gap: var(--space-4);
+      min-block-size: 72px;
     }
 
-    // Styled as the outline button; icon and label inside are turned back upright.
     .js &__menu-button {
-      display: inline-flex;
-      align-items: center;
-      min-block-size: var(--control-md);
-      padding-inline: var(--space-4);
-      border: 1.5px solid color-mix(in srgb, var(--text) 45%, transparent);
-      border-radius: var(--radius-pill);
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+      inline-size: var(--control-md);
+      block-size: var(--control-md);
+      padding: 0;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
       background-color: transparent;
-      font-size: var(--text-ui);
-      font-weight: 600;
+      color: var(--text);
       cursor: pointer;
-      transform: $lean;
       transition: background-color var(--duration-fast) var(--ease-out);
 
       @media (hover: hover) {
@@ -525,16 +523,6 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       }
     }
 
-    &__menu-button-inner {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-3);
-      transform: $upright;
-    }
-
-    // Two bars, full and 65%, that cross into an X while the menu is open (transform only).
-    // Both bars span the icon; the short one is scaled down and shifted 17.5% to the right,
-    // the inline start in RTL, so the two share that edge.
     &__menu-icon {
       position: relative;
       inline-size: 1.125rem;
@@ -546,7 +534,7 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
         position: absolute;
         inset-inline: 0;
         block-size: var(--stroke);
-        border-radius: var(--radius-pill);
+        border-radius: var(--radius-sm);
         background-color: currentColor;
         transition: transform var(--duration-base) var(--ease-out);
       }
@@ -558,17 +546,17 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
 
       &::after {
         inset-block-end: 0;
-        transform: translate(17.5%, 0) rotate(0deg) scaleX(0.65);
+        transform: scaleX(0.65);
       }
     }
 
     [aria-expanded="true"] &__menu-icon {
       &::before {
-        transform: translate(0, 5px) rotate(45deg);
+        transform: translateY(5px) rotate(45deg);
       }
 
       &::after {
-        transform: translate(0, -5px) rotate(-45deg) scaleX(1);
+        transform: translateY(-5px) rotate(-45deg) scaleX(1);
       }
     }
 
@@ -576,18 +564,20 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       position: absolute;
       inset-block-start: 100%;
       inset-inline: 0;
+      box-sizing: border-box;
       flex-direction: column;
       flex-wrap: nowrap;
       align-items: stretch;
-      margin-block-start: var(--space-2);
+      gap: 0;
       max-block-size: calc(100dvh - var(--header-height) - var(--space-5));
       overflow-y: auto;
       overscroll-behavior: contain;
-      padding: var(--space-3) $panel-pad var(--space-6);
-      @include glass;
+      padding: var(--space-2) var(--page-gutter) var(--space-5);
+      border-block: 1px solid var(--border);
+      background-color: var(--surface);
       visibility: hidden;
       opacity: 0;
-      transform: translateY(calc(var(--space-2) * -1));
+      transform: translateY(calc(var(--space-1) * -1));
       transition:
         opacity var(--duration-base) var(--ease-out),
         transform var(--duration-base) var(--ease-out),
@@ -601,12 +591,18 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
       transition-delay: 0s;
     }
 
-    // The panel scrolls, so it clips what spills out of it: this padding keeps the CTA's glow
-    // inside it (the glow fades out within about 2.5rem).
+    .js &__menu-item {
+      border-block-end: 1px solid var(--border);
+    }
+
     .js &__menu-item--cta {
       margin-block-start: var(--space-4);
-      padding-inline: var(--space-5);
-      padding-block-end: var(--space-2);
+      margin-inline-start: 0;
+      padding-block-start: var(--space-4);
+      padding-inline-start: 0;
+      border-block-start: 1px solid var(--border);
+      border-inline-start: 0;
+      border-block-end: 0;
     }
 
     .js &__menu-item--cta &__cta {
@@ -617,10 +613,26 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
 
     .js &__link {
       inline-size: 100%;
-      min-block-size: var(--control-lg);
+      min-block-size: 56px;
       font-family: var(--font-display);
       font-size: var(--text-card);
       font-weight: 600;
+      line-height: 1.5;
+
+      .layout__link-label::after {
+        inset-block-end: calc(var(--space-2) * -1);
+      }
+    }
+
+  }
+
+  @media (width >= $nav-wide) {
+    &__menu {
+      flex-wrap: nowrap;
+    }
+
+    &__cta {
+      min-block-size: var(--control-md);
     }
   }
 
@@ -834,55 +846,7 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
   }
 }
 
-/* V8.4: editorial footer, with a reserved full-width brand signature. */
-.layout__header {
-  padding: 0;
-  background: var(--bg);
-  border-block-end: 1px solid var(--border);
-}
-.layout__bar {
-  padding-inline: var(--page-gutter);
-  &::before {
-    content: none;
-  }
-}
-.layout__logo {
-  block-size: clamp(24px, 1.75vw, 32px);
-  inline-size: auto;
-}
-@media (width >= 60em) {
-  .layout__menu {
-    gap: 0 clamp(20px, 2.3vw, 38px);
-    flex-wrap: nowrap;
-  }
-  .layout__link {
-    font-size: 1rem;
-    text-decoration: none;
-    min-block-size: 48px;
-    transition: color 0.22s var(--ease-out);
-  }
-  .layout__link-label::after {
-    content: "";
-    position: absolute;
-    inset-inline: 0;
-    inset-block-end: -8px;
-    block-size: 2px;
-    background: var(--accent);
-    transform: skewX(calc(-1 * var(--slant-angle))) scaleX(0);
-    transform-origin: right;
-    transition: transform 0.24s var(--ease-out);
-  }
-  .layout__link[aria-current="page"] .layout__link-label::after,
-  .layout__link--section .layout__link-label::after,
-  .layout__link:hover .layout__link-label::after {
-    transform: skewX(calc(-1 * var(--slant-angle))) scaleX(1);
-  }
-  .layout__cta {
-    min-block-size: 52px;
-    font-size: 1rem;
-    padding-inline: 28px;
-  }
-}
+/* Editorial footer, with a reserved full-width brand signature. */
 
 .layout__footer-directory {
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(0, 1fr);
@@ -957,15 +921,6 @@ $glass-filter: blur(20px) saturate(1.6) brightness(0.65);
   }
 }
 @media (width < 60em) {
-  .js .layout__menu {
-    background: var(--bg);
-    border-radius: var(--radius-md);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .js .layout__menu-button {
-    border-radius: var(--radius-sm);
-  }
   .layout__footer-directory {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
